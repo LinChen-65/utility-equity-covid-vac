@@ -44,6 +44,7 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Fra
 
 #policy_list = ['Age_Agnostic','No_Vaccination', 'Baseline','Age_Flood', 'Income_Flood', 'EW_Flood']
 policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood']
+#policy_list = ['Income_Flood', 'JUE_EW_Flood']
 print('Policy list: ', policy_list)
 
 # Vaccination time
@@ -175,6 +176,65 @@ def assign_acceptance(income, acceptance_scenario): # vaccine_acceptance = 1 - v
         print('Invalid scenario. Please check.')
         pdb.set_trace()
 
+def assign_acceptance_quantile(quantile, acceptance_scenario):
+    if(acceptance_scenario=='cf9'):
+        if(quantile==0): return 0
+        if(quantile==1): return 0
+        if(quantile==2): return 0.5
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf10'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 0.3
+        if(quantile==2): return 0.3
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf11'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 0.3
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf12'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1    
+    elif(acceptance_scenario=='cf13'):
+        if(quantile==0): return 0.2
+        if(quantile==1): return 0.4
+        if(quantile==2): return 0.6
+        if(quantile==3): return 0.8
+        if(quantile==4): return 1    
+    elif(acceptance_scenario=='cf14'):
+        if(quantile==0): return 0.2
+        if(quantile==1): return 0.2
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf15'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 0.1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf16'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf17'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 0.3
+        if(quantile==2): return 0.5
+        if(quantile==3): return 0.7
+        if(quantile==4): return 1
+    else:
+        print('Invalid scenario. Please check.')
+        pdb.set_trace()
+
 ###############################################################################
 # Load Data
 
@@ -285,7 +345,8 @@ cbg_income_msa.fillna(0,inplace=True)
 separators = functions.get_separators(cbg_income_msa, NUM_GROUPS, 'Mean_Household_Income','Sum', normalized=False)
 cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 # Vaccine hesitancy by income #20211007
-cbg_income_msa['Vaccine_Acceptance'] = cbg_income_msa['Mean_Household_Income'].apply(lambda x:assign_acceptance(x,ACCEPTANCE_SCENARIO))
+#cbg_income_msa['Vaccine_Acceptance'] = cbg_income_msa['Mean_Household_Income'].apply(lambda x:assign_acceptance(x,ACCEPTANCE_SCENARIO))
+cbg_income_msa['Vaccine_Acceptance'] = cbg_income_msa['Mean_Household_Income_Quantile'].apply(lambda x:assign_acceptance_quantile(x,ACCEPTANCE_SCENARIO))
 
 
 # cbg_c24.csv: Occupation
@@ -444,6 +505,7 @@ else:
             #print('Newly distributed vaccines: ', np.sum(new_vector))
             
         vaccination_vector_age_flood = current_vector
+        
 
         # Run simulations
         _, history_D2_age_flood = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
@@ -496,6 +558,7 @@ else:
             
             # Find the most vulnerable group
             most_vulnerable_group = np.argmax(final_deaths_rate_current)
+            print('Currently, most_vulnerable_group:', most_vulnerable_group)
             # Annotate the most vulnerable group
             cbg_income_msa['Most_Vulnerable'] = cbg_income_msa.apply(lambda x : 1 if x['Mean_Household_Income_Quantile']==most_vulnerable_group else 0, axis=1)
             
@@ -526,6 +589,7 @@ else:
                                                  vaccine_acceptance = vaccine_acceptance, #20211007
                                                  #protection_rate = protection_rate_most_disadvantaged)
                                                  protection_rate = PROTECTION_RATE)
+        
 
     ###############################################################################
     # JUE_EW_Flood, prioritize the most disadvantaged
