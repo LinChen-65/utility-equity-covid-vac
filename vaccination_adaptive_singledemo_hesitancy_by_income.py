@@ -231,6 +231,12 @@ def assign_acceptance_quantile(quantile, acceptance_scenario):
         if(quantile==2): return 0.5
         if(quantile==3): return 0.7
         if(quantile==4): return 1
+    elif(acceptance_scenario=='cf18'):
+        if(quantile==0): return 0.6
+        if(quantile==1): return 0.7
+        if(quantile==2): return 0.8
+        if(quantile==3): return 0.9
+        if(quantile==4): return 1
     else:
         print('Invalid scenario. Please check.')
         pdb.set_trace()
