@@ -1,5 +1,17 @@
 import numpy as np
 import pandas as pd
+import datetime
+
+def list_hours_in_range(min_hour, max_hour):
+    """
+    Return a list of datetimes in a range from min_hour to max_hour, inclusive. Increment is one hour. 
+    """
+    assert(min_hour <= max_hour)
+    hours = []
+    while min_hour <= max_hour:
+        hours.append(min_hour)
+        min_hour = min_hour + datetime.timedelta(hours=1)
+    return hours
 
 def match_msa_name_to_msas_in_acs_data(msa_name, acs_msas):
     '''
