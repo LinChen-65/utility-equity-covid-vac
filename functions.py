@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import datetime
+import pdb
 
 def list_hours_in_range(min_hour, max_hour):
     """
@@ -12,6 +13,7 @@ def list_hours_in_range(min_hour, max_hour):
         hours.append(min_hour)
         min_hour = min_hour + datetime.timedelta(hours=1)
     return hours
+
 
 def match_msa_name_to_msas_in_acs_data(msa_name, acs_msas):
     '''
@@ -166,12 +168,6 @@ def vaccine_distribution_flood(cbg_table, vaccination_ratio, demo_feat, ascendin
     print('Final check of distributed vaccines:',vaccination_vector.sum())
     return vaccination_vector
     
-'''    
-def to_percent(temp, position):
-    #return '%1.0f'%(5*(temp+1)) + '%' 
-    #return '%1.0f'%(5*(temp+1))
-    return '%1.0f'%((100/)*(temp+1))
-'''
 
 def get_separators(cbg_table, num_groups, col_indicator, col_sum, normalized):
     separators = np.zeros(num_groups+1)
@@ -215,8 +211,6 @@ def assign_group(x, separators,reverse=False):
         return(num_groups-1)
     else:
         return 0
-  
-        
               
         
 # 水位法分配疫苗 # Adjustable execution ratio.
@@ -278,4 +272,144 @@ def vaccine_distribution_flood_new(cbg_table, vaccination_ratio, demo_feat, asce
     del cbg_table_sorted
     #print('Final check of distributed vaccines:',vaccination_vector.sum())
     return vaccination_vector
-    
+
+
+def gini(array):
+    """Calculate the Gini coefficient of a numpy array."""
+    # based on bottom eq:
+    # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
+    # from:
+    # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
+    # All values are treated equally, arrays must be 1d:
+    array = array.flatten()
+    if np.amin(array) < 0:
+        # Values cannot be negative:
+        array -= np.amin(array)
+    # Values cannot be 0:
+    array += 0.0000001
+    # Values must be sorted:
+    array = np.sort(array)
+    # Index per array element:
+    index = np.arange(1,array.shape[0]+1)
+    # Number of array elements:
+    n = array.shape[0]
+    # Gini coefficient:
+    return ((np.sum((2 * index - n  - 1) * array)) / (n * np.sum(array))) 
+
+
+def assign_acceptance_absolute(income, acceptance_scenario): # vaccine_acceptance = 1 - vaccine_hesitancy
+    # Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7778842/pdf/10900_2020_Article_958.pdf
+    if(acceptance_scenario=='real'):
+        if(income<=30000): return 0.72
+        if((income>30000)&(income<=60000)): return 0.74
+        if((income>60000)&(income<=99999)): return 0.81
+        if(income>99999): return 0.86
+    elif(acceptance_scenario=='cf1'):
+        if(income<=30000): return 0.576 #0.72*0.5
+        if((income>30000)&(income<=60000)): return 0.592 #0.74*0.5 
+        if((income>60000)&(income<=99999)): return 0.81
+        if(income>99999): return 0.86
+    elif(acceptance_scenario=='cf2'):
+        if(income<=30000): return 0.3
+        if((income>30000)&(income<=60000)): return 0.6
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf3'):
+        if(income<=30000): return 0.3
+        if((income>30000)&(income<=60000)): return 0.3
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf4'):
+        if(income<=30000): return 0.2
+        if((income>30000)&(income<=60000)): return 0.2
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf5'):
+        if(income<=30000): return 0.1
+        if((income>30000)&(income<=60000)): return 0.1
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf6'):
+        if(income<=30000): return 0.1
+        if((income>30000)&(income<=60000)): return 0.5
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf7'):
+        if(income<=30000): return 0.1
+        if((income>30000)&(income<=60000)): return 0.8
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf8'):
+        if(income<=30000): return 0
+        if((income>30000)&(income<=60000)): return 0
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    else:
+        print('Invalid scenario. Please check.')
+        pdb.set_trace()
+
+
+def assign_acceptance_quantile(quantile, acceptance_scenario=None):
+    if(acceptance_scenario=='cf9'):
+        if(quantile==0): return 0
+        if(quantile==1): return 0
+        if(quantile==2): return 0.5
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf10'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 0.3
+        if(quantile==2): return 0.3
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf11'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 0.3
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf12'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1    
+    elif(acceptance_scenario=='cf13'):
+        if(quantile==0): return 0.2
+        if(quantile==1): return 0.4
+        if(quantile==2): return 0.6
+        if(quantile==3): return 0.8
+        if(quantile==4): return 1    
+    elif(acceptance_scenario=='cf14'):
+        if(quantile==0): return 0.2
+        if(quantile==1): return 0.2
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf15'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 0.1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf16'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf17'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 0.3
+        if(quantile==2): return 0.5
+        if(quantile==3): return 0.7
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf18'):
+        if(quantile==0): return 0.6
+        if(quantile==1): return 0.7
+        if(quantile==2): return 0.8
+        if(quantile==3): return 0.9
+        if(quantile==4): return 1
+    else:
+        print('Invalid scenario. Please check.')
+        pdb.set_trace()

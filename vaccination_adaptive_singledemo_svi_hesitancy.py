@@ -131,122 +131,6 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
     return history_C2, history_D2
 
 
-def assign_acceptance_absolute(income, acceptance_scenario): # vaccine_acceptance = 1 - vaccine_hesitancy
-    # Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7778842/pdf/10900_2020_Article_958.pdf
-    if(acceptance_scenario=='real'):
-        if(income<=30000): return 0.72
-        if((income>30000)&(income<=60000)): return 0.74
-        if((income>60000)&(income<=99999)): return 0.81
-        if(income>99999): return 0.86
-    elif(acceptance_scenario=='cf1'):
-        if(income<=30000): return 0.576 #0.72*0.5
-        if((income>30000)&(income<=60000)): return 0.592 #0.74*0.5 
-        if((income>60000)&(income<=99999)): return 0.81
-        if(income>99999): return 0.86
-    elif(acceptance_scenario=='cf2'):
-        if(income<=30000): return 0.3
-        if((income>30000)&(income<=60000)): return 0.6
-        if((income>60000)&(income<=99999)): return 1
-        if(income>99999): return 1
-    elif(acceptance_scenario=='cf3'):
-        if(income<=30000): return 0.3
-        if((income>30000)&(income<=60000)): return 0.3
-        if((income>60000)&(income<=99999)): return 1
-        if(income>99999): return 1
-    elif(acceptance_scenario=='cf4'):
-        if(income<=30000): return 0.2
-        if((income>30000)&(income<=60000)): return 0.2
-        if((income>60000)&(income<=99999)): return 1
-        if(income>99999): return 1
-    elif(acceptance_scenario=='cf5'):
-        if(income<=30000): return 0.1
-        if((income>30000)&(income<=60000)): return 0.1
-        if((income>60000)&(income<=99999)): return 1
-        if(income>99999): return 1
-    elif(acceptance_scenario=='cf6'):
-        if(income<=30000): return 0.1
-        if((income>30000)&(income<=60000)): return 0.5
-        if((income>60000)&(income<=99999)): return 1
-        if(income>99999): return 1
-    elif(acceptance_scenario=='cf7'):
-        if(income<=30000): return 0.1
-        if((income>30000)&(income<=60000)): return 0.8
-        if((income>60000)&(income<=99999)): return 1
-        if(income>99999): return 1
-    elif(acceptance_scenario=='cf8'):
-        if(income<=30000): return 0
-        if((income>30000)&(income<=60000)): return 0
-        if((income>60000)&(income<=99999)): return 1
-        if(income>99999): return 1
-    else:
-        print('Invalid scenario. Please check.')
-        pdb.set_trace()
-
-def assign_acceptance_quantile(quantile, acceptance_scenario=None):
-    if(acceptance_scenario=='cf9'):
-        if(quantile==0): return 0
-        if(quantile==1): return 0
-        if(quantile==2): return 0.5
-        if(quantile==3): return 1
-        if(quantile==4): return 1
-    elif(acceptance_scenario=='cf10'):
-        if(quantile==0): return 0.3
-        if(quantile==1): return 0.3
-        if(quantile==2): return 0.3
-        if(quantile==3): return 1
-        if(quantile==4): return 1
-    elif(acceptance_scenario=='cf11'):
-        if(quantile==0): return 0.3
-        if(quantile==1): return 0.3
-        if(quantile==2): return 1
-        if(quantile==3): return 1
-        if(quantile==4): return 1
-    elif(acceptance_scenario=='cf12'):
-        if(quantile==0): return 0.3
-        if(quantile==1): return 1
-        if(quantile==2): return 1
-        if(quantile==3): return 1
-        if(quantile==4): return 1    
-    elif(acceptance_scenario=='cf13'):
-        if(quantile==0): return 0.2
-        if(quantile==1): return 0.4
-        if(quantile==2): return 0.6
-        if(quantile==3): return 0.8
-        if(quantile==4): return 1    
-    elif(acceptance_scenario=='cf14'):
-        if(quantile==0): return 0.2
-        if(quantile==1): return 0.2
-        if(quantile==2): return 1
-        if(quantile==3): return 1
-        if(quantile==4): return 1
-    elif(acceptance_scenario=='cf15'):
-        if(quantile==0): return 0.1
-        if(quantile==1): return 0.1
-        if(quantile==2): return 1
-        if(quantile==3): return 1
-        if(quantile==4): return 1
-    elif(acceptance_scenario=='cf16'):
-        if(quantile==0): return 0.1
-        if(quantile==1): return 1
-        if(quantile==2): return 1
-        if(quantile==3): return 1
-        if(quantile==4): return 1
-    elif(acceptance_scenario=='cf17'):
-        if(quantile==0): return 0.1
-        if(quantile==1): return 0.3
-        if(quantile==2): return 0.5
-        if(quantile==3): return 0.7
-        if(quantile==4): return 1
-    elif(acceptance_scenario=='cf18'):
-        if(quantile==0): return 0.6
-        if(quantile==1): return 0.7
-        if(quantile==2): return 0.8
-        if(quantile==3): return 0.9
-        if(quantile==4): return 1
-    else:
-        print('Invalid scenario. Please check.')
-        pdb.set_trace()
-
 ###############################################################################
 # Load Data
 
@@ -363,9 +247,9 @@ if(('Income_Flood' in policy_list) or (consider_hesitancy=='True')):
     if(consider_hesitancy=='True'):
         # Vaccine hesitancy by income #20211007
         if(ACCEPTANCE_SCENARIO in ['real','cf1','cf2','cf3','cf4','cf5','cf6','cf7','cf8']):
-            cbg_income_msa['Vaccine_Acceptance'] = cbg_income_msa['Mean_Household_Income'].apply(lambda x:assign_acceptance_absolute(x,ACCEPTANCE_SCENARIO))
+            cbg_income_msa['Vaccine_Acceptance'] = cbg_income_msa['Mean_Household_Income'].apply(lambda x:functions.assign_acceptance_absolute(x,ACCEPTANCE_SCENARIO))
         elif(ACCEPTANCE_SCENARIO in ['cf9','cf10','cf11','cf12','cf13','cf14','cf15','cf16','cf17','cf18']):
-            cbg_income_msa['Vaccine_Acceptance'] = cbg_income_msa['Mean_Household_Income_Quantile'].apply(lambda x:assign_acceptance_quantile(x,ACCEPTANCE_SCENARIO))
+            cbg_income_msa['Vaccine_Acceptance'] = cbg_income_msa['Mean_Household_Income_Quantile'].apply(lambda x:functions.assign_acceptance_quantile(x,ACCEPTANCE_SCENARIO))
         # Retrieve vaccine acceptance as ndarray
         vaccine_acceptance = np.array(cbg_income_msa['Vaccine_Acceptance'].copy())
     elif(consider_hesitancy=='False'):
