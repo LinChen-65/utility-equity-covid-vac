@@ -1,5 +1,19 @@
 import numpy as np
 import pandas as pd
+import datetime
+import pdb
+
+def list_hours_in_range(min_hour, max_hour):
+    """
+    Return a list of datetimes in a range from min_hour to max_hour, inclusive. Increment is one hour. 
+    """
+    assert(min_hour <= max_hour)
+    hours = []
+    while min_hour <= max_hour:
+        hours.append(min_hour)
+        min_hour = min_hour + datetime.timedelta(hours=1)
+    return hours
+
 
 def match_msa_name_to_msas_in_acs_data(msa_name, acs_msas):
     '''
@@ -154,43 +168,7 @@ def vaccine_distribution_flood(cbg_table, vaccination_ratio, demo_feat, ascendin
     print('Final check of distributed vaccines:',vaccination_vector.sum())
     return vaccination_vector
     
-'''    
-def to_percent(temp, position):
-    #return '%1.0f'%(5*(temp+1)) + '%' 
-    #return '%1.0f'%(5*(temp+1))
-    return '%1.0f'%((100/)*(temp+1))
-'''
-'''
-def get_separators(cbg_table, num_groups, col_indicator, col_sum, normalized):
-    separators = np.zeros(num_groups+1)
-    
-    total = cbg_table[col_sum].sum()
-    group_size = total / num_groups
-    
-    cbg_table_work = cbg_table.copy()
-    cbg_table_work.sort_values(col_indicator, inplace=True)
-    
-    for j in range(last_position, len(cbg_table_work)):
-        if (cbg_table_work.head(j)[col_sum].sum() <= group_size*(i+1)) & (cbg_table_work.head(j+1)[col_sum].sum() >= group_size*(i+1)):
-            first_separator = cbg_table_work.iloc[j][col_indicator]
-            break
-    if(first_separator==0):
-        
-    else:
-        separators[0] = 0
-        last_position = 0
-        for i in range(num_groups):
-            for j in range(last_position, len(cbg_table_work)):
-                if (cbg_table_work.head(j)[col_sum].sum() <= group_size*(i+1)) & (cbg_table_work.head(j+1)[col_sum].sum() >= group_size*(i+1)):
-                    separators[i+1] = cbg_table_work.iloc[j][col_indicator]
-                    last_position = j
-                    break
-    
-    
-    separators[-1] = 1 if normalized else cbg_table[col_indicator].max()
-    
-    return separators
-'''
+
 def get_separators(cbg_table, num_groups, col_indicator, col_sum, normalized):
     separators = np.zeros(num_groups+1)
     
@@ -215,15 +193,6 @@ def get_separators(cbg_table, num_groups, col_indicator, col_sum, normalized):
 
     
 # Assign CBGs to groups, which are defined w.r.t certain demographic features
-'''
-def assign_group(x, separators):
-    num_groups = len(separators)-1
-    for i in range(num_groups):
-        #if((x>=separators[i]) & (x<separators[i+1])):
-        if((x>separators[i]) & (x<=separators[i+1])):
-            return i
-    return(num_groups-1)
-'''
 def assign_group(x, separators,reverse=False):
     """
         reverse: 控制是否需要反向，以保证most disadvantaged is assigned the largest group number.
@@ -242,322 +211,9 @@ def assign_group(x, separators,reverse=False):
         return(num_groups-1)
     else:
         return 0
-
-# Analyze results and produce graphs
-# Comparison between Dem-Struct-Agnostic and Dem-Struct-Aware            
-'''            
-def output_result_0_only_deaths(cbg_table, demo_feat, policy_list, num_groups, 
-                                print_result=True,draw_result=True,
-                                store_result=False, timestring='yyyymmdd'):
-    
-    #demo_feat: demographic feature of interest: 'Age','Poverty'
-    #num_groups: number of quantiles that all CBGs are divided into
-    
-    
-    color_list = ['k','r','b','y','c']
-    
-    label = dict()
-    for policy in range(len(policy_list)):
-        label[policy] = policy
-        if('Age_Agnostic' in policy_list):
-            label['Age_Agnostic'] = 'Dem-Struct-Agnostic'
-            label['No_Vaccination'] = 'Dem-Struct-Aware'
-    
-    demo_feat_show = {'Age':'Elder Ratio',
-                      'Mean_Household_Income':'Mean Household Income',
-                      'Median_Household_Income':'Median Household Income',
-                      'Poverty':'Poverty Ratio',
-                      'Mobility':'Mobility Reduction Level',
-                      'Race':'White Ratio',
-                      'Population_Density':'Population Density',
-                      'Essential_Worker':'Essential Worker Ratio'
-                     }
-
-    reverse=False
-    
-    results = {}
-    for policy in policy_list:
+              
         
-        exec("final_deaths_rate_%s_total = cbg_table['Final_Deaths_%s'].sum()/cbg_table['Sum'].sum()" % (policy.lower(),policy))
-        cbg_table['Final_Deaths_' + policy] = eval('avg_final_deaths_' + policy.lower())
-        exec("%s = np.zeros(num_groups)" % ('final_deaths_rate_'+ policy.lower()))
-        
-        for i in range(num_groups):
-            eval('final_deaths_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Final_Deaths_' + policy].sum()
-            eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
-            
-        results[policy] = {'deaths':eval('final_deaths_rate_'+ policy.lower())}
-        
-        if(print_result==True):
-            print('Policy: ', policy)
-            print('final_deaths_rate_'+policy.lower()+': ',eval('final_deaths_rate_'+ policy.lower()))
-            print('Standard deviance from total: ', np.std(eval('final_deaths_rate_'+ policy.lower())))
-
-    if(draw_result==True):
-        fig, ax = plt.subplots(1,1,figsize=(8,3))
-        
-        for policy in policy_list:
-            if(reverse==True):
-                group_deaths = np.zeros(num_groups)
-                for i in range(num_groups):
-                    group_deaths[i] = eval('final_deaths_rate_'+policy.lower())[-i-1]
-                ax[0].plot(np.arange(num_groups),
-                         group_deaths,
-                         label=label[policy],
-                         color=color_list[policy_list.index(policy)],
-                         marker='o'
-                        )
-            else:
-                ax.plot(np.arange(num_groups),
-                         eval('final_deaths_rate_'+policy.lower()),
-                         label=label[policy],
-                         color=color_list[policy_list.index(policy)],
-                         marker='o')
-            ax.plot([0,num_groups-1], 
-                     [eval('final_deaths_rate_'+policy.lower()+'_total'), eval('final_deaths_rate_'+policy.lower()+'_total')], 
-                     color=color_list[policy_list.index(policy)],
-                     linestyle='--')
-        #for i in range(eval('num_groups_by_'+demo_feat.lower())):
-        #    plt.plot([i,i],[final_cases_rate_baseline[i], final_cases_rate_extreme_1[i]],color='g')
-        ax.set_xticks(np.arange(num_groups))
-        ax.legend()
-        ax.xaxis.set_major_formatter(FuncFormatter(functions.to_percent))
-        ax.set_xlabel(demo_feat_show[demo_feat]+' Percentile(%)')
-        ax.set_title('Predicted Death Rates in %s' % MSA_NAME)
-        
-        if store_result == True:
-            path = os.path.join(root,
-                                '%s_%s_disparities_%s'
-                                % (timestring,demo_feat.lower(), MSA_NAME))
-            # Save graphs
-            f=plt.gcf()
-            f.savefig(path,bbox_inches='tight')
-            plt.show()
-            f.clear()
-    
-    return results
-'''    
-
-
-# Analyze results and produce graphs
-# All policies
-'''
-def output_result(cbg_table, demo_feat, policy_list, num_groups, print_result=True,draw_result=True):
-    
-    #demo_feat: demographic feature of interest: 'Age','Poverty'
-    #num_groups: number of quantiles that all CBGs are divided into
-    
-    print('Observation dimension: ', demo_feat)
-    reverse = False
-    color_list = ['k','b','r','y','c','peru']
-
-    results = {}
-    
-    for policy in policy_list:
-        exec("final_cases_rate_%s_total = cbg_table['Final_Cases_%s'].sum()/cbg_table['Sum'].sum()" % (policy.lower(),policy))
-        exec("final_deaths_rate_%s_total = cbg_table['Final_Deaths_%s'].sum()/cbg_table['Sum'].sum()" % (policy.lower(),policy))
-        
-        cbg_table['Final_Cases_' + policy] = eval('avg_final_cases_' + policy.lower())
-        cbg_table['Final_Deaths_' + policy] = eval('avg_final_deaths_' + policy.lower())
-        
-        exec("final_cases_rate_%s = np.zeros(num_groups)" % (policy.lower()))
-        exec("%s = np.zeros(num_groups)" % ('final_deaths_rate_'+ policy.lower()))
-        
-        for i in range(num_groups):
-            eval('final_cases_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Final_Cases_' + policy].sum()
-            eval('final_cases_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
-            eval('final_deaths_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Final_Deaths_' + policy].sum()
-            eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
-            
-        cases_total_abs = eval('final_cases_rate_%s_total'%(policy.lower()))
-        deaths_total_abs = eval('final_deaths_rate_%s_total'%(policy.lower()))
-        cases_gini_abs =  gini.gini(eval('final_cases_rate_'+ policy.lower()))
-        deaths_gini_abs = gini.gini(eval('final_deaths_rate_'+ policy.lower()))
-        
-        if(policy=='Baseline'):
-            cases_total_baseline = cases_total_abs;print('cases_total_baseline:',cases_total_baseline)
-            deaths_total_baseline = deaths_total_abs;print('deaths_total_baseline:',deaths_total_baseline)
-            cases_gini_baseline = cases_gini_abs
-            deaths_gini_baseline = deaths_gini_abs
-                
-            cases_total_rel = 0
-            deaths_total_rel = 0
-            cases_gini_rel = 0
-            deaths_gini_rel = 0
-                                         
-            results[policy] = {'cases_total_abs':'%.5f'% cases_total_abs,
-                               'cases_total_rel':'%.5f'% cases_total_rel,
-                               'cases_gini_abs':'%.5f'% cases_gini_abs,
-                               'cases_gini_rel':'%.5f'% cases_gini_rel,
-                           
-                               'deaths_total_abs':'%.5f'% deaths_total_abs,
-                               'deaths_total_rel':'%.5f'% deaths_total_rel,
-                               'deaths_gini_abs':'%.5f'% deaths_gini_abs,
-                               'deaths_gini_rel':'%.5f'% deaths_gini_rel}   
-        else:
-            cases_total_rel = (eval('final_cases_rate_%s_total'%(policy.lower())) - cases_total_baseline) / cases_total_baseline
-            deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_baseline) / deaths_total_baseline
-            cases_gini_rel =  (gini.gini(eval('final_cases_rate_'+ policy.lower())) - cases_gini_baseline) / cases_gini_baseline
-            deaths_gini_rel = (gini.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline
-        
-            results[policy] = {'cases_total_abs':'%.5f'% cases_total_abs,
-                               'cases_total_rel':'%.5f'% cases_total_rel,
-                               'cases_gini_abs':'%.5f'% cases_gini_abs,
-                               'cases_gini_rel':'%.5f'% cases_gini_rel,
-                           
-                               'deaths_total_abs':'%.5f'% deaths_total_abs,
-                               'deaths_total_rel':'%.5f'% deaths_total_rel,
-                               'deaths_gini_abs':'%.5f'% deaths_gini_abs,
-                               'deaths_gini_rel':'%.5f'% deaths_gini_rel}                        
-        
-                                    
-        if(print_result==True):
-            print('Policy: ', policy)
-            print('final_cases_rate_'+ policy.lower(), eval('final_cases_rate_%s_total'%(policy.lower())))
-            print('Cases, Gini Index: ',gini.gini(eval('final_cases_rate_'+ policy.lower())))
-            print('Deaths, Gini Index: ',gini.gini(eval('final_deaths_rate_'+ policy.lower())))
-            
-            if(policy=='Baseline'):
-                cases_total_baseline = eval('final_cases_rate_%s_total'%(policy.lower()))
-                deaths_total_baseline = eval('final_deaths_rate_%s_total'%(policy.lower()))
-                cases_gini_baseline = gini.gini(eval('final_cases_rate_'+ policy.lower()))
-                deaths_gini_baseline = gini.gini(eval('final_deaths_rate_'+ policy.lower()))
-                
-            if(policy!='Baseline' and policy!='No_Vaccination'):
-                print('Compared to baseline:')
-                
-                print('Cases total: ', (eval('final_cases_rate_%s_total'%(policy.lower())) - cases_total_baseline) / cases_total_baseline)
-                print('Deaths total: ', (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_baseline) / deaths_total_baseline)
-                print('Cases gini: ', (gini.gini(eval('final_cases_rate_'+ policy.lower())) - cases_gini_baseline) / cases_gini_baseline)
-                print('Deaths gini: ', (gini.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline)
-
-    if(draw_result==True):
-        plt.figure(figsize=(8,3))
-        if(demo_feat=='Age'):
-            plt.title('Predicted case rates for CBGs with different elder ratios')
-        elif(demo_feat=='Mobility'):
-            plt.title('Predicted case rates for CBGs with different mobility reduction levels')
-        elif(demo_feat=='Mean_Household_Income'):
-            plt.title('Predicted case rates for CBGs with different mean household incomes')
-        else:
-            plt.title('Predicted case rates for CBGs with different %s ratios' % (demo_feat.lower()))
-        
-        for policy in policy_list:
-            if(reverse==True):
-                group_cases = np.zeros(num_groups)
-                for i in range(num_groups):
-                    group_cases[i] = eval('final_cases_rate_'+policy.lower())[-i-1]
-                plt.plot(np.arange(num_groups),
-                         group_cases,
-                         label=policy,
-                         color=color_list[policy_list.index(policy)],
-                         marker='o'
-                        )
-            else:
-                plt.plot(np.arange(num_groups),
-                         eval('final_cases_rate_'+policy.lower()),
-                         label=policy,
-                         color=color_list[policy_list.index(policy)],
-                         marker='o')
-            plt.plot([0,num_groups-1], 
-                     [eval('final_cases_rate_'+policy.lower()+'_total'), eval('final_cases_rate_'+policy.lower()+'_total')], 
-                     color=color_list[policy_list.index(policy)],
-                     linestyle='--')
-        plt.xticks(np.arange(num_groups))
-        plt.legend()
-
-        plt.figure(figsize=(8,3))
-        if(demo_feat=='Age'):
-            plt.title('Predicted death rates for CBGs with different elder ratios')
-        elif(demo_feat=='Mobility'):
-            plt.title('Predicted death rates for CBGs with different mobility reduction levels')
-        elif(demo_feat=='Mean_Household_Income'):
-            plt.title('Predicted death rates for CBGs with different mean household incomes')
-        else:
-            plt.title('Predicted death rates for CBGs with different %s ratios' % (demo_feat.lower()))
-        for policy in policy_list:
-            if(reverse==True):
-                group_deaths = np.zeros(num_groups)
-                for i in range(num_groups):
-                    group_deaths[i] = eval('final_deaths_rate_'+policy.lower())[-i-1]
-                plt.plot(np.arange(num_groups),
-                         group_deaths,
-                         label=policy,
-                         color=color_list[policy_list.index(policy)],
-                         marker='o'
-                        )
-            else:
-                plt.plot(np.arange(num_groups),
-                         eval('final_deaths_rate_'+policy.lower()),
-                         label=policy,
-                         color=color_list[policy_list.index(policy)],
-                         marker='o')
-            plt.plot([0,num_groups-1], 
-                     [eval('final_deaths_rate_'+policy.lower()+'_total'), eval('final_deaths_rate_'+policy.lower()+'_total')], 
-                     color=color_list[policy_list.index(policy)],
-                     linestyle='--')
-        plt.xticks(np.arange(num_groups))
-        plt.legend()
-
-    return results
-''' 
-
-def make_gini_table(policy_list, demo_feat_list, num_groups, show_option, 
-                    save_path, save_result=False):
-    
-    cbg_table_name_dict=dict()
-    cbg_table_name_dict['Age'] = cbg_age_msa
-    cbg_table_name_dict['Mean_Household_Income'] = cbg_income_msa
-    cbg_table_name_dict['Race'] = cbg_race_msa
-    cbg_table_name_dict['Mobility'] = cbg_mobility_msa
-    cbg_table_name_dict['Essential_Worker'] = cbg_occupation_msa
-    cbg_table_name_dict['Population_Density'] = cbg_density_msa
-    
-    print('Policy list: ', policy_list)
-    print('Demographic feature list: ', demo_feat_list)
-    print('Show Option: ', show_option)
-
-    if(show_option=='cases'):
-        gini_df = pd.DataFrame(columns=pd.MultiIndex.from_tuples([('All','cases_total_abs'),('All','cases_total_rel')]))
-    if(show_option=='deaths'):
-        gini_df = pd.DataFrame(columns=pd.MultiIndex.from_tuples([('All','deaths_total_abs'),('All','deaths_total_rel')]))
-    
-    gini_df['Policy'] = policy_list
-
-    for demo_feat in demo_feat_list:
-        print(demo_feat)
-        results = functions.output_result(cbg_table_name_dict[demo_feat], 
-                                          demo_feat, policy_list, num_groups=NUM_GROUPS,
-                                          print_result=False, draw_result=False)
-        if(show_option=='cases'):
-            for i in range(len(policy_list)):
-                policy = policy_list[i]
-                gini_df.loc[i,('All','cases_total_abs')] = results[policy]['cases_total_abs']
-                gini_df.loc[i,('All','cases_total_rel')] = results[policy]['cases_total_rel']
-                gini_df.loc[i,(demo_feat,'cases_gini_abs')] = results[policy]['cases_gini_abs']
-                gini_df.loc[i,(demo_feat,'cases_gini_rel')] = results[policy]['cases_gini_rel']
-        elif(show_option=='deaths'):
-            for i in range(len(policy_list)):
-                policy = policy_list[i]
-                gini_df.loc[i,('All','deaths_total_abs')] = results[policy]['deaths_total_abs']
-                gini_df.loc[i,('All','deaths_total_rel')] = results[policy]['deaths_total_rel']
-                gini_df.loc[i,(demo_feat,'deaths_gini_abs')] = results[policy]['deaths_gini_abs']
-                gini_df.loc[i,(demo_feat,'deaths_gini_rel')] = results[policy]['deaths_gini_rel']
-
-    gini_df.set_index(['Policy'],inplace=True)
-    # Transpose
-    gini_df_trans = pd.DataFrame(gini_df.values.T, index=gini_df.columns, columns=gini_df.index)#转置
-    # Save .csv
-    if(save_result==True):
-        gini_df_trans.to_csv(save_path)
-
-        
-        
-        
-        
-        
-# 水位法分配疫苗
-# Adjustable execution ratio.
+# 水位法分配疫苗 # Adjustable execution ratio.
 # Only 'flooding' in the most vulnerable demographic group.
 # Check whether a CBG has been covered, before vaccinating it.
 def vaccine_distribution_flood_new(cbg_table, vaccination_ratio, demo_feat, ascending, execution_ratio, leftover, is_last):
@@ -569,12 +225,8 @@ def vaccine_distribution_flood_new(cbg_table, vaccination_ratio, demo_feat, asce
     # Rank CBGs according to some demographic feature
     cbg_table_sorted.sort_values(by=['Most_Vulnerable','Covered',demo_feat],ascending=[False, True, ascending],inplace = True)
     
-    # Calculate number of available vaccines
-    #leftover = cbg_table_sorted['Sum'].sum() * vaccination_ratio * execution_ratio - cbg_table_sorted[cbg_table_sorted['Covered']==1]['Sum'].sum()
-    #print('leftover:',leftover)
+    # Calculate total number of available vaccines
     num_vaccines = cbg_table_sorted['Sum'].sum() * vaccination_ratio * execution_ratio + leftover
-    #print('Total num of vaccines: ',num_vaccines)
-    #print('Num of vaccines distributed according to the policy:',num_vaccines)
     
     # Distribute vaccines according to the ranking
     vaccination_vector = np.zeros(len(cbg_table))
@@ -600,7 +252,7 @@ def vaccine_distribution_flood_new(cbg_table, vaccination_ratio, demo_feat, asce
     cbg_table_original = cbg_table_sorted.sort_index()
     vaccination_vector = cbg_table_original['Vaccination_Vector'].values
     '''
-    # Vaccines left to be distributed randomly (baseline)
+    # if executation_ratio<1, vaccines left to be distributed randomly (baseline)
     num_vaccines_left = cbg_table['Sum'].sum() * vaccination_ratio - vaccination_vector.sum()
     #print('Num of vaccines left:', num_vaccines_left)
     
@@ -620,4 +272,144 @@ def vaccine_distribution_flood_new(cbg_table, vaccination_ratio, demo_feat, asce
     del cbg_table_sorted
     #print('Final check of distributed vaccines:',vaccination_vector.sum())
     return vaccination_vector
-    
+
+
+def gini(array):
+    """Calculate the Gini coefficient of a numpy array."""
+    # based on bottom eq:
+    # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
+    # from:
+    # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
+    # All values are treated equally, arrays must be 1d:
+    array = array.flatten()
+    if np.amin(array) < 0:
+        # Values cannot be negative:
+        array -= np.amin(array)
+    # Values cannot be 0:
+    array += 0.0000001
+    # Values must be sorted:
+    array = np.sort(array)
+    # Index per array element:
+    index = np.arange(1,array.shape[0]+1)
+    # Number of array elements:
+    n = array.shape[0]
+    # Gini coefficient:
+    return ((np.sum((2 * index - n  - 1) * array)) / (n * np.sum(array))) 
+
+
+def assign_acceptance_absolute(income, acceptance_scenario): # vaccine_acceptance = 1 - vaccine_hesitancy
+    # Ref: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7778842/pdf/10900_2020_Article_958.pdf
+    if(acceptance_scenario=='real'):
+        if(income<=30000): return 0.72
+        if((income>30000)&(income<=60000)): return 0.74
+        if((income>60000)&(income<=99999)): return 0.81
+        if(income>99999): return 0.86
+    elif(acceptance_scenario=='cf1'):
+        if(income<=30000): return 0.576 #0.72*0.5
+        if((income>30000)&(income<=60000)): return 0.592 #0.74*0.5 
+        if((income>60000)&(income<=99999)): return 0.81
+        if(income>99999): return 0.86
+    elif(acceptance_scenario=='cf2'):
+        if(income<=30000): return 0.3
+        if((income>30000)&(income<=60000)): return 0.6
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf3'):
+        if(income<=30000): return 0.3
+        if((income>30000)&(income<=60000)): return 0.3
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf4'):
+        if(income<=30000): return 0.2
+        if((income>30000)&(income<=60000)): return 0.2
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf5'):
+        if(income<=30000): return 0.1
+        if((income>30000)&(income<=60000)): return 0.1
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf6'):
+        if(income<=30000): return 0.1
+        if((income>30000)&(income<=60000)): return 0.5
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf7'):
+        if(income<=30000): return 0.1
+        if((income>30000)&(income<=60000)): return 0.8
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    elif(acceptance_scenario=='cf8'):
+        if(income<=30000): return 0
+        if((income>30000)&(income<=60000)): return 0
+        if((income>60000)&(income<=99999)): return 1
+        if(income>99999): return 1
+    else:
+        print('Invalid scenario. Please check.')
+        pdb.set_trace()
+
+
+def assign_acceptance_quantile(quantile, acceptance_scenario=None):
+    if(acceptance_scenario=='cf9'):
+        if(quantile==0): return 0
+        if(quantile==1): return 0
+        if(quantile==2): return 0.5
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf10'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 0.3
+        if(quantile==2): return 0.3
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf11'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 0.3
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf12'):
+        if(quantile==0): return 0.3
+        if(quantile==1): return 1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1    
+    elif(acceptance_scenario=='cf13'):
+        if(quantile==0): return 0.2
+        if(quantile==1): return 0.4
+        if(quantile==2): return 0.6
+        if(quantile==3): return 0.8
+        if(quantile==4): return 1    
+    elif(acceptance_scenario=='cf14'):
+        if(quantile==0): return 0.2
+        if(quantile==1): return 0.2
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf15'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 0.1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf16'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 1
+        if(quantile==2): return 1
+        if(quantile==3): return 1
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf17'):
+        if(quantile==0): return 0.1
+        if(quantile==1): return 0.3
+        if(quantile==2): return 0.5
+        if(quantile==3): return 0.7
+        if(quantile==4): return 1
+    elif(acceptance_scenario=='cf18'):
+        if(quantile==0): return 0.6
+        if(quantile==1): return 0.7
+        if(quantile==2): return 0.8
+        if(quantile==3): return 0.9
+        if(quantile==4): return 1
+    else:
+        print('Invalid scenario. Please check.')
+        pdb.set_trace()
