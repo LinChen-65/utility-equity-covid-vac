@@ -42,8 +42,8 @@ MSA_NAME = sys.argv[1]; print('MSA_NAME: ',MSA_NAME) #MSA_NAME = 'SanFrancisco'
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Francisco_Oakland_Hayward_CA'
 
 #policy_list = ['Age_Agnostic','No_Vaccination', 'Baseline','Age_Flood', 'Income_Flood', 'EW_Flood','SVI']
-#policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood']
-policy_list = ['SVI']
+#policy_list = ['Baseline','Age_Flood', 'Age_Flood_Reverse','Income_Flood','Income_Flood_Reverse', 'JUE_EW_Flood','JUE_EW_Flood_Reverse','SVI']
+policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood','SVI']
 print('Policy list: ', policy_list)
 
 # Vaccination time
@@ -302,11 +302,23 @@ cbg_attack_rates_original_scaled = cbg_attack_rates_original * attack_scale
 cbg_death_rates_original_scaled = cbg_death_rates_original * constants.death_scale_dict[MSA_NAME]
 print('Age-aware CBG-specific death rates scaled.')
 
+need_to_save_dict = {
+    'no_vaccination':False,
+    'baseline':False,
+    'age_flood':False,
+    'age_flood_reverse':False,
+    'income_flood':False,
+    'income_flood_reverse':False,
+    'jue_ew_flood':False,
+    'jue_ew_flood_reverse':False,
+    'svi':False,
+}
 ###############################################################################
 # No_Vaccination
 
 if ('No_Vaccination' in policy_list):
     print('Policy: No_Vaccination.')
+    need_to_save_dict['no_vaccination'] = True
 
     # Construct the vaccination vector
     vaccination_vector_no_vaccination = np.zeros(len(cbg_sizes))
@@ -322,6 +334,7 @@ if ('No_Vaccination' in policy_list):
 
 if('Baseline' in policy_list):
     print('Policy: Baseline.')
+    need_to_save_dict['baseline'] = True
     
     # Construct the vaccination vector
     random_permutation = np.arange(len(cbg_age_msa))
@@ -342,31 +355,32 @@ if('Baseline' in policy_list):
                                            protection_rate = PROTECTION_RATE)
                                     
 
+print('Experiments for prioritizing the most disadvantaged communities...')
+#if(os.path.exists(os.path.join(root,MSA_NAME,
+#                               'vaccination_results_adaptive_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
+#                               'history_D2_svi_adaptive_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
+#                               #'history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_will%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,WILL_1_STR, MSA_NAME)))):
+#    print('Results for vaccinating the most disadvantaged already exist. No need to simulate again.')                           
+###############################################################################
+# Age_Flood, prioritize the most disadvantaged
 
-if(os.path.exists(os.path.join(root,MSA_NAME,
+if('Age_Flood' in policy_list):
+    demo_feat = 'Age'
+    print('Policy: Age_Flood.')
+    if(os.path.exists(os.path.join(root,MSA_NAME,
                                'vaccination_results_adaptive_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
-                               'history_D2_svi_adaptive_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
-                               #'history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_will%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,WILL_1_STR, MSA_NAME)))):
-    print('Results for vaccinating the most disadvantaged already exist. No need to simulate again.')                           
-else:
-    ###############################################################################
-    # Age_Flood, prioritize the most disadvantaged
-
-    if('Age_Flood' in policy_list):
-        policy = 'Age_Flood'
-        demo_feat = 'Age'
-        print('Policy: Age_Flood.')
-        
+                               'history_D2_age_flood_adaptive_%sd_%s_%s_%sseeds_acceptance%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,ACCEPTANCE_SCENARIO, MSA_NAME)))):
+        print('Results for Age_Flood already exist. No need to simulate again.')      
+    else:    
+        need_to_save_dict['age_flood'] = True
         # Construct the vaccination vector    
         current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
         cbg_age_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
         leftover = 0
         
         for i in range(int(distribution_time)):
-            if i==(int(distribution_time)-1): 
-                is_last = True
-            else:
-                is_last = False
+            if i==(int(distribution_time)-1): is_last = True
+            else: is_last = False
                 
             cbg_age_msa['Vaccination_Vector'] = current_vector
             
@@ -416,7 +430,6 @@ else:
             #print('Newly distributed vaccines: ', np.sum(new_vector))
             
         vaccination_vector_age_flood = current_vector
-        
 
         # Run simulations
         _, history_D2_age_flood = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
@@ -425,24 +438,26 @@ else:
                                               #protection_rate = protection_rate_most_disadvantaged)
                                               protection_rate = PROTECTION_RATE)
 
-    ###############################################################################
-    # Income_Flood, prioritize the most disadvantaged
+###############################################################################
+# Income_Flood, prioritize the most disadvantaged
 
-    if('Income_Flood' in policy_list):
-        policy = 'Income_Flood'
-        demo_feat = 'Mean_Household_Income'
-        print('Policy: Income_Flood.')
-        
+if('Income_Flood' in policy_list):
+    demo_feat = 'Mean_Household_Income'
+    print('Policy: Income_Flood.')
+    if(os.path.exists(os.path.join(root,MSA_NAME,
+                           'vaccination_results_adaptive_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
+                           'history_D2_income_flood_adaptive_%sd_%s_%s_%sseeds_acceptance%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,ACCEPTANCE_SCENARIO, MSA_NAME)))):
+        print('Results for Income_Flood already exist. No need to simulate again.')   
+    else:   
+        need_to_save_dict['income_flood'] = True 
         # Construct the vaccination vector
         current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
         cbg_income_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
         leftover = 0
         
         for i in range(int(distribution_time)):
-            if i==(int(distribution_time)-1):
-                is_last = True
-            else:
-                is_last=False
+            if i==(int(distribution_time)-1): is_last = True
+            else: is_last=False
                 
             cbg_income_msa['Vaccination_Vector'] = current_vector
             
@@ -502,24 +517,26 @@ else:
                                                  protection_rate = PROTECTION_RATE)
         
 
-    ###############################################################################
-    # JUE_EW_Flood, prioritize the most disadvantaged
+###############################################################################
+# JUE_EW_Flood, prioritize the most disadvantaged
 
-    if('JUE_EW_Flood' in policy_list):
-        policy = 'EW_Flood'
-        demo_feat = 'JUE_EW'
-        print('Policy: JUE_EW_Flood.')
-        
+if('JUE_EW_Flood' in policy_list):
+    demo_feat = 'JUE_EW'
+    print('Policy: JUE_EW_Flood.')
+    if(os.path.exists(os.path.join(root,MSA_NAME,
+                               'vaccination_results_adaptive_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
+                               'history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_acceptance%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,ACCEPTANCE_SCENARIO, MSA_NAME)))):
+        print('Results for JUE_EW_Flood already exist. No need to simulate again.')       
+    else:
+        need_to_save_dict['jue_ew_flood'] = True
         # Construct the vaccination vector
         current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
         cbg_occupation_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
         leftover = 0
         
         for i in range(int(distribution_time)):
-            if i==(int(distribution_time)-1):
-                is_last = True
-            else:
-                is_last=False
+            if i==(int(distribution_time)-1): is_last = True
+            else: is_last=False
                 
             cbg_occupation_msa['Vaccination_Vector'] = current_vector
             
@@ -577,11 +594,16 @@ else:
                                                  protection_rate = PROTECTION_RATE)
 
 
-    ###############################################################################
-    # SVI, prioritize the most disadvantaged
-    if('SVI' in policy_list):
-        print('Policy: SVI.')
-    
+###############################################################################
+# SVI, prioritize the most disadvantaged
+if('SVI' in policy_list):
+    print('Policy: SVI.')
+    if(os.path.exists(os.path.join(root,MSA_NAME,
+                               'vaccination_results_adaptive_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
+                               'history_D2_svi_adaptive_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
+        print('Results for Age_Flood already exist. No need to simulate again.')   
+    else:
+        need_to_save_dict['svi'] = True
         # Construct the vaccination vector    
         vaccination_vector_svi = functions.vaccine_distribution_flood(cbg_table=svidata_msa, 
                                                                       vaccination_ratio=VACCINATION_RATIO, 
@@ -600,16 +622,18 @@ else:
                                 'history_D2_svi_%sd_%s_%sseeds_%s'%(VACCINATION_TIME_STR,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
         np.array(history_D2_svi).tofile(filename)
 
-    ###############################################################################
-    # Save results
+###############################################################################
+# Save results
 
-    if(quick_test=='True'):
-        print('Testing. Not saving results.')
-    else:
-        print('Saving results...\nPolicy list: ', policy_list)
-        if(consider_hesitancy=='True'):
-            for policy in policy_list:
-                policy = policy.lower()
+print('need_to_save_dict',need_to_save_dict)
+if(quick_test=='True'):
+    print('Testing. Not saving results.')
+else:
+    print('Saving results...\nPolicy list: ', policy_list)
+    if(consider_hesitancy=='True'):
+        for policy in policy_list:
+            policy = policy.lower()
+            if(need_to_save_dict[policy]==True):
                 if(policy=='baseline'):
                     filename = os.path.join(root,MSA_NAME,
                                             'vaccination_results_adaptive_%sd_%s_0.01' %(VACCINATION_TIME_STR,VACCINATION_RATIO),
@@ -629,9 +653,11 @@ else:
                         % (policy,VACCINATION_TIME_STR,VACCINATION_RATIO,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO, MSA_NAME))
                     #exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,\'vaccination_results_adaptive_%sd_%s_0.01\',\'history_D2_%s_adaptive_%sd_%s_%s_%sseeds_will%s_%s\'))' 
                     #    % (policy,VACCINATION_TIME_STR,VACCINATION_RATIO,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,WILL_1_STR, MSA_NAME))
-        elif(consider_hesitancy=='False'):
-            for policy in policy_list:
-                policy = policy.lower()
+                need_to_save_dict[policy] = False
+    elif(consider_hesitancy=='False'):
+        for policy in policy_list:
+            policy = policy.lower()
+            if(need_to_save_dict[policy]==True):
                 if(policy=='baseline'):
                     filename = os.path.join(root,MSA_NAME,
                                             'vaccination_results_adaptive_%sd_%s_0.01' %(VACCINATION_TIME_STR,VACCINATION_RATIO),
@@ -646,40 +672,44 @@ else:
                 else:
                     exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,\'vaccination_results_adaptive_%sd_%s_0.01\',\'history_D2_%s_adaptive_%sd_%s_%s_%sseeds_acceptance_%s_%s\'))' 
                         % (policy,VACCINATION_TIME_STR,VACCINATION_RATIO,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO, MSA_NAME))
-        
-        print('Results saved.')
+                need_to_save_dict[policy] = False
+    print('Results saved.')
 
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 # Experiments for vaccinating the least disadvantaged communities
-if(os.path.exists(os.path.join(root,MSA_NAME,
+
+print('Experiments for prioritizing the least disadvantaged communities...')
+#if(os.path.exists(os.path.join(root,MSA_NAME,
+#                               'vaccination_results_adaptive_reverse_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
+#                               'history_D2_jue_ew_flood_adaptive_reverse_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
+#                               #'history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_will%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,WILL_1_STR, MSA_NAME)))):
+#    print('Results for vaccinating the least disadvantaged already exist. No need to simulate again.')                           
+#else:
+#    print('\nExperiments for vaccinating the least disadvantaged communities:\n')
+
+###############################################################################
+# Age_Flood, prioritize the least disadvantaged
+
+if('Age_Flood_Reverse' in policy_list):
+    demo_feat = 'Age'
+    print('Policy: Age_Flood_Reverse.')
+    if(os.path.exists(os.path.join(root,MSA_NAME,
                                'vaccination_results_adaptive_reverse_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
-                               'history_D2_jue_ew_flood_adaptive_reverse_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
-                               #'history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_will%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,WILL_1_STR, MSA_NAME)))):
-    print('Results for vaccinating the least disadvantaged already exist. No need to simulate again.')                           
-else:
-    print('\nExperiments for vaccinating the least disadvantaged communities:\n')
-
-    ###############################################################################
-    # Age_Flood, prioritize the least disadvantaged
-
-    if('Age_Flood' in policy_list):
-        policy = 'Age_Flood'
-        demo_feat = 'Age'
-        print('Policy: Age_Flood.')
-        
+                               'history_D2_age_flood_adaptive_reverse_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
+        print('Results for Age_Flood_Reverse already exist. No need to simulate again.')                          
+    else:
+        need_to_save_dict['age_flood_reverse'] = True    
         # Construct the vaccination vector    
         current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
         cbg_age_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
         leftover = 0
         
         for i in range(int(distribution_time)):
-            if i==(int(distribution_time)-1): 
-                is_last = True
-            else:
-                is_last = False
+            if i==(int(distribution_time)-1): is_last = True
+            else: is_last = False
                 
             cbg_age_msa['Vaccination_Vector'] = current_vector
             
@@ -729,33 +759,35 @@ else:
             assert((current_vector<=cbg_sizes).all())
             #print('Newly distributed vaccines: ', np.sum(new_vector))
             
-        vaccination_vector_age_flood = current_vector
+        vaccination_vector_age_flood_reverse = current_vector
 
         # Run simulations
-        _, history_D2_age_flood = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+        _, history_D2_age_flood_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
                                               vaccination_vector=vaccination_vector_age_flood,
                                               vaccine_acceptance = vaccine_acceptance, #20211007
                                               #protection_rate = protection_rate_most_disadvantaged)
                                               protection_rate = PROTECTION_RATE)
 
-    ###############################################################################
-    # Income_Flood, prioritize the least disadvantaged
+###############################################################################
+# Income_Flood, prioritize the least disadvantaged
 
-    if('Income_Flood' in policy_list):
-        policy = 'Income_Flood'
-        demo_feat = 'Mean_Household_Income'
-        print('Policy: Income_Flood.')
-        
+if('Income_Flood_Reverse' in policy_list):
+    demo_feat = 'Mean_Household_Income'
+    print('Policy: Income_Flood_Reverse.')
+    if(os.path.exists(os.path.join(root,MSA_NAME,
+                               'vaccination_results_adaptive_reverse_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
+                               'history_D2_income_flood_adaptive_reverse_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
+        print('Results for Income_Flood_Reverse already exist. No need to simulate again.')          
+    else:
+        need_to_save_dict['income_flood_reverse'] = True    
         # Construct the vaccination vector
         current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
         cbg_income_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
         leftover = 0
         
         for i in range(int(distribution_time)):
-            if i==(int(distribution_time)-1):
-                is_last = True
-            else:
-                is_last=False
+            if i==(int(distribution_time)-1): is_last = True
+            else: is_last=False
                 
             cbg_income_msa['Vaccination_Vector'] = current_vector
             
@@ -805,33 +837,35 @@ else:
             assert((current_vector<=cbg_sizes).all())
             #print('Newly distributed vaccines: ', (np.sum(current_vector)-np.sum(current_vector_prev)))    
         
-        vaccination_vector_income_flood = current_vector
+        vaccination_vector_income_flood_reverse = current_vector
 
         # Run simulations
-        _, history_D2_income_flood = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+        _, history_D2_income_flood_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
                                                  vaccination_vector=vaccination_vector_income_flood,
                                                  vaccine_acceptance = vaccine_acceptance, #20211007
                                                  #protection_rate = protection_rate_most_disadvantaged)
                                                  protection_rate = PROTECTION_RATE)
 
-    ###############################################################################
-    # JUE_EW_Flood, prioritize the least disadvantaged
+###############################################################################
+# JUE_EW_Flood, prioritize the least disadvantaged
 
-    if('JUE_EW_Flood' in policy_list):
-        policy = 'EW_Flood'
-        demo_feat = 'JUE_EW'
-        print('Policy: JUE_EW_Flood.')
-        
+if('JUE_EW_Flood_Reverse' in policy_list):
+    demo_feat = 'JUE_EW'
+    print('Policy: JUE_EW_Flood_Reverse.')
+    if(os.path.exists(os.path.join(root,MSA_NAME,
+                               'vaccination_results_adaptive_reverse_%sd_%s_0.01'% (VACCINATION_TIME_STR,VACCINATION_RATIO),
+                               'history_D2_jue_ew_flood_adaptive_reverse_%sd_%s_%s_%sseeds_acceptance_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO,MSA_NAME)))):
+        print('Results for JUE_EW_Flood_Reverse already exist. No need to simulate again.')          
+    else:
+        need_to_save_dict['jue_ew_flood_reverse'] = True    
         # Construct the vaccination vector
         current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
         cbg_occupation_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
         leftover = 0
         
         for i in range(int(distribution_time)):
-            if i==(int(distribution_time)-1):
-                is_last = True
-            else:
-                is_last=False
+            if i==(int(distribution_time)-1): is_last = True
+            else: is_last=False
                 
             cbg_occupation_msa['Vaccination_Vector'] = current_vector
             
@@ -880,31 +914,33 @@ else:
             assert((current_vector<=cbg_sizes).all())
             #print('Newly distributed vaccines: ', np.sum(new_vector))
             
-        vaccination_vector_jue_ew_flood = current_vector
+        vaccination_vector_jue_ew_flood_reverse = current_vector
 
         # Run simulations
-        _, history_D2_jue_ew_flood = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+        _, history_D2_jue_ew_flood_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
                                                  vaccination_vector=vaccination_vector_jue_ew_flood,
                                                  vaccine_acceptance = vaccine_acceptance, #20211007
                                                  #protection_rate = protection_rate_most_disadvantaged)
                                                  protection_rate = PROTECTION_RATE)
 
 
-    ###############################################################################
-    # Save results
+###############################################################################
+# Save results
 
-    if(quick_test=='True'):
-        print('Testing. Not saving results.')
-    else:
-        print('Saving results...')
-        print('Policy list: ', policy_list)
-        for policy in policy_list:
-            policy = policy.lower()
+print('need_to_save_dict',need_to_save_dict)
+if(quick_test=='True'):
+    print('Testing. Not saving results.')
+else:
+    print('Saving results...\nPolicy list: ', policy_list)
+    for policy in policy_list:
+        policy = policy.lower()
+        if(need_to_save_dict[policy]==True):
             if(policy!='baseline'):
                 exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,\'vaccination_results_adaptive_reverse_%sd_%s_0.01\',\'history_D2_%s_adaptive_reverse_%sd_%s_%s_%sseeds_acceptance_%s_%s\'))' 
                     % (policy,VACCINATION_TIME_STR,VACCINATION_RATIO,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, ACCEPTANCE_SCENARIO, MSA_NAME))
                 #exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,\'vaccination_results_adaptive_reverse_%sd_%s_0.01\',\'history_D2_%s_adaptive_reverse_%sd_%s_%s_%sseeds_will%s_%s\'))' 
                 #    % (policy,VACCINATION_TIME_STR,VACCINATION_RATIO,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,WILL_2_STR, MSA_NAME))
+                need_to_save_dict[policy] = False
         print('Results saved.')
 
 
