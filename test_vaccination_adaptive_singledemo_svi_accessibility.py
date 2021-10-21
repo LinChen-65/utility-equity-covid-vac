@@ -48,7 +48,9 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Fra
 
 #policy_list = ['Age_Agnostic','No_Vaccination', 'Baseline','Age_Flood', 'Income_Flood', 'EW_Flood','SVI']
 #policy_list = ['Baseline','Age_Flood', 'Age_Flood_Reverse','Income_Flood','Income_Flood_Reverse', 'JUE_EW_Flood','JUE_EW_Flood_Reverse','SVI']
-policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood','SVI']
+#policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood','SVI']
+#policy_list = ['Real_Scaled']
+policy_list = ['Real_Scaled_Flood']
 print('Policy list: ', policy_list)
 
 # Vaccination time
@@ -291,7 +293,8 @@ if('SVI' in policy_list):
     svidata_msa = pd.merge(cbg_ids_msa, svidata, left_on='census_tract', right_on='FIPS', how='left')
     svidata_msa['Sum'] = cbg_age_msa['Sum'].copy()
 
-if(consider_accessibility=='True'):
+#if(consider_accessibility=='True'):
+if(True):
     # accessibility by race/ethnic
     # cbg_b03.csv: HISPANIC OR LATINO ORIGIN BY RACE
     filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
@@ -374,6 +377,9 @@ if(consider_accessibility=='True'):
     #cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Vac_Rate_Age_Race'] / 
 
 
+if('Real_Scaled' in policy_list):
+    equal_rate_scale_factor = VACCINATION_RATIO/(np.sum(cbg_sizes * cbg_age_msa['Vac_Rate_Age_Race'])/np.sum(cbg_sizes))
+    print('equal_rate_scale_factor: ', equal_rate_scale_factor)
 
 ##############################################################################
 # Load and scale age-aware CBG-specific attack/death rates (original)
@@ -407,19 +413,20 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
     elif(consider_hesitancy=='False'):
         vaccine_acceptance = np.ones(len(cbg_sizes)) # fully accepted scenario
 
-    # Division by vaccine acceptance to get the final accessibility
-    cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Vac_Rate_Age_Race'] / vaccine_acceptance
-    # Find the minimum non-zero value
-    a = np.array(cbg_age_msa['Accessibility_Age_Race'])
-    a = a[a>0]
-    print(min(a))
-    cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Accessibility_Age_Race'].apply(lambda x : min(a) if x==0 else x)
-    vaccine_acceptance = np.array(cbg_age_msa['Accessibility_Age_Race']) #以此代替原来的acceptance参数传入函数
+    if(consider_accessibility=='True'):
+        # Division by vaccine acceptance to get the final accessibility
+        cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Vac_Rate_Age_Race'] / vaccine_acceptance
+        # Find the minimum non-zero value
+        a = np.array(cbg_age_msa['Accessibility_Age_Race'])
+        a = a[a>0]
+        print('Minimum nonzero accessibility: ', min(a))
+        cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Accessibility_Age_Race'].apply(lambda x : min(a) if x==0 else x)
+        vaccine_acceptance = np.array(cbg_age_msa['Accessibility_Age_Race']) #以此代替原来的acceptance参数传入函数
 
-    print('cbg_age_msa[\'Accessibility_Age_Race\'].max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
-          '\ncbg_age_msa[\'Accessibility_Age_Race\'].min(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].min(),3))
+        print('cbg_age_msa[\'Accessibility_Age_Race\'].max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
+             '\ncbg_age_msa[\'Accessibility_Age_Race\'].min(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].min(),3))
     #print(np.isnan(np.array(cbg_age_msa['Accessibility_Age_Race'])).any())
-    pdb.set_trace()
+   # pdb.set_trace()
 
     ##############################################################################
     need_to_save_dict = {
@@ -432,6 +439,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         'jue_ew_flood':False,
         'jue_ew_flood_reverse':False,
         'svi':False,
+        'real_scaled':False,
+        'real_scaled_flood':False
     }
     ###############################################################################
     # No_Vaccination
@@ -467,6 +476,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                                                         ascending=None,
                                                                         execution_ratio=1
                                                                         )
+        pdb.set_trace()
         # Run simulations
         _, history_D2_baseline = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
                                             vaccination_vector=vaccination_vector_baseline,
@@ -494,7 +504,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         demo_feat = 'Age'
         print('Policy: Age_Flood.')
         if(os.path.exists(os.path.join(root, MSA_NAME, subroot,
-                                'test_history_D2_age_flood_adaptive_%sd_%s_%s_%sseeds_%s_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,ACCEPTANCE_SCENARIO, MSA_NAME)))):
+                                'test_history_D2_age_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string, MSA_NAME)))):
             print('Results for Age_Flood already exist. No need to simulate again.')      
         else:    
             need_to_save_dict['age_flood'] = True
@@ -570,7 +580,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         demo_feat = 'Mean_Household_Income'
         print('Policy: Income_Flood.')
         if(os.path.exists(os.path.join(root,MSA_NAME,subroot,
-                            'test_history_D2_income_flood_adaptive_%sd_%s_%s_%sseeds_%s_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,ACCEPTANCE_SCENARIO, MSA_NAME)))):
+                            'test_history_D2_income_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,MSA_NAME)))):
             print('Results for Income_Flood already exist. No need to simulate again.')   
         else:   
             need_to_save_dict['income_flood'] = True 
@@ -648,7 +658,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         demo_feat = 'JUE_EW'
         print('Policy: JUE_EW_Flood.')
         if(os.path.exists(os.path.join(root,MSA_NAME,subroot,
-                                'test_history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_%s_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,ACCEPTANCE_SCENARIO, MSA_NAME)))):
+                                'test_history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,MSA_NAME)))):
             print('Results for JUE_EW_Flood already exist. No need to simulate again.')       
         else:
             need_to_save_dict['jue_ew_flood'] = True
@@ -722,8 +732,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
     if('SVI' in policy_list):
         print('Policy: SVI.')
         if(os.path.exists(os.path.join(root,MSA_NAME,subroot,
-                                'test_history_D2_svi_adaptive_%sd_%s_%s_%sseeds_%s_%s_%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string,ACCEPTANCE_SCENARIO,MSA_NAME)))):
-            print('Results for Age_Flood already exist. No need to simulate again.')   
+                                'test_history_D2_svi_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string,MSA_NAME)))):
+            print('Results for SVI already exist. No need to simulate again.')   
         else:
             need_to_save_dict['svi'] = True
             # Construct the vaccination vector    
@@ -738,6 +748,50 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                             vaccination_vector=vaccination_vector_svi,
                                             vaccine_acceptance = vaccine_acceptance, #20211007
                                             protection_rate = PROTECTION_RATE)
+
+    ###############################################################################
+    if('Real_Scaled' in policy_list):
+        #vaccine_acceptance_real_scaled = np.ones(len(cbg_sizes))
+        #print('equal_rate_scale_factor: ', equal_rate_scale_factor)
+        print('Policy: Real_Scaled.')
+        #if(False):
+        if(os.path.exists(os.path.join(root,MSA_NAME,subroot,
+                                'test_history_D2_real_scaled_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string,MSA_NAME)))):
+            print('Results for Real_Scaled already exist. No need to simulate again.')   
+        else:
+            need_to_save_dict['real_scaled'] = True
+            # Construct the vaccination vector    
+            vaccination_vector_real_scaled = equal_rate_scale_factor * np.array(cbg_age_msa['Vac_Rate_Age_Race']*cbg_sizes)
+            #pdb.set_trace()
+            
+            # Run simulations
+            _, history_D2_real_scaled = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+                                            vaccination_vector=vaccination_vector_real_scaled,
+                                            vaccine_acceptance = vaccine_acceptance, #20211018
+                                            protection_rate = PROTECTION_RATE)
+
+    ###############################################################################
+    if('Real_Scaled_Flood' in policy_list):
+        print('Policy: Real_Scaled_Flood.')
+        #if(False):
+        if(os.path.exists(os.path.join(root,MSA_NAME,subroot,
+                                'test_history_D2_real_scaled_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string,MSA_NAME)))):
+            print('Results for Real_Scaled_Flood already exist. No need to simulate again.')   
+        else:
+            need_to_save_dict['real_scaled_flood'] = True
+        # Construct the vaccination vector    
+        vaccination_vector_real_scaled_flood = functions.vaccine_distribution_flood(cbg_table=cbg_age_msa, 
+                                                                    vaccination_ratio=VACCINATION_RATIO, 
+                                                                    demo_feat='Vac_Rate_Age_Race', 
+                                                                    ascending=False,
+                                                                    execution_ratio=1
+                                                                    )
+        #pdb.set_trace()
+        # Run simulations
+        _, history_D2_real_scaled_flood = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+                                                         vaccination_vector=vaccination_vector_real_scaled_flood,
+                                                         vaccine_acceptance = vaccine_acceptance, #20211007
+                                                         protection_rate = PROTECTION_RATE)
 
     ###############################################################################
     # Save results
@@ -757,19 +811,19 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
             if(need_to_save_dict[policy]==True):
                 if(policy=='baseline'):
                     filename = os.path.join(root, MSA_NAME, subroot,       
-                                            'test_history_D2_baseline_adaptive_%sd_%s_%s_%sseeds_%s%s_%s' %(VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,ACCEPTANCE_SCENARIO,MSA_NAME)
+                                            'test_history_D2_baseline_adaptive_%sd_%s_%s_%sseeds_%s%s' %(VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,MSA_NAME)
                                             )
                     print('Save baseline results at:\n', filename)            
                     np.array(history_D2_baseline).tofile(filename)
                 elif(policy =='svi'):
                     filename = os.path.join(root, MSA_NAME, subroot,
-                                            'test_history_D2_svi_adaptive_%sd_%s_%s_%sseeds_%s%s_%s'%(VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,ACCEPTANCE_SCENARIO,MSA_NAME)
+                                            'test_history_D2_svi_adaptive_%sd_%s_%s_%sseeds_%s%s'%(VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,MSA_NAME)
                                             )
                     print('Save SVI-informed results at:\n', filename)            
                     np.array(history_D2_svi).tofile(filename)
                 else:         
-                    exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,subroot,\'test_history_D2_%s_adaptive_%sd_%s_%s_%sseeds_%s%s_%s\'))' 
-                        % (policy,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string,ACCEPTANCE_SCENARIO, MSA_NAME))
+                    exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,subroot,\'test_history_D2_%s_adaptive_%sd_%s_%s_%sseeds_%s%s\'))' 
+                        % (policy,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string,MSA_NAME))
                 need_to_save_dict[policy] = False
         print('Results saved.')
 
@@ -1046,5 +1100,6 @@ print('Vac_Rate_Age.max(): ', np.round(cbg_age_msa['Vac_Rate_Age'].max(),3),
       '\nVac_Rate_Age.min(): ', np.round(cbg_age_msa['Vac_Rate_Age'].min(),3))
 print('Vac_Rate_Age_Race.max(): ', np.round(cbg_age_msa['Vac_Rate_Age_Race'].max(),3),
       '\nVac_Rate_Age_Race.min(): ', np.round(cbg_age_msa['Vac_Rate_Age_Race'].min(),3))
-print('Accessibility_Age_Race.max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
-      '\nAccessibility_Age_Race.min(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].min(),3))
+if(consider_accessibility=='True'):
+    print('Accessibility_Age_Race.max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
+          '\nAccessibility_Age_Race.min(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].min(),3))

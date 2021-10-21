@@ -620,7 +620,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         print('Policy: SVI.')
         if(os.path.exists(os.path.join(root, MSA_NAME, subroot, 
                                 'test_history_D2_svi_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string,MSA_NAME)))):
-            print('Results for Age_Flood already exist. No need to simulate again.')   
+            print('Results for SVI already exist. No need to simulate again.')   
         else:
             need_to_save_dict['svi'] = True
             # Construct the vaccination vector    

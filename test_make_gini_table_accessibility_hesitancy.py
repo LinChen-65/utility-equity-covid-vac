@@ -7,12 +7,11 @@ setproctitle.setproctitle("covid-19-vac@chenlin")
 import sys
 import socket
 import os
-import datetime
+import glob
 import pandas as pd
 import numpy as np
 import constants
 import functions
-import time
 import pdb
 
 ############################################################
@@ -48,14 +47,26 @@ demo_policy_list = ['Age_Flood', 'Income_Flood', 'JUE_EW_Flood']
 NUM_GROUPS = int(sys.argv[5]); print('NUM_GROUPS: ',NUM_GROUPS)
 
 if(REL_TO=='No_Vaccination'):
-    policy_list = ['No_Vaccination','Baseline', 'Age_Flood', 'Income_Flood', 'JUE_EW_Flood'] 
+    policy_list = ['No_Vaccination','Baseline', 'Age_Flood', 'Income_Flood', 'JUE_EW_Flood',
+                   'SVI','Real_Scaled','Comprehensive', 'Comprehensive_Ablation'] 
+    #'Real_Scaled','Real_Scaled_Flood'
+    #policy_list = ['No_Vaccination','Baseline',
+    #                'Age_Flood','Age_Flood_Reverse',
+    #                'Income_Flood', 'Income_Flood_Reverse',
+    #                'JUE_EW_Flood','JUE_EW_Flood_Reverse'] 
+
 elif(REL_TO=='Baseline'):
-    policy_list = ['Baseline', 'No_Vaccination','Age_Flood', 'Income_Flood', 'JUE_EW_Flood']
+    policy_list = ['Baseline', 'No_Vaccination','Age_Flood', 'Income_Flood', 'JUE_EW_Flood',
+                   'SVI','Real_Scaled','Comprehensive', 'Comprehensive_Ablation'] 
+    #'Real_Scaled','Real_Scaled_Flood'
+    # #policy_list = ['Baseline','No_Vaccination', 
+    #                'Age_Flood','Age_Flood_Reverse',
+    #                'Income_Flood', 'Income_Flood_Reverse',
+    #                'JUE_EW_Flood','JUE_EW_Flood_Reverse'] 
 else:
     print('Invalid REL_TO. Please check.')
     pdb.set_trace()
 print('policy list:', policy_list)
-
 
 # Consider hesitancy or not
 consider_hesitancy = sys.argv[6]
@@ -103,7 +114,7 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, print_result=Tr
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
                 deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_no_vaccination) / deaths_total_no_vaccination
-                deaths_gini_rel = (np.round(gini.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
+                deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
                 results[policy] = {
                                    'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
@@ -296,7 +307,8 @@ cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Househo
 
 ###############################################################################
 
-subroot = 'vaccination_results_adaptive_%sd_%s_0.01' %(VACCINATION_TIME_STR,VACCINATION_RATIO)    
+subroot = 'vaccination_results_adaptive_%sd_%s_0.01' %(VACCINATION_TIME_STR,VACCINATION_RATIO) 
+subroot_reverse = 'vaccination_results_adaptive_reverse_%sd_%s_0.01' %(VACCINATION_TIME_STR,VACCINATION_RATIO)    
 if(consider_accessibility=='False'):
     if(consider_hesitancy=='True'):
         notation_string = 'acceptance_%s_'%ACCEPTANCE_SCENARIO
@@ -311,28 +323,45 @@ else:
 for policy in policy_list:
     policy = policy.lower()
     if(policy=='no_vaccination'):
-        history_D2_no_vaccination = np.fromfile(os.path.join(root,MSA_NAME,subroot,'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%(MSA_NAME)))
-        history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,NUM_SEEDS,M))
-    elif(policy=='baseline'):
-        history_D2_baseline = np.fromfile(os.path.join(root,MSA_NAME,subroot,
-                                                       'test_history_D2_baseline_adaptive_%sd_0.1_0.01_30seeds_%s%s'%(VACCINATION_TIME_STR,notation_string,MSA_NAME)))
-        history_D2_baseline = np.reshape(history_D2_baseline,(63,NUM_SEEDS,M))
+        history_D2_no_vaccination = np.fromfile(os.path.join(root,MSA_NAME,'vaccination_results_adaptive_31d_0.1_0.01','20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%(MSA_NAME)))
+        #history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,NUM_SEEDS,M))
+    #elif(policy=='baseline'):
+    #    history_D2_baseline = np.fromfile(os.path.join(root,MSA_NAME,subroot,
+    #                                                   'test_history_D2_baseline_adaptive_%sd_%s_0.01_30seeds_%s%s'%(VACCINATION_TIME_STR,VACCINATION_RATIO,notation_string,MSA_NAME)))
+    #    history_D2_baseline = np.reshape(history_D2_baseline,(63,NUM_SEEDS,M))
+    elif(policy =='comprehensive'):
+        # 通配匹配，绕过weight string
+        filepath = glob.glob(os.path.join(root,MSA_NAME,subroot, 'test_history_D2_adaptive_hybrid_%sd_%s_0.01*_30seeds_%s%s'%(VACCINATION_TIME_STR,VACCINATION_RATIO,notation_string,MSA_NAME)))
+        if(len(filepath)>1):
+            print('When loading %s, multiple files are detected. Please check.' % policy)
+            pdb.set_trace()
+        history_D2_comprehensive = np.fromfile(filepath[0])
+        #exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,subroot, \'test_history_D2_adaptive_%s_%sd_%s_0.01_30seeds_%s%s\'))' 
+        #    % (policy,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,notation_string,MSA_NAME))
+    elif(policy =='comprehensive_ablation'):
+        # 通配匹配，绕过weight string
+        filepath = glob.glob(os.path.join(root,MSA_NAME,subroot, 'test_history_D2_adaptive_hybrid_ablation_%sd_%s_0.01*_30seeds_%s%s' %(VACCINATION_TIME_STR,VACCINATION_RATIO,notation_string,MSA_NAME)))
+        if(len(filepath)>1):
+            print('When loading %s, multiple files are detected. Please check.' % policy)
+            pdb.set_trace()
+        history_D2_comprehensive_ablation = np.fromfile(filepath[0])
     else:
-        exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,subroot, \'test_history_D2_%s_adaptive_%sd_0.1_0.01_30seeds_%s%s\'))' 
-            % (policy,policy,VACCINATION_TIME_STR,notation_string,MSA_NAME))
-        exec('history_D2_%s = np.reshape(history_D2_%s,(63,NUM_SEEDS,M))' %(policy,policy))    
-        '''
-        exec('history_D2_%s_reverse = np.fromfile(os.path.join(root,MSA_NAME,subroot, \'test_history_D2_%s_adaptive_reverse_%sd_0.1_0.01_30seeds_%s%s\'))' 
-            % (policy,policy,VACCINATION_TIME_STR,notation_string,MSA_NAME))    
-        exec('history_D2_%s_reverse = np.reshape(history_D2_%s_reverse,(63,NUM_SEEDS,M))' %(policy,policy))
-        '''
+        if('reverse' in policy): #['Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse']
+            exec('history_D2_%s_reverse = np.fromfile(os.path.join(root,MSA_NAME,subroot_reverse, \'test_history_D2_%s_adaptive_reverse_%sd_VACCINATION_RATIO_0.01_30seeds_%s%s\'))' 
+                % (policy,policy,VACCINATION_TIME_STR,notation_string,MSA_NAME))    
+        else:  #['Age_Flood','Income_Flood','JUE_EW_Flood']
+            exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,subroot, \'test_history_D2_%s_adaptive_%sd_%s_0.01_30seeds_%s%s\'))' 
+                 % (policy,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,notation_string,MSA_NAME))
+    exec('history_D2_%s = np.reshape(history_D2_%s,(63,NUM_SEEDS,M))' %(policy,policy))    
+
     
 #print('history_D2_no_vaccination.shape:', history_D2_no_vaccination.shape) # (63, 30, 2943)
 
 ###############################################################################
 # Add simulation results to grouping tables
 
-for policy in ['No_Vaccination', 'Baseline']:
+#for policy in ['No_Vaccination', 'Baseline']:
+for policy in policy_list:
     exec("history_D2_%s = np.array(history_D2_%s)" % (policy.lower(),policy.lower()))
     exec("avg_history_D2_%s = np.mean(history_D2_%s,axis=1)" % (policy.lower(),policy.lower()))
     exec("avg_final_deaths_%s = avg_history_D2_%s[-1,:]" % (policy.lower(),policy.lower()))
@@ -341,6 +370,7 @@ for policy in ['No_Vaccination', 'Baseline']:
     exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
     exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
 
+'''
 for policy in demo_policy_list:
     # Prioritize the most disadvantaged
     exec('history_D2_%s = np.array(history_D2_%s)'%(policy.lower(),policy.lower()))
@@ -350,14 +380,13 @@ for policy in demo_policy_list:
     exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
     exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
     # Prioritize the least disadvantaged
-    '''
     exec('history_D2_%s_reverse = np.array(history_D2_%s_reverse)'%(policy.lower(),policy.lower()))
     exec("avg_history_D2_%s_reverse = np.mean(history_D2_%s_reverse,axis=1)" % (policy.lower(),policy.lower()))
     exec("avg_final_deaths_%s_reverse = avg_history_D2_%s_reverse[-1,:]" % (policy.lower(),policy.lower()))
     exec("cbg_age_msa['Final_Deaths_%s_Reverse'] = avg_final_deaths_%s_reverse" % (policy,policy.lower()))
     exec("cbg_income_msa['Final_Deaths_%s_Reverse'] = avg_final_deaths_%s_reverse" % (policy,policy.lower()))
     exec("cbg_occupation_msa['Final_Deaths_%s_Reverse'] = avg_final_deaths_%s_reverse" % (policy,policy.lower()))
-    '''
+'''
 
 ###############################################################################
 # Check whether there is NaN in cbg_tables
@@ -374,7 +403,7 @@ if((cbg_age_msa.isnull().any().any()) or (cbg_income_msa.isnull().any().any()) o
 
 demo_feat_list = ['Age', 'Mean_Household_Income', 'Essential_Worker']
 #print('Demographic feature list: ', demo_feat_list)
-
+'''
 if(REL_TO=='No_Vaccination'):
     all_policy_list = ['No_Vaccination','Baseline', 'Age_Flood', 'Income_Flood', 'JUE_EW_Flood'] 
     #all_policy_list = ['No_Vaccination','Baseline',
@@ -388,8 +417,11 @@ elif(REL_TO=='Baseline'):
     #                   'Age_Flood','Age_Flood_Reverse',
     #                   'Income_Flood', 'Income_Flood_Reverse',
     #                   'JUE_EW_Flood','JUE_EW_Flood_Reverse'] 
+'''
+
 #save_path = os.path.join(root, 'adaptive_results_hesitancy_by_income_%s_0.1_0.01_%s_%s_acceptance_%s_rel2%s.csv'%(VACCINATION_TIME_STR,NUM_GROUPS, MSA_NAME,ACCEPTANCE_SCENARIO,REL_TO))
-save_path = os.path.join(root, 'test_gini_table_%s_%s_%s_%s_%srel2%s.csv'%(VACCINATION_TIME_STR,VACCINATION_RATIO,NUM_GROUPS, MSA_NAME,notation_string,REL_TO))
+save_path = os.path.join(root, 'test_gini_table_%s_%s_%s_%srel2%s.csv'%(VACCINATION_TIME_STR,VACCINATION_RATIO, MSA_NAME,notation_string,REL_TO))
 print('save_path: ',save_path)
-gini_df = make_gini_table(policy_list=all_policy_list, parallel=False, demo_feat_list=demo_feat_list, num_groups=NUM_GROUPS, save_result=True, save_path=save_path)
+#gini_df = make_gini_table(policy_list=all_policy_list, parallel=False, demo_feat_list=demo_feat_list, num_groups=NUM_GROUPS, save_result=True, save_path=save_path)
+gini_df = make_gini_table(policy_list=policy_list, parallel=False, demo_feat_list=demo_feat_list, num_groups=NUM_GROUPS, save_result=True, save_path=save_path)
 print(gini_df)
