@@ -50,8 +50,10 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Fra
 #policy_list = ['Baseline','Age_Flood', 'Age_Flood_Reverse','Income_Flood','Income_Flood_Reverse', 'JUE_EW_Flood','JUE_EW_Flood_Reverse','SVI']
 #policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood','SVI']
 #policy_list = ['Real_Scaled']
-policy_list = ['Real_Scaled_Flood']
+#policy_list = ['Real_Scaled_Flood']
+policy_list = ['SVI','Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse']
 print('Policy list: ', policy_list)
+
 
 # Vaccination time
 VACCINATION_TIME = sys.argv[2];print('VACCINATION_TIME:',VACCINATION_TIME)
@@ -84,6 +86,7 @@ print('Vaccine acceptance scenario list: ', ACCEPTANCE_SCENARIO_LIST)
 
 # Consider accessibility or not
 consider_accessibility = sys.argv[6]; print('Consider accessibility?', consider_accessibility)
+
 
 # Quick Test: prototyping
 quick_test = sys.argv[7]; print('Quick testing?', quick_test)
@@ -231,7 +234,7 @@ print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
 
 
 # Load other Safegraph demographic data, and perform grouping
-if('Age_Flood' in policy_list):
+if(('Age_Flood' in policy_list) or ('Age_Flood_Reverse' in policy_list)):
     # Calculate elder ratios
     cbg_age_msa['Elder_Absolute'] = cbg_age_msa.apply(lambda x : x['70 To 74 Years']+x['75 To 79 Years']+x['80 To 84 Years']+x['85 Years And Over'],axis=1)
     cbg_age_msa['Elder_Ratio'] = cbg_age_msa['Elder_Absolute'] / cbg_age_msa['Sum']
@@ -240,7 +243,7 @@ if('Age_Flood' in policy_list):
     cbg_age_msa['Age_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
 
-if(('Income_Flood' in policy_list) or (consider_hesitancy=='True')):
+if(('Income_Flood' in policy_list) or ('Income_Flood_Reverse' in policy_list) or (consider_hesitancy=='True') ):
     # Load ACS 5-year (2013-2017) Data: Mean Household Income
     filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
     cbg_income = pd.read_csv(filepath)
@@ -261,7 +264,7 @@ if(('Income_Flood' in policy_list) or (consider_hesitancy=='True')):
     cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
 
-if('JUE_EW_Flood' in policy_list):
+if(('JUE_EW_Flood' in policy_list) or ('JUE_EW_Flood_Reverse' in policy_list)):
     # cbg_c24.csv: Occupation
     filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
     cbg_occupation = pd.read_csv(filepath)
@@ -446,7 +449,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
     # No_Vaccination
 
     if ('No_Vaccination' in policy_list):
-        print('Policy: No_Vaccination.')
+        print('\nPolicy: No_Vaccination.')
         need_to_save_dict['no_vaccination'] = True
 
         # Construct the vaccination vector
@@ -462,7 +465,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
     # Baseline: Flooding on Random Permutation
 
     if('Baseline' in policy_list):
-        print('Policy: Baseline.')
+        print('\nPolicy: Baseline.')
         need_to_save_dict['baseline'] = True
         
         # Construct the vaccination vector
@@ -502,7 +505,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
     if('Age_Flood' in policy_list):
         demo_feat = 'Age'
-        print('Policy: Age_Flood.')
+        print('\nPolicy: Age_Flood.')
         if(os.path.exists(os.path.join(root, MSA_NAME, subroot,
                                 'test_history_D2_age_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string, MSA_NAME)))):
             print('Results for Age_Flood already exist. No need to simulate again.')      
@@ -578,7 +581,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
     if('Income_Flood' in policy_list):
         demo_feat = 'Mean_Household_Income'
-        print('Policy: Income_Flood.')
+        print('\nPolicy: Income_Flood.')
         if(os.path.exists(os.path.join(root,MSA_NAME,subroot,
                             'test_history_D2_income_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,MSA_NAME)))):
             print('Results for Income_Flood already exist. No need to simulate again.')   
@@ -656,7 +659,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
     if('JUE_EW_Flood' in policy_list):
         demo_feat = 'JUE_EW'
-        print('Policy: JUE_EW_Flood.')
+        print('\nPolicy: JUE_EW_Flood.')
         if(os.path.exists(os.path.join(root,MSA_NAME,subroot,
                                 'test_history_D2_jue_ew_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS,notation_string,MSA_NAME)))):
             print('Results for JUE_EW_Flood already exist. No need to simulate again.')       
@@ -907,7 +910,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
             # Run simulations
             _, history_D2_age_flood_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                                vaccination_vector=vaccination_vector_age_flood,
+                                                vaccination_vector=vaccination_vector_age_flood_reverse,
                                                 vaccine_acceptance = vaccine_acceptance, #20211007
                                                 #protection_rate = protection_rate_most_disadvantaged)
                                                 protection_rate = PROTECTION_RATE)
@@ -984,7 +987,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
             # Run simulations
             _, history_D2_income_flood_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                                    vaccination_vector=vaccination_vector_income_flood,
+                                                    vaccination_vector=vaccination_vector_income_flood_reverse,
                                                     vaccine_acceptance = vaccine_acceptance, #20211007
                                                     #protection_rate = protection_rate_most_disadvantaged)
                                                     protection_rate = PROTECTION_RATE)
@@ -1060,7 +1063,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
             # Run simulations
             _, history_D2_jue_ew_flood_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                                    vaccination_vector=vaccination_vector_jue_ew_flood,
+                                                    vaccination_vector=vaccination_vector_jue_ew_flood_reverse,
                                                     vaccine_acceptance = vaccine_acceptance, #20211007
                                                     #protection_rate = protection_rate_most_disadvantaged)
                                                     protection_rate = PROTECTION_RATE)
@@ -1079,12 +1082,15 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
             policy = policy.lower()
             if(need_to_save_dict[policy]==True):
                 if(policy!='baseline'):
+                    policy_savename = policy[:-8]
+                    print('policy_savename: ', policy_savename)
                     filename = os.path.join(root,MSA_NAME,subroot,
-                                            'test_history_D2_%s_adaptive_reverse_%sd_%s_%s_%sseeds_%s%s'%(policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string, MSA_NAME)
+                                            'test_history_D2_%s_adaptive_reverse_%sd_%s_%s_%sseeds_%s%s'%(policy_savename,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string, MSA_NAME)
                                             )
                     print('Save %s results at:\n'%policy, filename)            
-                    exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,subroot,\'test_history_D2_%s_adaptive_reverse_%sd_%s_%s_%sseeds_%s%s\'))' 
-                        % (policy,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL,NUM_SEEDS, notation_string, MSA_NAME))
+                    #exec('np.array(history_D2_%s).tofile(os.path.join(root,MSA_NAME,subroot,\'test_history_D2_%s_adaptive_reverse_%sd_%s_%s_%sseeds_%s%s\'))' 
+                    exec('np.array(history_D2_%s).tofile(filename)' 
+                        % (policy))
                     need_to_save_dict[policy] = False
                 print('Results saved.')
 

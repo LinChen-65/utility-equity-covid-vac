@@ -372,6 +372,8 @@ for policy in policy_list:
             history_D2_comprehensive = np.fromfile(filepath)
     else:
         if('reverse' in policy): #['Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse']
+            policy = policy[:-8]
+            print('policy: ', policy)
             exec('history_D2_%s_reverse = np.fromfile(os.path.join(root,MSA_NAME,subroot_reverse, \'test_history_D2_%s_adaptive_reverse_%sd_VACCINATION_RATIO_0.01_30seeds_%s%s\'))' 
                 % (policy,policy,VACCINATION_TIME_STR,notation_string,MSA_NAME))    
         else:  #['Age_Flood','Income_Flood','JUE_EW_Flood']

@@ -58,7 +58,7 @@ else:
     print('Invalid REL_TO.')
 print('policy list:', policy_list)
 
-# Vaccine acceptance scenario: real, cf1, cf2
+# Vaccine acceptance scenario: full, real, cf1, cf2
 ACCEPTANCE_SCENARIO = sys.argv[6]
 print('Vaccine acceptance scenario: ', ACCEPTANCE_SCENARIO)
 

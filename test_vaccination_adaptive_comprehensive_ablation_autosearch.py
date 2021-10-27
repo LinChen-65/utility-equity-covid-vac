@@ -1,7 +1,7 @@
 # python test_vaccination_adaptive_hybrid_autosearch_conform.py MSA_NAME VACCINATION_TIME VACCINATION_RATIO RECHECK_INTERVAL consider_hesitancy ACCEPTANCE_SCENARIO w1 w2 w3 w4 w5 quick_test 
 # python test_vaccination_adaptive_hybrid_autosearch_conform.py Atlanta 15 0.1 0.01 True cf18 1 1 1 1 1 False
 
-from genericpath import exists
+#from genericpath import exists
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
 
@@ -446,8 +446,7 @@ for policy in policy_to_compare:
     policy = policy.lower()
 
     if(policy=='no_vaccination'):
-        history_D2_no_vaccination = np.fromfile(os.path.join(root,MSA_NAME,
-                                                            'vaccination_results_adaptive_%sd_0.1_0.01'%VACCINATION_TIME_STR,
+        history_D2_no_vaccination = np.fromfile(os.path.join(root,MSA_NAME, 'vaccination_results_adaptive_31d_0.1_0.01',
                                                             '20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%MSA_NAME))
         history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,NUM_SEEDS,M))
     else:
