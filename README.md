@@ -31,28 +31,43 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
 
 ## Running the code
+Note: Parameters inside square brackets should be specified to generate corrsponding results. Example values are provided in the python files.
+
 1. **Fit epidemic curves (Fig.1)**
 ```
-python xxx.py
+python grid_search_parameters.py [MSA_NAME] [quick_test] [p_sick_at_t0]
+python adjust_scaling_factors.py [MSA_NAM] [quick_test]
+# Plot range within 150% of the best RMSE
+python get_upper_lower_bound_of_models_wider.py [MSA_NAME] [quick_test] [direction] [tolerance]
 ```
 
 2. **Correlation analysis of demographic features (Fig.1)**
 ```
-python xxx.py
+python correlation_demo_feats_new.py [NUM_GROUPS] [colormap]
 ```
 3. **Simulate vaccine distribution strategies (Fig.2)**
 ```
-python xxx.py
+python vaccination_adaptive_singledemo_svi_hesitancy_test.py [MSA_NAME] [VACCINATION_TIME] [VACCINATION_RATIO] [consider_hesitancy] [ACCEPTANCE_SCENARIO] [quick_test]
+# Hypothesis test for the significance of changes
+python hypothesis_test_fig2.py [MSA_NAME]
 ```
 4. **Calculate community risk and societal harm (Fig.3)**
 ```
-python xxx.py
+# Calculate the susceptible-infectious ratio
+python get_s_i_ratio_at_vaccination_moment.py [quick_test]
+# Estimate the infection risk for people in the same CBG/in other CBGs 
+python generate_infect_same_diff.py [MSA_NAME]
+# Correlation between community risk and societal harm
+python correlation_cm_sh.py [NUM_GROUPS] [colormap]
 ```
 5. **Regression analysis with/without community risk and societal harm (Fig.3)**
 ```
-python xxx.py
+# Generate random bags of vaccination results
+python vaccination_randombag_newdamage_gini.py [MSA_NAME] [RANDOM_SEED] [quick_test]
+# Regression
+python regression_randombag_sample.py [MSA_NAME] [LEN_SEEDS] [NUM_SAMPLE] [SAMPLE_FRAC]
 ```
-6. **Construct all-round vaccination strategies (Fig.4)**
+6. **Auto-search all-round vaccination strategies (Fig.4)**
 ```
-python xxx.py
+python vaccination_adaptive_hybrid_autosearch_conform.py [MSA_NAME] [VACCINATION_TIME] [VACCINATION_RATIO] [consider_hesitancy] [ACCEPTANCE_SCENARIO] [w1] [w2] [w3] [w4] [w5] [quick_test] 
 ```
