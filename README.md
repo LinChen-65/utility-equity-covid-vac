@@ -32,8 +32,27 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 
 ## Running the code
 1. **Fit epidemic curves (Fig.1)**
+```
+python xxx.py
+```
+
 2. **Correlation analysis of demographic features (Fig.1)**
+```
+python xxx.py
+```
 3. **Simulate vaccine distribution strategies (Fig.2)**
+```
+python xxx.py
+```
 4. **Calculate community risk and societal harm (Fig.3)**
+```
+python xxx.py
+```
 5. **Regression analysis with/without community risk and societal harm (Fig.3)**
+```
+python xxx.py
+```
 6. **Construct all-round vaccination strategies (Fig.4)**
+```
+python xxx.py
+```
