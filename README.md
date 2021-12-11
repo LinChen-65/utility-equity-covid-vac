@@ -30,4 +30,10 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 - Social vulnerability indices for communities are available at the website of U.S. Agency for Toxic Substances and Disease Registry (https://www.atsdr.cdc.gov/placeandhealth/svi/data_documentation_download.html).
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
 
-## Files
+## Running the code
+1. **Fit epidemic curves (Fig.1)**
+2. **Correlation analysis of demographic features (Fig.1)**
+3. **Simulate vaccine distribution strategies (Fig.2)**
+4. **Calculate community risk and societal harm (Fig.3)**
+5. **Regression analysis with/without community risk and societal harm (Fig.3)**
+6. **Construct all-round vaccination strategies (Fig.4)**
