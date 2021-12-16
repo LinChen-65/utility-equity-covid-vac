@@ -9,13 +9,9 @@ import os
 import datetime
 import pandas as pd
 import numpy as np
-import pickle
 
 import constants
 import functions
-
-import time
-import gini
 
 import pdb
 
@@ -79,7 +75,7 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, print_result=Tr
         for i in range(num_groups):
             eval('final_deaths_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Final_Deaths_' + policy].sum()
             eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
-        deaths_gini_abs = gini.gini(eval('final_deaths_rate_'+ policy.lower()))
+        deaths_gini_abs = functions.gini(eval('final_deaths_rate_'+ policy.lower()))
         deaths_gini_abs = np.round(deaths_gini_abs,6)
        
         if(rel_to=='No_Vaccination'): # compared to No_Vaccination
@@ -95,7 +91,7 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, print_result=Tr
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
                 deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_no_vaccination) / deaths_total_no_vaccination
-                deaths_gini_rel = (np.round(gini.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
+                deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
                 results[policy] = {
                                    'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
@@ -115,7 +111,7 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, print_result=Tr
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
                 deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_baseline) / deaths_total_baseline
-                deaths_gini_rel = (np.round(gini.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_baseline) / deaths_gini_baseline
+                deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_baseline) / deaths_gini_baseline
                 results[policy] = {
                                    'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,

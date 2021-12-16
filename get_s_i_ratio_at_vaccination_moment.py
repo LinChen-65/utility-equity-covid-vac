@@ -14,7 +14,6 @@ import numpy as np
 import pickle
 
 import constants
-import helper
 import functions
 import disease_model_returnSEIR
 
@@ -101,7 +100,7 @@ for MSA_NAME in MSA_NAME_LIST:
     # Load Data
     print('Start loading data...')
     
-    all_hours = helper.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
+    all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
     print('len(all_hours):',len(all_hours))#;pdb.set_trace()
 
     # Load POI-CBG visiting matrices

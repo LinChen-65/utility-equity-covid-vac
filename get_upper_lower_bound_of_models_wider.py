@@ -13,15 +13,8 @@ import numpy as np
 import pickle
 
 import constants
-import helper
 import functions
-import disease_model_only_modify_attack_rates
-
-import imp
-imp.reload(constants)
-imp.reload(helper)
-imp.reload(functions)
-imp.reload(disease_model_only_modify_attack_rates)
+import disease_model #disease_model_only_modify_attack_rates
 
 from math import sqrt
 from sklearn.metrics import mean_squared_error
@@ -134,7 +127,7 @@ d = pd.read_csv(os.path.join(root,MSA_NAME, 'parameters_%s.csv' % MSA_NAME))
 # No clipping
 new_d = d
 
-all_hours = helper.list_hours_in_range(min_datetime, max_datetime)
+all_hours = functions.list_hours_in_range(min_datetime, max_datetime)
 poi_areas = new_d['feet'].values#面积
 poi_dwell_times = new_d['median'].values#平均逗留时间
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2

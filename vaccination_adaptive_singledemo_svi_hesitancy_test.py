@@ -16,7 +16,7 @@ import constants
 import functions
 #import disease_model_only_modify_attack_rates
 #import disease_model_diff_acceptance
-import disease_model_test
+import disease_model #disease_model_test
 
 import time
 import pdb

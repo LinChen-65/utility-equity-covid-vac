@@ -15,12 +15,7 @@ import time
 
 import constants
 import helper
-import disease_model_original
-
-import imp
-imp.reload(constants)
-imp.reload(helper)
-imp.reload(disease_model_original)
+import disease_model #disease_model_original
 
 from math import sqrt
 from sklearn.metrics import mean_squared_error

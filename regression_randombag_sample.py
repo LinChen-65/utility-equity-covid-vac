@@ -12,7 +12,6 @@ import functions
 
 import numpy as np
 import pandas as pd
-import time
 import pickle
 
 from sklearn import preprocessing

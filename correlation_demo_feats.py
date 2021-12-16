@@ -6,15 +6,11 @@ setproctitle.setproctitle("covid-19-vac@chenlin")
 
 import sys
 import os
-import datetime
 import pandas as pd
 import numpy as np
 
 import constants
 import functions
-
-import time
-from scipy import stats
 
 import pdb
 

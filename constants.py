@@ -7,17 +7,7 @@ DETAILED_AGE_LIST =['Under 5 Years','5 To 9 Years','10 To 14 Years','15 To 17 Ye
                     '70 To 74 Years','75 To 79 Years','80 To 84 Years','85 Years And Over']
 
 
-'''
-AGE_GROUPS_FOR_ATTACK_RATES = {0:['B01001e3','B01001e4','B01001e27','B01001e28'],
-              1:['B01001e5','B01001e6','B01001e7','B01001e29','B01001e30','B01001e31'],
-              2:['B01001e8','B01001e9','B01001e10','B01001e11','B01001e32','B01001e33','B01001e34','B01001e35'],
-              3:['B01001e12','B01001e13','B01001e36','B01001e37'],
-              4:['B01001e14','B01001e15','B01001e38','B01001e39'],
-              5:['B01001e16','B01001e17','B01001e40','B01001e41'],
-              6:['B01001e18','B01001e19','B01001e20','B01001e21','B01001e42','B01001e43','B01001e44','B01001e45'],
-              7:['B01001e22','B01001e23','B01001e46','B01001e47'],
-              8:['B01001e24','B01001e25','B01001e48','B01001e49']
-             }'''
+
 AGE_GROUPS_FOR_ATTACK_RATES = {
                                 0:['Under 5 Years','5 To 9 Years'],
                                 1:['10 To 14 Years','15 To 17 Years','18 To 19 Years'],
@@ -30,25 +20,7 @@ AGE_GROUPS_FOR_ATTACK_RATES = {
                                 8:['80 To 84 Years','85 Years And Over']
                               }
 
-'''                              
-AGE_GROUPS_FOR_DEATH_RATES = {0:['B01001e3','B01001e27'],
-              1:['B01001e4','B01001e28'],
-              2:['B01001e5','B01001e29'],
-              3:['B01001e6','B01001e7','B01001e30','B01001e31'],
-              4:['B01001e8','B01001e9','B01001e10','B01001e32','B01001e33','B01001e34'],
-              5:['B01001e11','B01001e35'],
-              6:['B01001e12','B01001e36'],
-              7:['B01001e13','B01001e37'],
-              8:['B01001e14','B01001e38'],
-              9:['B01001e15','B01001e39'],
-              10:['B01001e16','B01001e40'],
-              11:['B01001e17','B01001e41'],
-              12:['B01001e18','B01001e19','B01001e42','B01001e43'],
-              13:['B01001e20','B01001e21','B01001e44','B01001e45'],
-              14:['B01001e22','B01001e46'],
-              15:['B01001e23','B01001e47'],
-              16:['B01001e24','B01001e25','B01001e48','B01001e49']
-             }'''
+
 AGE_GROUPS_FOR_DEATH_RATES = {
                                 0:['Under 5 Years'],
                                 1:['5 To 9 Years'],
@@ -140,19 +112,6 @@ MSA_NAME_FULL_DICT = {
 }
 
 # parameters:[p_sick_at_t0, home_beta, poi_psi]
-'''
-# Parameters from the paper
-parameters_dict = {'Atlanta':[5e-4, 0.004, 2388],
-                   'Chicago': [2e-4, 0.009, 1764],
-                   'Dallas': [2e-4, 0.009, 1452],
-                   'Houston': [2e-4, 0.001, 2076],
-                   'LosAngeles': [2e-4, 0.006, 2076],
-                   'Miami': [2e-4, 0.001, 2388],
-                   'NewYorkCity': [1e-4, 0.001, 2700],
-                   'Philadelphia': [5e-4, 0.009, 827],
-                   'SanFrancisco': [5e-4, 0.006, 1139],
-                   'WashingtonDC': [5e-4, 0.016, 515]}
-'''
 parameters_dict = {'Atlanta':[2e-4, 0.0037, 2388],
                    'Chicago': [1e-4,0.0063,2076],
                    'Dallas':[2e-4, 0.0063, 1452],
@@ -165,30 +124,6 @@ parameters_dict = {'Atlanta':[2e-4, 0.0037, 2388],
                    'WashingtonDC': [5e-5, 0.0037, 2700]}
                    
 
-'''
-scale_dict = {'Atlanta':[21.9,1.24],
-              'Chicago': [22.2,1.20],
-              'Dallas': [22.2,0.88],
-              'Houston': [22.3,0.60],
-              'LosAngeles': [22.3,1.16],
-              'Miami': [20.4,0.58],
-              'NewYorkCity': [0,0],
-              'Philadelphia': [22.5,1.30],
-              'SanFrancisco': [20.5,0.65],
-              'WashingtonDC': [21.8,1.20]}
-
-# fit to accumulated deaths
-death_scale_dict = {'Atlanta':[1.38],
-                    'Chicago': [1.46],
-                    'Dallas': [0.99],
-                    'Houston': [0.71],
-                    'LosAngeles': [1.52],
-                    'Miami': [0.67],
-                    'NewYorkCity': [1.21],
-                    'Philadelphia': [1.52],
-                    'SanFrancisco': [0.71],
-                    'WashingtonDC': [1.28]}
-'''
 
 # fit to daily smooth deaths
 death_scale_dict = {'Atlanta':[1.20],

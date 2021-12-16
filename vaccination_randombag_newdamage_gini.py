@@ -15,8 +15,7 @@ import pickle
 import constants
 import helper
 import functions
-import disease_model_only_modify_attack_rates
-import gini
+import disease_model #disease_model_only_modify_attack_rates
 
 import time
 import pdb
@@ -142,7 +141,7 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to, print_r
             #eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
             eval('final_deaths_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile_FOR_GINI']==i]['Final_Deaths_' + policy].sum()
             eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile_FOR_GINI']==i]['Sum'].sum()
-        deaths_gini_abs = gini.gini(eval('final_deaths_rate_'+ policy.lower()))
+        deaths_gini_abs = functions.gini(eval('final_deaths_rate_'+ policy.lower()))
        
         if(rel_to=='No_Vaccination'): # compared to No_Vaccination
             if(policy=='No_Vaccination'):
@@ -157,7 +156,7 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to, print_r
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
                 deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_no_vaccination) / deaths_total_no_vaccination
-                deaths_gini_rel = (gini.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
+                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
                 results[policy] = {
                                    'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
@@ -177,7 +176,7 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to, print_r
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
                 deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_baseline) / deaths_total_baseline
-                deaths_gini_rel = (gini.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline
+                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline
                 results[policy] = {
                                    'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
@@ -186,16 +185,16 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to, print_r
                                     
         if(print_result==True):
             print('Policy: ', policy)
-            print('Deaths, Gini Index: ',gini.gini(eval('final_deaths_rate_'+ policy.lower())))
+            print('Deaths, Gini Index: ',functions.gini(eval('final_deaths_rate_'+ policy.lower())))
             
             if(policy=='Baseline'):
                 deaths_total_baseline = eval('final_deaths_rate_%s_total'%(policy.lower()))
-                deaths_gini_baseline = gini.gini(eval('final_deaths_rate_'+ policy.lower()))
+                deaths_gini_baseline = functions.gini(eval('final_deaths_rate_'+ policy.lower()))
                 
             if(policy!='Baseline' and policy!='No_Vaccination'):
                 print('Compared to baseline:')
                 print('Deaths total: ', (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_baseline) / deaths_total_baseline)
-                print('Deaths gini: ', (gini.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline)
+                print('Deaths gini: ', (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline)
 
     return results
 
