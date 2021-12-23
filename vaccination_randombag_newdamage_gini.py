@@ -87,10 +87,10 @@ REL_TO = 'No_Vaccination'
 ###############################################################################
 # Functions
 
-def run_simulation(starting_seed, num_seeds, vaccination_vector, protection_rate=1):
-    m = disease_model_only_modify_attack_rates.Model(starting_seed=starting_seed,
-                                                     num_seeds=num_seeds,
-                                                     debug=False,clip_poisson_approximation=True,ipf_final_match='poi',ipf_num_iter=100)
+def run_simulation(starting_seed, num_seeds, vaccination_vector,vaccine_acceptance, protection_rate=1):
+    m = disease_model.Model(starting_seed=starting_seed,
+                            num_seeds=num_seeds,
+                            debug=False,clip_poisson_approximation=True,ipf_final_match='poi',ipf_num_iter=100)
 
     m.init_exogenous_variables(poi_areas=poi_areas,
                                poi_dwell_time_correction_factors=poi_dwell_time_correction_factors,
@@ -101,6 +101,7 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, protection_rate
                                #vaccination_time=24*31, # when to apply vaccination (which hour)
                                vaccination_time=24*VACCINATION_TIME, # when to apply vaccination (which hour)
                                vaccination_vector = vaccination_vector,
+                               vaccine_acceptance=vaccine_acceptance,
                                protection_rate = protection_rate,
                                home_beta=constants.parameters_dict[MSA_NAME][1],
                                cbg_attack_rates_original = cbg_attack_rates_scaled,
