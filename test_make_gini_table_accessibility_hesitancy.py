@@ -57,9 +57,11 @@ NUM_GROUPS = int(sys.argv[6]); print('NUM_GROUPS: ',NUM_GROUPS)
 if(REL_TO=='No_Vaccination'):
     if(VACCINATION_RATIO==0.56):
         policy_list = ['No_Vaccination','Baseline', 'Age_Flood', 'Income_Flood', 'JUE_EW_Flood',
+                       'Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse',
                        'SVI', 'Real_Scaled','Comprehensive_Ablation','Comprehensive'] 
     else:
         policy_list = ['No_Vaccination','Baseline', 'Age_Flood', 'Income_Flood', 'JUE_EW_Flood',
+                       'Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse',
                        'SVI', 'Comprehensive_Ablation','Comprehensive'] 
     #policy_list = ['No_Vaccination','Baseline',
     #                'Age_Flood','Age_Flood_Reverse',
@@ -69,10 +71,12 @@ if(REL_TO=='No_Vaccination'):
 elif(REL_TO=='Baseline'):
     if(VACCINATION_RATIO==0.56):
         policy_list = ['Baseline', 'No_Vaccination','Age_Flood', 'Income_Flood', 'JUE_EW_Flood',
-                        'SVI','Real_Scaled','Comprehensive_Ablation','Comprehensive'] 
+                       'Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse',
+                       'SVI','Real_Scaled','Comprehensive_Ablation','Comprehensive'] 
     else:         
         policy_list = ['Baseline', 'No_Vaccination','Age_Flood', 'Income_Flood', 'JUE_EW_Flood',
-                        'SVI','Comprehensive_Ablation','Comprehensive']            
+                       'Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse',
+                       'SVI','Comprehensive_Ablation','Comprehensive']            
     # #policy_list = ['Baseline','No_Vaccination', 
     #                'Age_Flood','Age_Flood_Reverse',
     #                'Income_Flood', 'Income_Flood_Reverse',
@@ -372,19 +376,20 @@ for policy in policy_list:
             history_D2_comprehensive = np.fromfile(filepath)
     else:
         if('reverse' in policy): #['Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse']
-            policy = policy[:-8]
-            print('policy: ', policy)
-            exec('history_D2_%s_reverse = np.fromfile(os.path.join(root,MSA_NAME,subroot_reverse, \'test_history_D2_%s_adaptive_reverse_%sd_VACCINATION_RATIO_0.01_30seeds_%s%s\'))' 
-                % (policy,policy,VACCINATION_TIME_STR,notation_string,MSA_NAME))    
+            policy_prefix = policy[:-8]
+            #print('policy: ', policy)
+            exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,subroot_reverse, \'test_history_D2_%s_adaptive_reverse_%sd_%s_%s_30seeds_%s%s\'))' 
+                % (policy,policy_prefix,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL_OTHERS,notation_string,MSA_NAME))    
         else:  #['Age_Flood','Income_Flood','JUE_EW_Flood']
-            exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,subroot, \'test_history_D2_%s_adaptive_%sd_%s_0.01_30seeds_%s%s\'))' 
-                 % (policy,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,notation_string,MSA_NAME))
+            exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,subroot, \'test_history_D2_%s_adaptive_%sd_%s_%s_30seeds_%s%s\'))' 
+                 % (policy,policy,VACCINATION_TIME_STR,VACCINATION_RATIO,RECHECK_INTERVAL_OTHERS,notation_string,MSA_NAME))
     exec('history_D2_%s = np.reshape(history_D2_%s,(63,NUM_SEEDS,M))' %(policy,policy))    
     
 #print('history_D2_no_vaccination.shape:', history_D2_no_vaccination.shape) # (63, 30, 2943)
 
 ###############################################################################
 # Add simulation results to grouping tables
+
 
 #for policy in ['No_Vaccination', 'Baseline']:
 for policy in policy_list:
