@@ -46,12 +46,9 @@ RECHECK_INTERVAL = 0.01
 MSA_NAME = sys.argv[1]; print('MSA_NAME: ',MSA_NAME) #MSA_NAME = 'SanFrancisco'
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Francisco_Oakland_Hayward_CA'
 
-#policy_list = ['Age_Agnostic','No_Vaccination', 'Baseline','Age_Flood', 'Income_Flood', 'EW_Flood','SVI']
 #policy_list = ['Baseline','Age_Flood', 'Age_Flood_Reverse','Income_Flood','Income_Flood_Reverse', 'JUE_EW_Flood','JUE_EW_Flood_Reverse','SVI']
-#policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood','SVI']
-#policy_list = ['Real_Scaled']
-#policy_list = ['Real_Scaled_Flood']
-policy_list = ['SVI','Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse']
+policy_list = ['Baseline','Age_Flood', 'Income_Flood', 'JUE_EW_Flood','SVI']
+#policy_list = ['SVI','Age_Flood_Reverse','Income_Flood_Reverse','JUE_EW_Flood_Reverse']
 print('Policy list: ', policy_list)
 
 
@@ -190,7 +187,6 @@ cbgs_to_idxs = dict(zip(cbg_ids_msa['census_block_group'].values, range(M)))
 x = {}
 for i in cbgs_to_idxs:
     x[str(i)] = cbgs_to_idxs[i]
-#print('Number of CBGs in this metro area:', M)
 
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
 filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
@@ -389,17 +385,14 @@ if('Real_Scaled' in policy_list):
 
 cbg_death_rates_original = np.loadtxt(os.path.join(root, MSA_NAME, 'cbg_death_rates_original_'+MSA_NAME))
 cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape)
-#print('Age-aware CBG-specific death rates loaded. Attack rates are irrelevant to age.')
 
 # The scaling factors are set according to a grid search
 # Fix attack_scale
 attack_scale = 1
 cbg_attack_rates_original_scaled = cbg_attack_rates_original * attack_scale
 cbg_death_rates_original_scaled = cbg_death_rates_original * constants.death_scale_dict[MSA_NAME]
-#print('Age-aware CBG-specific death rates scaled.')
 
 start_all = time.time()
-
 for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
     print('ACCEPTANCE_SCENARIO: ', ACCEPTANCE_SCENARIO)
     start = time.time()
@@ -424,12 +417,16 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         a = a[a>0]
         print('Minimum nonzero accessibility: ', min(a))
         cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Accessibility_Age_Race'].apply(lambda x : min(a) if x==0 else x)
+        vaccine_accessibility = np.array(cbg_age_msa['Accessibility_Age_Race']) #20220225
+        print('vaccine_accessibility: ', vaccine_accessibility)
+        print('vaccine_acceptance: ', vaccine_acceptance)
+        print('accessibility always greater than acceptance?', (vaccine_accessibility<=vaccine_acceptance).all())
+        pdb.set_trace()
         vaccine_acceptance = np.array(cbg_age_msa['Accessibility_Age_Race']) #以此代替原来的acceptance参数传入函数
 
         print('cbg_age_msa[\'Accessibility_Age_Race\'].max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
              '\ncbg_age_msa[\'Accessibility_Age_Race\'].min(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].min(),3))
-    #print(np.isnan(np.array(cbg_age_msa['Accessibility_Age_Race'])).any())
-   # pdb.set_trace()
+
 
     ##############################################################################
     need_to_save_dict = {
