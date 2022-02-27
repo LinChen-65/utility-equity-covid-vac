@@ -257,9 +257,10 @@ cbg_income_msa['Sum'] = cbg_age_msa['Sum'].copy()
 cbg_income_msa.rename(columns = {'total_households':'Total_Households',
                                  'mean_household_income':'Mean_Household_Income'},inplace=True)
 
-# cbg_b02.csv: Race #20220205
+# cbg_b02.csv: Race #20220225
 filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b02.csv")
 cbg_race = pd.read_csv(filepath)
+# Extract cbgs corresponding to the metro area, by merging dataframes
 cbg_race_msa = pd.merge(cbg_ids_msa, cbg_race, on='census_block_group', how='left')
 del cbg_race
 cbg_race_msa['Sum'] = cbg_age_msa['Sum']
@@ -272,9 +273,10 @@ cbg_race_msa['Black_Ratio'] = cbg_race_msa['Black_Absolute'] / cbg_race_msa['Sum
 columns_of_interest = ['census_block_group', 'Sum', 'White_Absolute', 'Black_Absolute','White_Ratio', 'Black_Ratio']
 cbg_race_msa = cbg_race_msa[columns_of_interest].copy()
 
-# cbg_b03.csv: Ethnic #20220205
+# cbg_b03.csv: Ethnic #20220225
 filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
 cbg_ethnic = pd.read_csv(filepath)
+# Extract cbgs corresponding to the metro area, by merging dataframes
 cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
 del cbg_ethnic
 cbg_ethnic_msa['Sum'] = cbg_age_msa['Sum']
@@ -305,10 +307,10 @@ cbg_occupation_msa['Essential_Worker_Quantile'] =  cbg_occupation_msa['Essential
 separators = functions.get_separators(cbg_income_msa, NUM_GROUPS, 'Mean_Household_Income','Sum', normalized=False)
 cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
-separators = functions.get_separators(cbg_race_msa, NUM_GROUPS, 'Black_Ratio','Sum', normalized=True) #20220205
+separators = functions.get_separators(cbg_race_msa, NUM_GROUPS, 'Black_Ratio','Sum', normalized=True) #20220225
 cbg_race_msa['Black_Quantile'] =  cbg_race_msa['Black_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
-separators = functions.get_separators(cbg_ethnic_msa, NUM_GROUPS, 'Hispanic_Ratio','Sum', normalized=True) #20220205
+separators = functions.get_separators(cbg_ethnic_msa, NUM_GROUPS, 'Hispanic_Ratio','Sum', normalized=True) #20220225
 cbg_ethnic_msa['Hispanic_Quantile'] =  cbg_ethnic_msa['Hispanic_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
 ###############################################################################
