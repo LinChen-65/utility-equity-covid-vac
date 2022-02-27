@@ -307,8 +307,10 @@ cbg_occupation_msa['Essential_Worker_Quantile'] =  cbg_occupation_msa['Essential
 separators = functions.get_separators(cbg_income_msa, NUM_GROUPS, 'Mean_Household_Income','Sum', normalized=False)
 cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
-separators = functions.get_separators(cbg_race_msa, NUM_GROUPS, 'Black_Ratio','Sum', normalized=True) #20220225
-cbg_race_msa['Black_Quantile'] =  cbg_race_msa['Black_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+#separators = functions.get_separators(cbg_race_msa, NUM_GROUPS, 'Black_Ratio','Sum', normalized=True) #20220225
+#cbg_race_msa['Black_Quantile'] =  cbg_race_msa['Black_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+separators = functions.get_separators(cbg_race_msa, NUM_GROUPS, 'White_Ratio','Sum', normalized=True) #20220227
+cbg_race_msa['White_Quantile'] =  cbg_race_msa['White_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
 separators = functions.get_separators(cbg_ethnic_msa, NUM_GROUPS, 'Hispanic_Ratio','Sum', normalized=True) #20220225
 cbg_ethnic_msa['Hispanic_Quantile'] =  cbg_ethnic_msa['Hispanic_Ratio'].apply(lambda x : functions.assign_group(x, separators))
@@ -323,12 +325,8 @@ for policy in policy_list:
         history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,NUM_SEEDS,M))
     elif(policy=='baseline'):
         history_D2_baseline = np.fromfile(os.path.join(root,MSA_NAME,'vaccination_results_adaptive_31d_0.1_0.01','20210206_history_D2_baseline_adaptive_0.1_0.01_30seeds_%s'%(MSA_NAME)))
-        #history_D2_baseline = np.fromfile(os.path.join(root,MSA_NAME,'vaccination_results_adaptive_%sd_0.1_0.01'%(VACCINATION_TIME_STR),
-        #                                               'history_D2_baseline_adaptive_%sd_0.1_0.01_30seeds_acceptance_%s_%s'%(VACCINATION_TIME_STR,ACCEPTANCE_SCENARIO,MSA_NAME)))
         history_D2_baseline = np.reshape(history_D2_baseline,(63,NUM_SEEDS,M))
     else:
-        #exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,\'vaccination_results_adaptive_%sd_0.1_0.01\', \'history_D2_%s_adaptive_%sd_0.1_0.01_30seeds_acceptance_%s_%s\'))' 
-        #    % (policy,VACCINATION_TIME_STR,policy,VACCINATION_TIME_STR,ACCEPTANCE_SCENARIO,MSA_NAME))
         exec('history_D2_%s = np.fromfile(os.path.join(root,MSA_NAME,\'vaccination_results_adaptive_%sd_0.1_0.01\', \'20210206_history_D2_%s_adaptive_0.1_0.01_30seeds_%s\'))' 
             % (policy,VACCINATION_TIME_STR,policy,MSA_NAME))
         exec('history_D2_%s = np.reshape(history_D2_%s,(63,NUM_SEEDS,M))' %(policy,policy))    
@@ -387,7 +385,8 @@ print('Any NaN in cbg_ethnic_msa?', cbg_ethnic_msa.isnull().any().any()) #202202
 # Gini table: efficiency & equity change under different policies
 
 #demo_feat_list = ['Age', 'Mean_Household_Income', 'Essential_Worker']
-demo_feat_list = ['Age', 'Mean_Household_Income', 'Essential_Worker', 'Black', 'Hispanic'] #20220225
+#demo_feat_list = ['Age', 'Mean_Household_Income', 'Essential_Worker', 'Black', 'Hispanic'] #20220225
+demo_feat_list = ['Age', 'Mean_Household_Income', 'Essential_Worker', 'White', 'Hispanic'] #20220225
 print('Demographic feature list: ', demo_feat_list)
 
 if(REL_TO=='No_Vaccination'):

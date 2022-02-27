@@ -189,6 +189,7 @@ def get_separators(cbg_table, num_groups, col_indicator, col_sum, normalized):
     separators[0] = -0.1 # to prevent making the first group [0,0] (which results in an empty group)
     separators[-1] = 1 if normalized else cbg_table[col_indicator].max()
     
+    #print('separators: ', separators)
     return separators
 
     
