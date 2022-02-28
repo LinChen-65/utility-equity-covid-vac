@@ -228,9 +228,8 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     cbg_race_msa.fillna(0,inplace=True) #20220226
     cbg_ethnic_msa.fillna(0,inplace=True) #20220226
 
-        
     ###############################################################################
-    # Obtain vulnerability and damage, according to theoretical analysis
+    # Collect data together
 
     nyt_included = np.zeros(len(idxs_msa_all))
     for i in range(len(nyt_included)):
@@ -238,13 +237,12 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
             nyt_included[i] = 1
     cbg_age_msa['NYT_Included'] = nyt_included.copy()
 
-    # Collect data together
     data_msa = pd.DataFrame()
     data_msa['Elder_Ratio'] = cbg_age_msa['Elder_Ratio'].copy()
     data_msa['Mean_Household_Income'] = cbg_income_msa['Mean_Household_Income'].copy()
-    #data_msa['Essential_Worker_Ratio'] = cbg_occupation_msa['Essential_Worker_Ratio'].copy()
-    data_msa['Employed_Ratio'] = cbg_occupation_msa['Employed_Ratio'].copy() #20220227
-    data_msa['EW_Over_Employed_Ratio'] = cbg_occupation_msa['EW_Over_Employed_Ratio'].copy() #20220227
+    data_msa['Essential_Worker_Ratio'] = cbg_occupation_msa['Essential_Worker_Ratio'].copy()
+    #data_msa['Employed_Ratio'] = cbg_occupation_msa['Employed_Ratio'].copy() #20220227
+    #data_msa['EW_Over_Employed_Ratio'] = cbg_occupation_msa['EW_Over_Employed_Ratio'].copy() #20220227
     #data_msa['Black_Ratio'] = cbg_race_msa['Black_Ratio'].copy() #20220226
     data_msa['White_Ratio'] = cbg_race_msa['White_Ratio'].copy() #20220227
     data_msa['Hispanic_Ratio'] = cbg_ethnic_msa['Hispanic_Ratio'].copy() #20220226
@@ -254,10 +252,9 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     
     data_msa['Elder_Ratio'] = data_msa['Elder_Ratio'].rank(method='dense',pct=True)
     data_msa['Mean_Household_Income'] = data_msa['Mean_Household_Income'].rank(method='dense',pct=True)
-    #data_msa['Essential_Worker_Ratio'] = data_msa['Essential_Worker_Ratio'].rank(method='dense',pct=True)
-    data_msa['Employed_Ratio'] = data_msa['Employed_Ratio'].rank(method='dense',pct=True) #20220227
-    data_msa['EW_Over_Employed_Ratio'] = data_msa['EW_Over_Employed_Ratio'].rank(method='dense',pct=True) #20220227
-
+    data_msa['Essential_Worker_Ratio'] = data_msa['Essential_Worker_Ratio'].rank(method='dense',pct=True)
+    #data_msa['Employed_Ratio'] = data_msa['Employed_Ratio'].rank(method='dense',pct=True) #20220227
+    #data_msa['EW_Over_Employed_Ratio'] = data_msa['EW_Over_Employed_Ratio'].rank(method='dense',pct=True) #20220227
     #data_msa['Black_Ratio'] = data_msa['Black_Ratio'].rank(method='dense',pct=True) #20220226
     data_msa['White_Ratio'] = data_msa['White_Ratio'].rank(method='dense',pct=True) #20220227
     data_msa['Hispanic_Ratio'] = data_msa['Hispanic_Ratio'].rank(method='dense',pct=True) #20220226

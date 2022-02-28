@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import datetime
+import constants
 import pdb
 
 def list_hours_in_range(min_hour, max_hour):
@@ -414,3 +415,96 @@ def assign_acceptance_quantile(quantile, acceptance_scenario=None):
     else:
         print('Invalid scenario. Please check.')
         pdb.set_trace()
+
+
+def load_cbg_age_msa(cbg_agesex, cbg_ids_msa): #20220228
+    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
+    # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
+    # which is defined in Constants.py
+    for i in range(3,25+1): # 'B01001e3'~'B01001e25'
+        male_column = 'B01001e'+str(i)
+        female_column = 'B01001e'+str(i+24)
+        cbg_age_msa[constants.DETAILED_AGE_LIST[i-3]] = cbg_age_msa.apply(lambda x : x[male_column]+x[female_column],axis=1)
+    # Rename
+    cbg_age_msa.rename(columns={'B01001e1':'Sum'},inplace=True)
+    # Extract columns of interest
+    columns_of_interest = ['census_block_group','Sum'] + constants.DETAILED_AGE_LIST
+    cbg_age_msa = cbg_age_msa[columns_of_interest].copy()
+    # Deal with CBGs with 0 populations
+    cbg_age_msa['Sum'] = cbg_age_msa['Sum'].apply(lambda x : x if x!=0 else 1)
+    # Calculate elder ratios
+    cbg_age_msa['Elder_Absolute'] = cbg_age_msa.apply(lambda x : x['70 To 74 Years']+x['75 To 79 Years']+x['80 To 84 Years']+x['85 Years And Over'],axis=1)
+    cbg_age_msa['Elder_Ratio'] = cbg_age_msa['Elder_Absolute'] / cbg_age_msa['Sum']
+    # Deal with NaN values
+    cbg_age_msa.fillna(0,inplace=True)
+
+    return cbg_age_msa
+
+
+def load_cbg_income_msa(cbg_income, cbg_ids_msa): #20220228
+    # Extract cbgs corresponding to the metro area, by merging dataframes
+    cbg_income_msa = pd.merge(cbg_ids_msa, cbg_income, on='census_block_group', how='left')
+    # Rename
+    cbg_income_msa.rename(columns = {'total_households':'Total_Households',
+                                     'mean_household_income':'Mean_Household_Income'},inplace=True)
+    # Deal with NaN values
+    cbg_income_msa.fillna(0,inplace=True)
+    
+    return cbg_income_msa
+
+
+def load_cbg_occupation_msa(cbg_occupation, cbg_ids_msa, cbg_sizes): #20220228
+    cbg_occupation_msa = pd.merge(cbg_ids_msa, cbg_occupation, on='census_block_group', how='left')
+    cbg_occupation_msa['Sum'] = cbg_sizes.copy()
+    columns_of_essential_workers = list(constants.ew_rate_dict.keys())
+    for column in columns_of_essential_workers:
+        cbg_occupation_msa[column] = cbg_occupation_msa[column].apply(lambda x : x*constants.ew_rate_dict[column])
+    cbg_occupation_msa['Essential_Worker_Absolute'] = cbg_occupation_msa.apply(lambda x : x[columns_of_essential_workers].sum(), axis=1)
+    cbg_occupation_msa['Employed_Absolute'] = cbg_occupation_msa['C24030e1'] #20220227
+    cbg_occupation_msa['Employed_Ratio'] = cbg_occupation_msa['Employed_Absolute'] / cbg_occupation_msa['Sum'] #20220227
+    cbg_occupation_msa['Essential_Worker_Ratio'] = cbg_occupation_msa['Essential_Worker_Absolute'] / cbg_occupation_msa['Sum']
+    columns_of_interest = ['census_block_group','Sum','Employed_Absolute','Employed_Ratio','Essential_Worker_Absolute','Essential_Worker_Ratio'] #20220227
+    cbg_occupation_msa = cbg_occupation_msa[columns_of_interest].copy()
+    # Deal with NaN values
+    cbg_occupation_msa.fillna(0,inplace=True)
+
+    return cbg_occupation_msa
+
+
+def load_cbg_race_msa(cbg_race, cbg_ids_msa, cbg_sizes): #20220228
+    # Extract cbgs corresponding to the metro area, by merging dataframes
+    cbg_race_msa = pd.merge(cbg_ids_msa, cbg_race, on='census_block_group', how='left')
+    cbg_race_msa['Sum'] = cbg_sizes.copy()
+    # Rename
+    cbg_race_msa.rename(columns={'B02001e2':'White_Absolute'},inplace=True)
+    cbg_race_msa.rename(columns={'B02001e3':'Black_Absolute'},inplace=True)
+    cbg_race_msa['White_Ratio'] = cbg_race_msa['White_Absolute'] / cbg_race_msa['Sum']
+    cbg_race_msa['Black_Ratio'] = cbg_race_msa['Black_Absolute'] / cbg_race_msa['Sum']
+    # Extract columns of interest
+    columns_of_interest = ['census_block_group', 'Sum', 'White_Absolute', 'Black_Absolute','White_Ratio', 'Black_Ratio']
+    cbg_race_msa = cbg_race_msa[columns_of_interest].copy()
+    # Deal with NaN values
+    cbg_race_msa.fillna(0,inplace=True)
+
+    return cbg_race_msa
+
+
+def load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes): #20220228
+    # Extract cbgs corresponding to the metro area, by merging dataframes
+    cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
+    cbg_ethnic_msa['Sum'] = cbg_sizes.copy()
+    # Rename
+    cbg_ethnic_msa.rename(columns={'B03002e12':'Hispanic_Absolute'},inplace=True)
+    cbg_ethnic_msa['Hispanic_Ratio'] = cbg_ethnic_msa['Hispanic_Absolute'] / cbg_ethnic_msa['Sum']
+    # Extract columns of interest
+    columns_of_interest = ['census_block_group', 'Sum', 'Hispanic_Absolute', 'Hispanic_Ratio']
+    cbg_ethnic_msa = cbg_ethnic_msa[columns_of_interest].copy()
+    # Deal with NaN values
+    cbg_ethnic_msa.fillna(0,inplace=True) 
+
+    return cbg_ethnic_msa
+
+    
+    
+
