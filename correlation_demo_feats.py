@@ -278,7 +278,7 @@ scatter_kde(data, 'Elder_Ratio', 'Essential_Worker_Ratio', savepath, colormap)
 savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_income_occupation.jpg'%(colormap, NUM_GROUPS))
 scatter_kde(data, 'Mean_Household_Income', 'Essential_Worker_Ratio', savepath, colormap) 
 
-
+'''
 savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_age_minority.jpg'%(colormap, NUM_GROUPS))
 scatter_kde(data, 'Elder_Ratio', 'Minority_Ratio', savepath, colormap)
 savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_income_minority.jpg'%(colormap, NUM_GROUPS))
@@ -290,3 +290,4 @@ savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_ew_over_
 scatter_kde(data, 'EW_Over_Employed_Ratio', 'Minority_Ratio', savepath, colormap) 
 savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_employed_minority.jpg'%(colormap, NUM_GROUPS))
 scatter_kde(data, 'Employed_Ratio', 'Minority_Ratio', savepath, colormap) 
+'''
