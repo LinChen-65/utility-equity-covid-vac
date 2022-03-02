@@ -66,6 +66,7 @@ def scatter_kde(df, col_x, col_y, savepath, colormap='Spectral_r'):
     label_dict['Black_Ratio'] = 'Percentage of black residents'
     label_dict['White_Ratio'] = 'Percentage of white residents' #20220227
     label_dict['Hispanic_Ratio'] = 'Percentage of Hispanic residents'
+    label_dict['Minority_Ratio'] = 'Percentage of minority residents'
 
     plt.figure()
     # Calculate the point density
@@ -204,29 +205,25 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     cbg_race_msa['Sum'] = cbg_age_msa['Sum']
     # Rename
     cbg_race_msa.rename(columns={'B02001e2':'White_Absolute'},inplace=True)
-    cbg_race_msa.rename(columns={'B02001e3':'Black_Absolute'},inplace=True)
-    cbg_race_msa['White_Ratio'] = cbg_race_msa['White_Absolute'] / cbg_race_msa['Sum']
-    cbg_race_msa['Black_Ratio'] = cbg_race_msa['Black_Absolute'] / cbg_race_msa['Sum']
     # Extract columns of interest
-    columns_of_interest = ['census_block_group', 'Sum', 'White_Absolute', 'Black_Absolute','White_Ratio', 'Black_Ratio']
+    columns_of_interest = ['census_block_group', 'Sum', 'White_Absolute']
     cbg_race_msa = cbg_race_msa[columns_of_interest].copy()
 
     # Ethnicity #20220226
     cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
     cbg_ethnic_msa['Sum'] = cbg_age_msa['Sum']
     # Rename
-    cbg_ethnic_msa.rename(columns={'B03002e12':'Hispanic_Absolute'},inplace=True)
-    cbg_ethnic_msa['Hispanic_Ratio'] = cbg_ethnic_msa['Hispanic_Absolute'] / cbg_ethnic_msa['Sum']
-    # Extract columns of interest
-    columns_of_interest = ['census_block_group', 'Sum', 'Hispanic_Absolute', 'Hispanic_Ratio']
-    cbg_ethnic_msa = cbg_ethnic_msa[columns_of_interest].copy()
+    #cbg_ethnic_msa.rename(columns={'B03002e12':'Hispanic_Absolute'},inplace=True)
+    cbg_ethnic_msa.rename(columns={'B03002e13':'Hispanic_White_Absolute'},inplace=True)
+    
+    cbg_race_msa['Minority_Absolute'] = cbg_race_msa['Sum'] - (cbg_race_msa['White_Absolute'] - cbg_ethnic_msa['Hispanic_White_Absolute'])
+    cbg_race_msa['Minority_Ratio'] = cbg_race_msa['Minority_Absolute'] / cbg_race_msa['Sum']
 
     # Deal with NaN values
     cbg_age_msa.fillna(0,inplace=True)
     cbg_income_msa.fillna(0,inplace=True)
     cbg_occupation_msa.fillna(0,inplace=True)
     cbg_race_msa.fillna(0,inplace=True) #20220226
-    cbg_ethnic_msa.fillna(0,inplace=True) #20220226
 
     ###############################################################################
     # Collect data together
@@ -241,11 +238,9 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Elder_Ratio'] = cbg_age_msa['Elder_Ratio'].copy()
     data_msa['Mean_Household_Income'] = cbg_income_msa['Mean_Household_Income'].copy()
     data_msa['Essential_Worker_Ratio'] = cbg_occupation_msa['Essential_Worker_Ratio'].copy()
-    #data_msa['Employed_Ratio'] = cbg_occupation_msa['Employed_Ratio'].copy() #20220227
-    #data_msa['EW_Over_Employed_Ratio'] = cbg_occupation_msa['EW_Over_Employed_Ratio'].copy() #20220227
-    #data_msa['Black_Ratio'] = cbg_race_msa['Black_Ratio'].copy() #20220226
-    data_msa['White_Ratio'] = cbg_race_msa['White_Ratio'].copy() #20220227
-    data_msa['Hispanic_Ratio'] = cbg_ethnic_msa['Hispanic_Ratio'].copy() #20220226
+    data_msa['EW_Over_Employed_Ratio'] = cbg_occupation_msa['EW_Over_Employed_Ratio'].copy()
+    data_msa['Employed_Ratio'] = cbg_occupation_msa['Employed_Ratio'].copy()
+    data_msa['Minority_Ratio'] = cbg_race_msa['Minority_Ratio'].copy() #20220301
     
     ###############################################################################
     # Ranking (dense, percentile)
@@ -253,11 +248,9 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Elder_Ratio'] = data_msa['Elder_Ratio'].rank(method='dense',pct=True)
     data_msa['Mean_Household_Income'] = data_msa['Mean_Household_Income'].rank(method='dense',pct=True)
     data_msa['Essential_Worker_Ratio'] = data_msa['Essential_Worker_Ratio'].rank(method='dense',pct=True)
-    #data_msa['Employed_Ratio'] = data_msa['Employed_Ratio'].rank(method='dense',pct=True) #20220227
-    #data_msa['EW_Over_Employed_Ratio'] = data_msa['EW_Over_Employed_Ratio'].rank(method='dense',pct=True) #20220227
-    #data_msa['Black_Ratio'] = data_msa['Black_Ratio'].rank(method='dense',pct=True) #20220226
-    data_msa['White_Ratio'] = data_msa['White_Ratio'].rank(method='dense',pct=True) #20220227
-    data_msa['Hispanic_Ratio'] = data_msa['Hispanic_Ratio'].rank(method='dense',pct=True) #20220226
+    data_msa['EW_Over_Employed_Ratio'] = data_msa['EW_Over_Employed_Ratio'].rank(method='dense',pct=True)
+    data_msa['Employed_Ratio'] = data_msa['Employed_Ratio'].rank(method='dense',pct=True)
+    data_msa['Minority_Ratio'] = data_msa['Minority_Ratio'].rank(method='dense',pct=True) #20220301
 
     data = data.append(data_msa, ignore_index=True)
     print('len(data): ',len(data))
@@ -275,38 +268,25 @@ for column in data.columns:
 
 # Scatter plot with density
 new_root = '/data/chenlin/utility-equity-covid-vac/results'
-#savepath = os.path.join(root, '0927_adjusted_%s_all_%squant_rank_uniform_age_income.jpg'%(colormap, NUM_GROUPS))
+'''
 savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_income.jpg'%(colormap, NUM_GROUPS))
 scatter_kde(data, 'Elder_Ratio', 'Mean_Household_Income', savepath, colormap)
 
-#savepath = os.path.join(root, '0927_adjusted_%s_all_%squant_rank_uniform_age_occupation.jpg'%(colormap, NUM_GROUPS))
 savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_occupation.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Elder_Ratio', 'Essential_Worker_Ratio', savepath, colormap) #'EW_Over_Employed_Ratio'#'Employed_Ratio' #'Essential_Worker_Ratio'
+scatter_kde(data, 'Elder_Ratio', 'Essential_Worker_Ratio', savepath, colormap) 
 
-#savepath = os.path.join(root, '0927_adjusted_%s_all_%squant_rank_uniform_income_occupation.jpg'%(colormap, NUM_GROUPS))
 savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_income_occupation.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Mean_Household_Income', 'Essential_Worker_Ratio', savepath, colormap) #'Employed_Ratio' #'Essential_Worker_Ratio'
+scatter_kde(data, 'Mean_Household_Income', 'Essential_Worker_Ratio', savepath, colormap) 
 
 
-#savepath = os.path.join(new_root, '20220226_%s_all_%squant_rank_uniform_age_race_black.jpg'%(colormap, NUM_GROUPS))
-#scatter_kde(data, 'Elder_Ratio', 'Black_Ratio', savepath, colormap) #20220226
-#savepath = os.path.join(new_root, '20220226_%s_all_%squant_rank_uniform_income_race.jpg'%(colormap, NUM_GROUPS))
-#scatter_kde(data, 'Mean_Household_Income', 'Black_Ratio', savepath, colormap) #20220226
-#savepath = os.path.join(new_root, '20220226_%s_all_%squant_rank_uniform_occupation_race.jpg'%(colormap, NUM_GROUPS))
-#scatter_kde(data, 'Essential_Worker_Ratio', 'Black_Ratio', savepath, colormap) #20220226
-#savepath = os.path.join(new_root, '20220226_%s_all_%squant_rank_uniform_race_ethnic.jpg'%(colormap, NUM_GROUPS))
-#scatter_kde(data, 'Black_Ratio', 'Hispanic_Ratio', savepath, colormap) #20220226
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_race_white.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Elder_Ratio', 'White_Ratio', savepath, colormap)
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_ethnic.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Elder_Ratio', 'Hispanic_Ratio', savepath, colormap) #20220226
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_income_race_white.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Mean_Household_Income', 'White_Ratio', savepath, colormap) #20220227
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_income_ethnic.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Mean_Household_Income', 'Hispanic_Ratio', savepath, colormap) #20220226
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_occupation_race_white.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Essential_Worker_Ratio', 'White_Ratio', savepath, colormap) #20220227
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_occupation_ethnic.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Essential_Worker_Ratio', 'Hispanic_Ratio', savepath, colormap) #20220226
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_race_ethnic_white.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'White_Ratio', 'Hispanic_Ratio', savepath, colormap) #20220227
+savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_age_minority.jpg'%(colormap, NUM_GROUPS))
+scatter_kde(data, 'Elder_Ratio', 'Minority_Ratio', savepath, colormap)
+savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_income_minority.jpg'%(colormap, NUM_GROUPS))
+scatter_kde(data, 'Mean_Household_Income', 'Minority_Ratio', savepath, colormap) 
+savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_occupation_minority.jpg'%(colormap, NUM_GROUPS))
+scatter_kde(data, 'Essential_Worker_Ratio', 'Minority_Ratio', savepath, colormap) 
+'''
+savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_ew_over_employed_minority.jpg'%(colormap, NUM_GROUPS))
+scatter_kde(data, 'EW_Over_Employed_Ratio', 'Minority_Ratio', savepath, colormap) 
+savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_employed_minority.jpg'%(colormap, NUM_GROUPS))
+scatter_kde(data, 'Employed_Ratio', 'Minority_Ratio', savepath, colormap) 
