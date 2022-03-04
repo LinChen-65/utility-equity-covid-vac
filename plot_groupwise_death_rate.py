@@ -16,15 +16,7 @@ demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
 NUM_GROUPS = 10
 root = '/data/chenlin/COVID-19/Data'
 saveroot = '/data/chenlin/utility-equity-covid-vac/results'
-'''
-label = dict()
-for policy in range(len(policy_list)):
-    label[policy] = policy
-    if('Age_Agnostic' in policy_list):
-        label['Age_Agnostic'] = 'Age-Agnostic'
-        label['No_Vaccination'] = 'Age-Aware'
-MSA_POP = [7191638, 10140946,8895355,7263757,15859681,6635035,6727280,5018570,7536060]
-'''
+
 # Drawing settings
 alpha=1
 markersize=11
@@ -325,7 +317,6 @@ if('Occupation' in demo_feat_list):
             np.round(cbg_occupation_msa['Employed_Ratio'].mean(),4), 
             np.round(cbg_occupation_msa['Employed_Ratio'].std(),4)
             )
-        #pdb.set_trace()
 
         # 先filter再分组
         #cbg_occupation_msa['Valid'] = cbg_occupation_msa.apply(lambda x : 1 if (x['Essential_Worker_Ratio']>0.2) else 0, axis=1)

@@ -1,7 +1,5 @@
 import numpy as np
 import time
-import pickle
-from scipy import sparse
 import pdb
 
 class Model:
@@ -44,7 +42,6 @@ class Model:
                                  confirmation_rate=.1,
                                  confirmation_lag=168,  # 7 days
                                  death_lag=432,  # 18 days
-                                 no_print=False,
                                  ):
         self.M = len(poi_areas)#POI的数量
         self.N = len(cbg_sizes)#cbg的数量
@@ -55,7 +52,6 @@ class Model:
         self.POI_FACTORS = self.PSI / poi_areas#ψ/apj
         if poi_dwell_time_correction_factors is not None:
             self.POI_FACTORS = poi_dwell_time_correction_factors * self.POI_FACTORS#dpj^2*ψ/apj
-            #print('Adjusted POI transmission rates with dwell time correction factors')
             self.included_dwell_time_correction_factors = True
         else:
             self.included_dwell_time_correction_factors = False
@@ -86,7 +82,6 @@ class Model:
         self.VACCINATION_TIME = vaccination_time
         self.VACCINATION_VECTOR = vaccination_vector
         self.VACCINE_ACCEPTANCE = vaccine_acceptance #20211007
-        #numpy.clip(a, a_min, a_max, out=None, **kwargs)
         self.VACCINATION_VECTOR = np.clip(self.VACCINATION_VECTOR, None, (self.CBG_SIZES*self.VACCINE_ACCEPTANCE))
         print('Toal num of vaccines: ', vaccination_vector.sum())
         print('Considering vaccine acceptance, actual num of vaccines: ', self.VACCINATION_VECTOR.sum())
@@ -102,15 +97,8 @@ class Model:
         self.CBG_ATTACK_RATES_NEW = np.clip(self.CBG_ATTACK_RATES_NEW, 0, None) # 20210116
         self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, 0, None) # 20210116
         self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, None, 1) # 20210214
-        #assert((self.CBG_ATTACK_RATES_NEW>=0).all())
         assert((self.CBG_DEATH_RATES_NEW>=0).all())
         assert((self.CBG_DEATH_RATES_NEW<=1).all())
-        #print('Before vaccination:\n',self.CBG_ATTACK_RATES_ORIGINAL,'\n',self.CBG_DEATH_RATES_ORIGINAL)
-        #print('After vaccination:\n',self.CBG_ATTACK_RATES_NEW,'\n',self.CBG_DEATH_RATES_NEW)
-        #print('Are they the same?',(self.CBG_ATTACK_RATES_NEW==self.CBG_ATTACK_RATES_ORIGINAL).all())
-        
-        array_params = [self.POI_FACTORS, self.CBG_SIZES,]
-        number_params = [self.LATENCY_PERIOD, self.INFECTIOUS_PERIOD, self.HOME_BETA]
         
     def init_endogenous_variables(self):
         # Initialize exposed/latent individuals
@@ -140,7 +128,6 @@ class Model:
         return [int(round(x)) for x in arr]
     
     def simulate_disease_spread(self,verbosity=24,no_print=False): 
-        start_time = time.time() 
         L_1=[]
         I_1=[]
         R_1=[]
@@ -178,7 +165,6 @@ class Model:
             
             if(epidemic_over == False):
                 
-                #
                 assert((self.cbg_latent>=0).all())
                 assert((self.cbg_infected>=0).all())
                 assert((self.cbg_removed>=0).all())
@@ -188,7 +174,6 @@ class Model:
                 assert((self.deaths_to_happen>=0).all())
                 assert((self.new_deaths>=0).all())
                 
-                #
                 self.update_states(t)
                 C1 = np.sum(self.new_confirmed_cases,axis=1)
                 self.C2=self.C2+self.new_confirmed_cases
@@ -205,10 +190,6 @@ class Model:
                 if np.max(self.cbg_latent + self.cbg_infected) < 1:
                     epidemic_over = True # epidemic is over
                     print('Disease died off after t=%d. Stopping experiment.' % t)
-                    #if t < self.T-1:
-                        # need to fill in trailing 0's in self.history
-                        #self.fill_remaining_history(t)
-                    #break
                 t += 1
                 
             else: 
@@ -219,27 +200,6 @@ class Model:
             print('Final state after %d rounds: L+I+R=%s' % (t, self.format_floats(cbg_all_affected)))
         total_affected = np.sum(cbg_all_affected, axis=1)
         #print(f'Average number of people infected across random seeds: {np.mean(total_affected):.3f}')
-        
-        if self.just_compute_r0:
-            assert self.cbg_latent.sum() == 0
-            assert self.cbg_infected.sum() == 0
-
-            initial_cases = self.P0.sum(axis=1)
-            self.estimated_R0 = {'R0':1.*(total - initial_cases) / initial_cases}
-            assert self.estimated_R0['R0'].shape  == total.shape == initial_cases.shape
-            print("Mean initial cases across seeds: %2.3f; new cases from initial: %2.3f; estimated R0: %2.3f" %
-                (initial_cases.mean(), (total - initial_cases).mean(), self.estimated_R0['R0'].mean()))
-
-            total_base = self.history['all']['new_cases_from_base'].sum(axis=1)
-            total_poi = self.history['all']['new_cases_from_poi'].sum(axis=1)
-            assert total_base.shape == total_poi.shape == initial_cases.shape
-            self.estimated_R0['R0_base'] = 1.*total_base / initial_cases
-            self.estimated_R0['R0_POI'] = 1.*total_poi / initial_cases
-            assert np.allclose(self.estimated_R0['R0_base'] + self.estimated_R0['R0_POI'], self.estimated_R0['R0'])
-        
-        end_time = time.time()
-        #print('Simulation time = %.3fs -> %.3fs per iteration' %
-        #    (end_time - start_time, (end_time - start_time)/t))
         
         return T1,L_1,I_1,R_1,self.C2,self.D2, total_affected, history_C2, history_D2, cbg_all_affected
     
@@ -253,25 +213,20 @@ class Model:
         self.get_new_cases(t)
         new_infectious = self.get_new_infectious()
         new_removed = self.get_new_removed()
-        if not self.just_compute_r0:
-            # normal case.
-            #print('normal case')
+        if not self.just_compute_r0: # normal case.
             self.cbg_latent = self.cbg_latent + self.cbg_new_cases - new_infectious
             self.cbg_infected = self.cbg_infected + new_infectious - new_removed
             self.cbg_removed = self.cbg_removed + new_removed
             self.new_confirmed_cases = np.random.binomial(self.cases_to_confirm.astype(int), 1/self.confirmation_lag)
             new_cases_to_confirm = np.random.binomial(new_infectious.astype(int), self.confirmation_rate)
             self.cases_to_confirm = self.cases_to_confirm + new_cases_to_confirm - self.new_confirmed_cases
-            #print(np.sum(new_cases_to_confirm + self.new_confirmed_cases,axis=1))
             self.new_deaths = np.random.binomial(self.deaths_to_happen.astype(int), 1/self.death_lag)
-            #new_deaths_to_happen = np.random.binomial(new_infectious.astype(int), self.death_rate)
             if t<self.VACCINATION_TIME:
                 new_deaths_to_happen = np.random.binomial(new_infectious.astype(int), self.CBG_DEATH_RATES_ORIGINAL)
             else:
                 new_deaths_to_happen = np.random.binomial(new_infectious.astype(int), self.CBG_DEATH_RATES_NEW)
             ############  ValueError: p < 0, p > 1 or p contains NaNs # 20210116
             self.deaths_to_happen = self.deaths_to_happen + new_deaths_to_happen - self.new_deaths
-            #self.deaths_to_happen = self.deaths_to_happen + new_deaths_to_happen - self.new_deaths
         else:
             # if we want to calibrate R0, don't allow anyone new to become infected - just put new_cases in removed.
             self.cbg_latent = self.cbg_latent - new_infectious
@@ -298,14 +253,9 @@ class Model:
         overall_densities = (np.sum(self.cbg_infected, axis=1) / np.sum(self.CBG_SIZES)).reshape(-1, 1)  # S x 1#总感染率，全部cbg的感染数除以总人数
         num_sus = np.clip(self.CBG_SIZES - self.cbg_latent - self.cbg_infected - self.cbg_removed, 0, None)  # S x N，易感人数即普通人人数维度是1×N
         sus_frac = num_sus / self.CBG_SIZES  # S x N，普通人比例
-        #assert (cbg_densities >= 0).all()
-        #assert (cbg_densities <= 1).all()
-        #assert (sus_frac >= 0).all()
-        #assert (sus_frac <= 1).all()
 
         if self.PSI > 0:
             # Our model: can only be infected by people in your home CBG.
-            #cbg_base_infection_rates = self.HOME_BETA * cbg_densities  # S x N，得到λtcbg
             if t<self.VACCINATION_TIME:
                 cbg_base_infection_rates = self.HOME_BETA * self.CBG_ATTACK_RATES_ORIGINAL * cbg_densities  # S x N，得到λtcbg
             else:
@@ -335,7 +285,6 @@ class Model:
                 poi_infection_rates = np.clip(poi_infection_rates, None, 1.0)#修正poi内的感染率
 
             # S x N = (S x N) * ((S x M) @ (M x N))
-            #cbg_mean_new_cases_from_poi = sus_frac * (poi_infection_rates @ poi_cbg_visits)#
             if t<self.VACCINATION_TIME:
                 cbg_mean_new_cases_from_poi = self.CBG_ATTACK_RATES_ORIGINAL * sus_frac * (poi_infection_rates @ poi_cbg_visits)
             else:
@@ -346,8 +295,6 @@ class Model:
             #print('Any new cases from poi?',(num_cases_from_poi!=0).any()) # 20210222
             self.num_cbgs_active_at_pois = np.sum(cbg_mean_new_cases_from_poi > 0)
 
-        if self.debug:
-            print(f'using poisson approx: expected new cases = {np.sum(cbg_mean_new_cases)}')
         self.num_cbgs_with_clipped_poi_cases = np.sum(num_cases_from_poi > num_sus)
         self.cbg_new_cases_from_poi = np.clip(num_cases_from_poi, None, num_sus)
         num_sus_remaining = num_sus - self.cbg_new_cases_from_poi
@@ -364,4 +311,3 @@ class Model:
         self.clipping_monitor['num_cbgs_active_at_pois'].append(self.num_cbgs_active_at_pois)
         self.clipping_monitor['num_cbgs_with_clipped_poi_cases'].append(self.num_cbgs_with_clipped_poi_cases)
         assert (self.cbg_new_cases <= num_sus).all()
-

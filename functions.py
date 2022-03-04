@@ -170,27 +170,31 @@ def vaccine_distribution_flood(cbg_table, vaccination_ratio, demo_feat, ascendin
     return vaccination_vector
     
 
-def get_separators(cbg_table, num_groups, col_indicator, col_sum, normalized):
+def get_separators(cbg_table, num_groups, col_indicator, col_sum, normalized): #20220302
     separators = np.zeros(num_groups+1)
-    
     total = cbg_table[col_sum].sum()
     group_size = total / num_groups
-    
     cbg_table_work = cbg_table.copy()
     cbg_table_work.sort_values(col_indicator, inplace=True)
-    last_position = 0
-    for i in range(num_groups):
-        for j in range(last_position, len(cbg_table_work)):
-            if (cbg_table_work.head(j)[col_sum].sum() <= group_size*(i+1)) & (cbg_table_work.head(j+1)[col_sum].sum() >= group_size*(i+1)):
-                separators[i+1] = cbg_table_work.iloc[j][col_indicator]
-                last_position = j
-                break
-    
-    #separators[0] = 0
+
     separators[0] = -0.1 # to prevent making the first group [0,0] (which results in an empty group)
     separators[-1] = 1 if normalized else cbg_table[col_indicator].max()
+    max_total = cbg_table_work[cbg_table_work[col_indicator]==separators[-1]][col_sum].sum()
+    if(max_total>group_size):
+        rest_group_size = (total - max_total) / (num_groups - 1)
+        rest_num_groups = num_groups - 1
+    else:
+        rest_group_size = group_size
+        rest_num_groups = num_groups
+
+    last_position = 0
+    for i in range(rest_num_groups):
+        for j in range(last_position, len(cbg_table_work)):
+            if (cbg_table_work.head(j)[col_sum].sum() <= rest_group_size*(i+1)) & (cbg_table_work.head(j+1)[col_sum].sum() >= rest_group_size*(i+1)):
+                separators[i+1] = cbg_table_work.iloc[j][col_indicator]
+                last_position = j
+                break 
     
-    #print('separators: ', separators)
     return separators
 
     

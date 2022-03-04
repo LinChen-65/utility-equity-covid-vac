@@ -8,26 +8,20 @@ import sys
 import os
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import KBinsDiscretizer
+import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
 
 import constants
 import functions
 
 import pdb
 
-from sklearn.preprocessing import KBinsDiscretizer
-import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
-
-print('202202272137')
 ############################################################
 # Constants
 
 root = '/data/chenlin/COVID-19/Data' #dl3
 #root = '/home/chenlin/COVID-19/Data' #rl4
-
-# timestring: specify the model
-timestring = '20210206'
-print('timestring: ',timestring)
 
 ############################################################
 # Main variable settings
