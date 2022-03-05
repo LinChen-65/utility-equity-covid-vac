@@ -14,10 +14,12 @@ import argparse
 import constants
 import functions
 import disease_model_test
+#import disease_model_test_till20220304 #test #20220304
 
 import time
 import pdb
 
+print('202203041151')
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
@@ -119,8 +121,11 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 
     m.init_endogenous_variables()
 
-    T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
-    return history_C2, history_D2
+    #T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
+    #return history_C2, history_D2
+    final_cases, final_deaths = m.simulate_disease_spread(no_print=True, store_history=False) #20220304
+    return final_deaths #20220304
+    
 
 def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False): #20220302
     # Construct the vaccination vector
@@ -133,18 +138,25 @@ def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False
         else: is_last=False
         cbg_table['Vaccination_Vector'] = current_vector
         # Run a simulation to determine the most vulnerable group
-        _, history_D2_current = run_simulation(starting_seed=STARTING_SEED_CHECKING, num_seeds=NUM_SEEDS_CHECKING, 
-                                                vaccination_vector=current_vector,
-                                                vaccine_acceptance=vaccine_acceptance, #20211007
-                                                protection_rate=args.protection_rate)
+        
+        #_, history_D2_current = run_simulation(starting_seed=STARTING_SEED_CHECKING, num_seeds=NUM_SEEDS_CHECKING,                                       
+        final_deaths_current = run_simulation(starting_seed=STARTING_SEED_CHECKING, num_seeds=NUM_SEEDS_CHECKING, #20220304
+                                              vaccination_vector=current_vector,
+                                              vaccine_acceptance=vaccine_acceptance, #20211007
+                                              protection_rate=args.protection_rate)
         # Average history records across random seeds
+        avg_final_deaths_current = np.mean(final_deaths_current, axis=0); print(avg_final_deaths_current.shape)
+        cbg_table['Final_Deaths_Current'] = avg_final_deaths_current
+
+        '''
         deaths_cbg_current, _= functions.average_across_random_seeds_only_death(history_D2_current, 
                                                                                 M, idxs_msa_nyt, 
-                                                                                print_results=False, draw_results=False)
+                                                                                print_results=False)
         # Analyze deaths in each demographic group
         avg_final_deaths_current = deaths_cbg_current[-1,:]
         # Add simulation results to cbg table
         cbg_table['Final_Deaths_Current'] = avg_final_deaths_current
+        '''
         
         final_deaths_rate_current = np.zeros(args.num_groups)
         for group_id in range(args.num_groups):
@@ -450,11 +462,19 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
             # Construct the vaccination vector
             vaccination_vector_no_vaccination = np.zeros(len(cbg_sizes))
             # Run simulations
+            this_start = time.time()
+            ''' 
             _, history_D2_no_vaccination = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
                                                           vaccination_vector=vaccination_vector_no_vaccination,
                                                           vaccine_acceptance = vaccine_acceptance, #20211007
                                                           protection_rate = args.protection_rate)
-
+            '''
+            final_deaths = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+                                          vaccination_vector=vaccination_vector_no_vaccination,
+                                          vaccine_acceptance = vaccine_acceptance, #20211007
+                                          protection_rate = args.protection_rate)                                   
+            print('Time: ', time.time() - this_start)
+            pdb.set_trace()
         ###############################################################################
         # Baseline: Flooding on Random Permutation
 
@@ -578,25 +598,32 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                                 protection_rate = args.protection_rate)
 
         ###############################################################################
+        # Minority, prioritized the most disadvantaged
+
         if(policy == 'Minority'):
             print('\nPolicy: Minority.')  
-            filename = os.path.join(saveroot, subroot, f'history_D2_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}' )      
+            #filename = os.path.join(saveroot, subroot, f'history_D2_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}' )      
+            filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}' ) #20220304
             if(os.path.exists(filename)):
                 print('Results for Minority already exist. No need to simulate again.')       
             else:
                 cbg_table = cbg_ethnic_msa
                 demo_feat = 'Minority_Ratio'
+                this_start = time.time()
                 vaccination_vector_minority = distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False) #20220302
+                print('Policy constructed. Time: ', time.time()-this_start)
                 # Run simulations
-                _, history_D2_minority = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                                        vaccination_vector=vaccination_vector_minority,
-                                                        vaccine_acceptance = vaccine_acceptance, #20211007
-                                                        protection_rate = args.protection_rate)
+                #_, history_D2_minority = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+                final_deaths = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, #20220304
+                                              vaccination_vector=vaccination_vector_minority,
+                                              vaccine_acceptance = vaccine_acceptance, #20211007
+                                              protection_rate = args.protection_rate)
                 if(args.quick_test=='True'): print('Testing. Not saving results.')
                 else:
                     print(f'Save {policy} results at:\n{filename}.')            
-                    np.array(history_D2_minority).tofile(filename)
-
+                    #np.array(history_D2_minority).tofile(filename)
+                    final_deaths.tofile(filename) #20220304
+                
     ###############################################################################
     # Experiments for vaccinating the least disadvantaged communities
     ###############################################################################
@@ -605,6 +632,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
     ###############################################################################
     # Age, prioritize the least disadvantaged
+
     if(policy == 'Age_Reverse'):
         print('Policy: Age_Reverse.')
         if(os.path.exists(os.path.join(root, args.msa_name, subroot,
@@ -664,7 +692,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
     if(policy == 'Minority_Reverse'):
         print('\nPolicy: Minority_Reverse.')    
-        filename = os.path.join(saveroot, subroot, f'history_D2_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}' )          
+        #filename = os.path.join(saveroot, subroot, f'history_D2_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}')          
+        filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304         
         if(os.path.exists(filename)):
             print('Results for Minority_Reverse already exist. No need to simulate again.')         
         else:
@@ -672,16 +701,18 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
             demo_feat = 'Minority_Ratio'
             vaccination_vector_minority_reverse = distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=True) #20220302
             # Run simulations
-            _, history_D2_minority_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                                          vaccination_vector=vaccination_vector_minority_reverse,
-                                                          vaccine_acceptance = vaccine_acceptance, #20211007
-                                                          protection_rate = args.protection_rate)
+            #_, history_D2_minority_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+            final_deaths = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, #20220304
+                                          vaccination_vector=vaccination_vector_minority_reverse,
+                                          vaccine_acceptance = vaccine_acceptance, #20211007
+                                          protection_rate = args.protection_rate)
             # Save results
             if(args.quick_test=='True'): print('Testing. Not saving results.')
             else:
                 policy = policy.lower()
                 print(f'Save {policy} results at:\n{filename}.')            
-                np.array(history_D2_minority_reverse).tofile(filename)
+                #np.array(history_D2_minority_reverse).tofile(filename)
+                final_deaths.tofile(filename) #20220304
 
      
     end = time.time()

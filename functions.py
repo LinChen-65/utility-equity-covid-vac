@@ -84,7 +84,7 @@ def average_across_random_seeds(history_C2, history_D2, num_cbgs, cbg_idxs, prin
     
 
 # Average history records across random seeds, only deaths
-def average_across_random_seeds_only_death(history_D2, num_cbgs, cbg_idxs, print_results=False, draw_results=False):
+def average_across_random_seeds_only_death(history_D2, num_cbgs, cbg_idxs, print_results=False):
     num_days = len(history_D2)
     
     # Average history records across random seeds
@@ -102,7 +102,9 @@ def average_across_random_seeds_only_death(history_D2, num_cbgs, cbg_idxs, print
         print('Deaths: ',deaths_msa)
     
     return avg_history_D2, deaths_msa
-    
+
+
+
     
 def apply_smoothing(x, agg_func=np.mean, before=3, after=3):
     new_x = []

@@ -1,5 +1,4 @@
 import numpy as np
-import copy
 import time
 import pdb
 
@@ -128,52 +127,44 @@ class Model:
     def format_floats(self, arr):
         return [int(round(x)) for x in arr]
     
-    def simulate_disease_spread(self,verbosity=24,no_print=False, store_history=True): #20220304
-        '''
+    def simulate_disease_spread(self,verbosity=24,no_print=False): 
         L_1=[]
         I_1=[]
         R_1=[]
         C_1=[]
         D_1=[]
         T1=[]
-        '''
         t = 0
         C=[0]
         D=[0]
         
-        #if(store_history): #20220304
         history_C2 = []
         history_D2 = []
         
         epidemic_over = False
         
         while t < self.T:#仿真时间之内
-            #iter_t0 = time.time()
+            iter_t0 = time.time()
             if (verbosity > 0) and (t % verbosity == 0):
                 L = np.sum(self.cbg_latent, axis=1) # 获得msa内所有cbg的L态人数
                 I = np.sum(self.cbg_infected, axis=1) # 获得msa内所有cbg的I态人数
                 R = np.sum(self.cbg_removed, axis=1) # 获得msa内所有cbg的R态人数
                 
-                '''
                 T1.append(t)
                 L_1.append(L)
                 I_1.append(I)
                 R_1.append(R)
                 C_1.append(C)
                 D_1.append(D)
-                '''
-
                 
-                #if(store_history): #20220304
                 history_C2.append(self.C2) # Save history for cases
                 history_D2.append(self.D2) # Save history for deaths
-                #print(self.D2)
-                #print(history_D2)
                 
                 if(no_print==False):
                     print('t:',t,'L:',L,'I:',I,'R',R,'C',C,'D',D)
             
             if(epidemic_over == False):
+                
                 assert((self.cbg_latent>=0).all())
                 assert((self.cbg_infected>=0).all())
                 assert((self.cbg_removed>=0).all())
@@ -185,14 +176,16 @@ class Model:
                 
                 self.update_states(t)
                 C1 = np.sum(self.new_confirmed_cases,axis=1)
-                #prev_self_C2 = copy.deepcopy(self.C2) #20220304
-                #prev_self_D2 = copy.deepcopy(self.D2) #20220304
-                self.C2 = self.C2 + self.new_confirmed_cases
-                C[0] = C[0]+C1
+                self.C2=self.C2+self.new_confirmed_cases
+                C[0]=C[0]+C1
                 D1 = np.sum(self.new_deaths,axis=1)
-                self.D2 = self.D2 + self.new_deaths
-                D[0] = D[0]+D1
-                #pdb.set_trace()
+                self.D2=self.D2+self.new_deaths
+                D[0]=D[0]+D1
+                if self.debug and verbosity > 0 and t % verbosity == 0:
+                    print('Num active POIs: %d. Num with infection rates clipped: %d' % (self.num_active_pois, self.num_poi_infection_rates_clipped))
+                    print('Num CBGs active at POIs: %d. Num with clipped num cases from POIs: %d' % (self.num_cbgs_active_at_pois, self.num_cbgs_with_clipped_poi_cases))
+                if self.debug:
+                    print("Time for iteration %i: %2.3f seconds" % (t, time.time() - iter_t0))
 
                 if np.max(self.cbg_latent + self.cbg_infected) < 1:
                     epidemic_over = True # epidemic is over
@@ -205,18 +198,11 @@ class Model:
         
         if self.N <= 10:
             print('Final state after %d rounds: L+I+R=%s' % (t, self.format_floats(cbg_all_affected)))
-        #total_affected = np.sum(cbg_all_affected, axis=1)
+        total_affected = np.sum(cbg_all_affected, axis=1)
         #print(f'Average number of people infected across random seeds: {np.mean(total_affected):.3f}')
         
-        #return T1,L_1,I_1,R_1,self.C2,self.D2, total_affected, history_C2, history_D2, cbg_all_affected
-        if(store_history): #20220304
-            return history_C2, history_D2
-        else:
-            return np.array(history_C2)[-1,:,:], np.array(history_D2)[-1,:,:]
-            #return self.C2, self.D2
-            #return prev_self_C2, prev_self_D2
+        return T1,L_1,I_1,R_1,self.C2,self.D2, total_affected, history_C2, history_D2, cbg_all_affected
     
-
     def update_states(self, t):
         '''
         Applies one round of updates. First, we compute the infection rates

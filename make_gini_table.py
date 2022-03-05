@@ -1,4 +1,4 @@
-# python make_gini_table 
+# python make_gini_table --msa_name SanFrancisco --vaccination_time 31 --vaccination_ratio 0.1 --rel_to Baseline
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
@@ -16,7 +16,7 @@ import pdb
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
-                    help='MSA name.')
+                    help='MSA name. If \'all\', then iterate over all MSAs.')
 parser.add_argument('--vaccination_time', type=int, default=31,
                     help='Time to distribute vaccines.')
 parser.add_argument('--vaccination_ratio' , type=float, default=0.1,
@@ -25,8 +25,8 @@ parser.add_argument('--num_seeds', type=int, default=30,
                     help='Num of seeds. Used to identify which files to load.')
 parser.add_argument('--num_groups', type=int, default=5,
                     help='Num of groups to divide CBGs into.') 
-parser.add_argument('--acceptance_scenario', 
-                    help='Scenario of vaccine hesitancy (fully/real/cf18/cf13/cf17/ALL). Only useful when consider_hesitancy is True.')
+#parser.add_argument('--acceptance_scenario', 
+#                    help='Scenario of vaccine hesitancy (fully/real/cf18/cf13/cf17/ALL). Only useful when consider_hesitancy is True.')
 parser.add_argument('--recheck_interval', type=float, default = 0.01,
                     help='Recheck interval (After distributing some portion of vaccines, recheck the most vulnerable demographic group).')                             
 parser.add_argument('--rel_to', 
@@ -36,7 +36,7 @@ print('args.msa_name:',args.msa_name)
 print('Vaccination Time:',str(args.vaccination_time))
 print('Vaccination ratio: ', args.vaccination_ratio)
 print('Number of groups: ',args.num_groups)
-print('Vaccine acceptance scenario: ', args.acceptance_scenario)
+#print('Vaccine acceptance scenario: ', args.acceptance_scenario)
 print('Relative to: ', args.rel_to)
 
 # root
@@ -51,36 +51,38 @@ elif(hostname=='rl4'):
 
 
 # Derived variables
-MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[args.msa_name]
-print('MSA_NAME_FULL:',MSA_NAME_FULL)
+if(args.msa_name=='all'):
+    msa_name_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami', 'Philadelphia', 'SanFrancisco', 'WashingtonDC']
+else:
+    msa_name_list = [args.msa_name]
 
-#demo_policy_list = ['Age', 'Age_Reverse', 'Income', 'Income_Reverse', 'Occupation', 'Occupation_Reverse','Minority', 'Minority_Reverse'] 
-demo_policy_list = [ 'Minority_Reverse'] #'Minority',
+demo_policy_list = ['Age', 'Age_Reverse', 'Income', 'Income_Reverse', 'Occupation', 'Occupation_Reverse','Minority', 'Minority_Reverse'] 
 print('Single_demo_feat based policy list: ', demo_policy_list)
 demo_feat_list = ['Elder_Ratio', 'Mean_Household_Income', 'EW_Ratio', 'Minority_Ratio'] #20220302
 print('Demographic feature list: ', demo_feat_list)
 
 if(args.rel_to=='No_Vaccination'):
     #policy_list = ['No_Vaccination','Baseline', 'Age', 'Income', 'Occupation', 'Minority'] 
-    policy_list = ['Minority', 'Minority_Reverse']
-    all_policy_list = ['No_Vaccination','Baseline'] + policy_list
+    #policy_list = demo_policy_list
+    #all_policy_list = ['No_Vaccination','Baseline'] + policy_list
+    policy_list = ['No_Vaccination','Baseline'] + demo_policy_list
 elif(args.rel_to=='Baseline'):
     #policy_list = ['Baseline', 'No_Vaccination','Age', 'Income', 'Occupation', 'Minority']
-    policy_list = ['Minority_Reverse']#'Minority', 
-    all_policy_list = ['Baseline','No_Vaccination'] + policy_list
+    #policy_list = demo_policy_list
+    #all_policy_list = ['Baseline','No_Vaccination'] + policy_list
+    policy_list = ['Baseline','No_Vaccination'] + demo_policy_list
 else:
     print('Invalid args.rel_to.')
 print('policy list:', policy_list)    
-print('all_policy_list: ', all_policy_list)
 
 ##############################################################################
-# Temporarily, make ues of previously generated gini_tables #20220302
-
-prev_path = os.path.join(saveroot, f'gini_table/test_gini_table_{args.vaccination_time}_{args.vaccination_ratio}_{args.msa_name}_rel2{args.rel_to}.csv')
+# Temporarily, make use of previously generated gini_tables #20220302
+'''
+prev_path = os.path.join(saveroot, f'gini_table/test_gini_table_{args.vaccination_time}_{args.vaccination_ratio}_{this_msa}_rel2{args.rel_to}.csv')
 prev_gini_table = pd.read_csv(prev_path)
 print(prev_gini_table)
 pdb.set_trace()
-
+'''
 ############################################################
 # Functions
 
@@ -251,277 +253,180 @@ def make_gini_table_incremental(prev_gini_table, policy_list, demo_feat_list, sa
     return gini_df_trans
 
 ############################################################
-# Load Data
 
+# MSA list
 # Load ACS Data for matching with NYT Data
 acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
-
-# Extract data specific to one msa, according to ACS data
-# MSA list
-msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
-print('\nMatching MSA_NAME_FULL to MSAs in ACS Data: ',msa_match)
-msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
-print('Number of counties matched: ',len(msa_data))
-msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
-good_list = list(msa_data['FIPS Code'].values);#print('Indices of counties matched: ',good_list)
-
-# Load CBG ids belonging to a specific metro area
-cbg_ids_msa = pd.read_csv(os.path.join(root,args.msa_name,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
-cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
-M = len(cbg_ids_msa);#print('Number of CBGs in this metro area:', M)
-# Mapping from cbg_ids to columns in hourly visiting matrices
-cbgs_to_idxs = dict(zip(cbg_ids_msa['census_block_group'].values, range(M)))
-x = {}
-for i in cbgs_to_idxs:
-    x[str(i)] = cbgs_to_idxs[i]
-
-# Select counties belonging to the MSA
-y = []
-for i in x:
-    if((len(i)==12) & (int(i[0:5])in good_list)): y.append(x[i])
-    if((len(i)==11) & (int(i[0:4])in good_list)): y.append(x[i])
-        
-idxs_msa_all = list(x.values());#print('Number of CBGs in this metro area:', len(idxs_msa_all))
-idxs_msa_nyt = y; #print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
-
-# Load ACS Data for MSA-county matching
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
-acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
-msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
-msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
-msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
-good_list = list(msa_data['FIPS Code'].values)
-del acs_data
-
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
 filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
-# Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
-cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
-del cbg_agesex
-# Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
-# which is defined in Constants.py
-for i in range(3,25+1): # 'B01001e3'~'B01001e25'
-    male_column = 'B01001e'+str(i)
-    female_column = 'B01001e'+str(i+24)
-    cbg_age_msa[constants.DETAILED_AGE_LIST[i-3]] = cbg_age_msa.apply(lambda x : x[male_column]+x[female_column],axis=1)
-# Rename
-cbg_age_msa.rename(columns={'B01001e1':'Sum'},inplace=True)
-# Extract columns of interest
-columns_of_interest = ['census_block_group','Sum'] + constants.DETAILED_AGE_LIST
-cbg_age_msa = cbg_age_msa[columns_of_interest].copy()
-# Deal with CBGs with 0 populations
-cbg_age_msa['Sum'] = cbg_age_msa['Sum'].apply(lambda x : x if x!=0 else 1)
-# Calculate elder ratios
-cbg_age_msa['Elder_Absolute'] = cbg_age_msa.apply(lambda x : x['70 To 74 Years']+x['75 To 79 Years']+x['80 To 84 Years']+x['85 Years And Over'],axis=1)
-cbg_age_msa['Elder_Ratio'] = cbg_age_msa['Elder_Absolute'] / cbg_age_msa['Sum']
-# Deal with NaN values
-cbg_age_msa.fillna(0,inplace=True)
-
-# Obtain cbg sizes (populations)
-cbg_sizes = cbg_age_msa['Sum'].values
-cbg_sizes = np.array(cbg_sizes,dtype='int32')
-print('Total population: ',np.sum(cbg_sizes))
-
-# Load other Safegraph demographic data
-# cbg_c24.csv: Occupation
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
-cbg_occupation = pd.read_csv(filepath)
-# Extract cbgs corresponding to the metro area, by merging dataframes
-cbg_occupation_msa = pd.merge(cbg_ids_msa, cbg_occupation, on='census_block_group', how='left')
-cbg_occupation_msa = functions.load_cbg_occupation_msa(cbg_occupation, cbg_ids_msa, cbg_sizes) #20220302
-del cbg_occupation
-cbg_occupation_msa.rename(columns={'Essential_Worker_Ratio':'EW_Ratio'},inplace=True)
-# Deal with NaN values
-cbg_occupation_msa.fillna(0,inplace=True)
-
 # Load ACS 5-year (2013-2017) Data: Mean Household Income
 filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
-# Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
-cbg_income_msa = functions.load_cbg_income_msa(cbg_income, cbg_ids_msa) #20220302
-del cbg_income
-cbg_income_msa['Sum'] = cbg_age_msa['Sum'].copy()
-# Deal with NaN values
-cbg_income_msa.fillna(0,inplace=True)
-
+# cbg_c24.csv: Occupation
+filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
+cbg_occupation = pd.read_csv(filepath)
 # cbg_b03.csv: Ethnic #20220225
 filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
 cbg_ethnic = pd.read_csv(filepath)
-# Extract cbgs corresponding to the metro area, by merging dataframes
-cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
-del cbg_ethnic
-cbg_ethnic_msa['Sum'] = cbg_age_msa['Sum']
-# Rename
-cbg_ethnic_msa.rename(columns={'B03002e3':'NH_White'},inplace=True)
-cbg_ethnic_msa['Minority_Absolute'] = cbg_ethnic_msa['NH_White'].copy()
-cbg_ethnic_msa['Minority_Ratio'] = cbg_ethnic_msa['Minority_Absolute'] / cbg_ethnic_msa['Sum']
-# Deal with NaN values
-cbg_ethnic_msa.fillna(0,inplace=True)
+
+for this_msa in msa_name_list:
+
+    # Extract data specific to one msa, according to ACS data
+    MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[this_msa]
+    msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas) #; print('\nMatching MSA_NAME_FULL to MSAs in ACS Data: ',msa_match)
+    msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy() #; print('Number of counties matched: ',len(msa_data))
+    msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
+    good_list = list(msa_data['FIPS Code'].values);#print('Indices of counties matched: ',good_list)
+
+    # Load CBG ids belonging to a specific metro area
+    cbg_ids_msa = pd.read_csv(os.path.join(root,this_msa,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
+    M = len(cbg_ids_msa);#print('Number of CBGs in this metro area:', M)
+    # Mapping from cbg_ids to columns in hourly visiting matrices
+    cbgs_to_idxs = dict(zip(cbg_ids_msa['census_block_group'].values, range(M)))
+    x = {}
+    for i in cbgs_to_idxs:
+        x[str(i)] = cbgs_to_idxs[i]
+
+    # Select counties belonging to the MSA
+    y = []
+    for i in x:
+        if((len(i)==12) & (int(i[0:5])in good_list)): y.append(x[i])
+        if((len(i)==11) & (int(i[0:4])in good_list)): y.append(x[i])
+            
+    idxs_msa_all = list(x.values());#print('Number of CBGs in this metro area:', len(idxs_msa_all))
+    idxs_msa_nyt = y; #print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
+
+    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
+    # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
+    # which is defined in Constants.py
+    for i in range(3,25+1): # 'B01001e3'~'B01001e25'
+        male_column = 'B01001e'+str(i)
+        female_column = 'B01001e'+str(i+24)
+        cbg_age_msa[constants.DETAILED_AGE_LIST[i-3]] = cbg_age_msa.apply(lambda x : x[male_column]+x[female_column],axis=1)
+    # Rename
+    cbg_age_msa.rename(columns={'B01001e1':'Sum'},inplace=True)
+    # Extract columns of interest
+    columns_of_interest = ['census_block_group','Sum'] + constants.DETAILED_AGE_LIST
+    cbg_age_msa = cbg_age_msa[columns_of_interest].copy()
+    # Deal with CBGs with 0 populations
+    cbg_age_msa['Sum'] = cbg_age_msa['Sum'].apply(lambda x : x if x!=0 else 1)
+    # Calculate elder ratios
+    cbg_age_msa['Elder_Absolute'] = cbg_age_msa.apply(lambda x : x['70 To 74 Years']+x['75 To 79 Years']+x['80 To 84 Years']+x['85 Years And Over'],axis=1)
+    cbg_age_msa['Elder_Ratio'] = cbg_age_msa['Elder_Absolute'] / cbg_age_msa['Sum']
+    # Deal with NaN values
+    cbg_age_msa.fillna(0,inplace=True)
+
+    # Obtain cbg sizes (populations)
+    cbg_sizes = cbg_age_msa['Sum'].values
+    cbg_sizes = np.array(cbg_sizes,dtype='int32')
+    print('Total population: ',np.sum(cbg_sizes))
+
+    # Load other Safegraph demographic data
+    # Income
+    cbg_income_msa = functions.load_cbg_income_msa(cbg_income, cbg_ids_msa) #20220302
+    cbg_income_msa['Sum'] = cbg_age_msa['Sum'].copy()
+    # Deal with NaN values
+    cbg_income_msa.fillna(0,inplace=True)
+
+    # Occupation
+    cbg_occupation_msa = pd.merge(cbg_ids_msa, cbg_occupation, on='census_block_group', how='left')
+    cbg_occupation_msa = functions.load_cbg_occupation_msa(cbg_occupation, cbg_ids_msa, cbg_sizes) #20220302
+    cbg_occupation_msa.rename(columns={'Essential_Worker_Ratio':'EW_Ratio'},inplace=True)
+    # Deal with NaN values
+    cbg_occupation_msa.fillna(0,inplace=True)
+
+    # Minority 
+    cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
+    cbg_ethnic_msa['Sum'] = cbg_age_msa['Sum']
+    # Rename
+    cbg_ethnic_msa.rename(columns={'B03002e3':'NH_White'},inplace=True)
+    cbg_ethnic_msa['Minority_Absolute'] = cbg_ethnic_msa['NH_White'].copy()
+    cbg_ethnic_msa['Minority_Ratio'] = cbg_ethnic_msa['Minority_Absolute'] / cbg_ethnic_msa['Sum']
+    # Deal with NaN values
+    cbg_ethnic_msa.fillna(0,inplace=True)
 
 
-###############################################################################
-# Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
+    ###############################################################################
+    # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
 
-separators = functions.get_separators(cbg_age_msa, args.num_groups, 'Elder_Ratio','Sum', normalized=True)
-cbg_age_msa['Elder_Ratio_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+    separators = functions.get_separators(cbg_age_msa, args.num_groups, 'Elder_Ratio','Sum', normalized=True)
+    cbg_age_msa['Elder_Ratio_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
-separators = functions.get_separators(cbg_occupation_msa, args.num_groups, 'EW_Ratio','Sum', normalized=True)
-cbg_occupation_msa['EW_Ratio_Quantile'] =  cbg_occupation_msa['EW_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+    separators = functions.get_separators(cbg_occupation_msa, args.num_groups, 'EW_Ratio','Sum', normalized=True)
+    cbg_occupation_msa['EW_Ratio_Quantile'] =  cbg_occupation_msa['EW_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
-separators = functions.get_separators(cbg_income_msa, args.num_groups, 'Mean_Household_Income','Sum', normalized=False)
-cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
+    separators = functions.get_separators(cbg_income_msa, args.num_groups, 'Mean_Household_Income','Sum', normalized=False)
+    cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
-separators = functions.get_separators(cbg_ethnic_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=True) #20220225
-cbg_ethnic_msa['Minority_Ratio_Quantile'] =  cbg_ethnic_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+    separators = functions.get_separators(cbg_ethnic_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=True) #20220225
+    cbg_ethnic_msa['Minority_Ratio_Quantile'] =  cbg_ethnic_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
+    ###############################################################################
+    # Preprocessing: from history_D2_xxx to final_deaths_xxx #20220304
 
+    file_name_dict = {'baseline': 'baseline',
+                    'age': 'age_flood', 
+                    'age_reverse': 'age_flood', 
+                    'income': 'income_flood',
+                    'income_reverse': 'income_flood', 
+                    'occupation': 'jue_ew_flood',
+                    'occupation_reverse': 'jue_ew_flood'
+                    }
+    for policy in policy_list:
+        print(policy)
+        policy = policy.lower()
+        final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
+        if(os.path.exists(final_deaths_result_path)):
+            print('Final deaths file already exists.')
+            exec(f'final_deaths_{policy} = np.fromfile(\'{final_deaths_result_path}\')')
+            exec(f'final_deaths_{policy} = np.reshape(final_deaths_{policy},(args.num_seeds,M))')   
+        else: # Generate final_deaths_xx files
+            if policy in ['minority', 'minority_reverse']:
+                history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
+            elif(policy=='no_vaccination'):
+                history_D2_result_path = os.path.join(root,this_msa,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
+            #elif(policy=='baseline'):
+            #    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+            else:
+                #history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                if('reverse' not in policy):
+                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                else:
+                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+            exec(f'history_D2_{policy} = np.fromfile(\'{history_D2_result_path}\')')
+            exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,args.num_seeds,M))')   
+            exec(f'final_deaths_{policy} = np.array(history_D2_{policy}[-1,:,:])')
+            exec(f'final_deaths_{policy}.tofile(final_deaths_result_path)')
+            print(f'Final deaths file saved? {os.path.exists(final_deaths_result_path)}')
+            #exec(f'avg_history_D2_{policy} = np.mean(history_D2_{policy},axis=1)')
+            #exec(f'avg_final_deaths_{policy} = avg_history_D2_{policy}[-1,:]')
+            #print(final_deaths_result_path)
+        exec(f'avg_final_deaths_{policy} = final_deaths_{policy}.mean(axis=0)')
 
-###############################################################################
-for policy in policy_list:
-    print(policy)
-    policy = policy.lower()
-    result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}')
-    exec(f'history_D2_{policy} = np.fromfile(\'{result_path}\')')
-    exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,args.num_seeds,M))')   
+    ###############################################################################
+    # Add simulation results to grouping tables
 
-pdb.set_trace()
-###############################################################################
-# Add simulation results to grouping tables
+    for policy in policy_list:
+        exec("cbg_age_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
+        exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
+        exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
+        exec("cbg_ethnic_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower())) #20220225
 
-for policy in demo_policy_list:
-    exec('history_D2_%s = np.array(history_D2_%s)'%(policy.lower(),policy.lower()))
-    exec("avg_history_D2_%s = np.mean(history_D2_%s,axis=1)" % (policy.lower(),policy.lower()))
-    exec("avg_final_deaths_%s = avg_history_D2_%s[-1,:]" % (policy.lower(),policy.lower()))
-    exec("cbg_age_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_ethnic_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower())) #20220225
+    # Check whether there is NaN in cbg_tables
+    print('Any NaN in cbg_age_msa?', cbg_age_msa.isnull().any().any())
+    print('Any NaN in cbg_income_msa?', cbg_income_msa.isnull().any().any())
+    print('Any NaN in cbg_occupation_msa?', cbg_occupation_msa.isnull().any().any())
+    print('Any NaN in cbg_ethnic_msa?', cbg_ethnic_msa.isnull().any().any()) #20220225
 
-# Check whether there is NaN in cbg_tables
-print('Any NaN in cbg_age_msa?', cbg_age_msa.isnull().any().any())
-print('Any NaN in cbg_income_msa?', cbg_income_msa.isnull().any().any())
-print('Any NaN in cbg_occupation_msa?', cbg_occupation_msa.isnull().any().any())
-print('Any NaN in cbg_ethnic_msa?', cbg_ethnic_msa.isnull().any().any()) #20220225
+    save_path = os.path.join(saveroot, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
+    print('save_path: ',save_path)
 
+    #gini_df = make_gini_table(policy_list, demo_feat_list, save_result=True, save_path=save_path)
+    gini_df = make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=save_path) #test 
 
-
-save_path = os.path.join(saveroot, f'gini_table/gini_table_%s_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{args.msa_name}_acceptance_{args.acceptance_scenario}_rel2{args.rel_to}.csv')
-print('save_path: ',save_path)
-
-gini_df = make_gini_table_incremental(prev_gini_table, policy_list=policy_list, demo_feat_list=demo_feat_list, save_result=True, save_path=save_path)
-print(gini_df)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-pdb.set_trace()
-###############################################################################
-###############################################################################
-###############################################################################
-
-for policy in policy_list:
-    policy = policy.lower()
-    print(policy)
-    if(policy=='no_vaccination'):
-        history_D2_no_vaccination = np.fromfile(os.path.join(root,args.msa_name,'vaccination_results_adaptive_31d_0.1_0.01','20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%(args.msa_name)))
-        history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,args.num_seeds,M))
-    elif(policy=='baseline'):
-        history_D2_baseline = np.fromfile(os.path.join(root,args.msa_name,'vaccination_results_adaptive_31d_0.1_0.01','20210206_history_D2_baseline_adaptive_0.1_0.01_30seeds_%s'%(args.msa_name)))
-        history_D2_baseline = np.reshape(history_D2_baseline,(63,args.num_seeds,M))
-    else:
-        exec('history_D2_%s = np.fromfile(os.path.join(root,args.msa_name,\'vaccination_results_adaptive_%sd_0.1_0.01\', \'20210206_history_D2_%s_adaptive_0.1_0.01_30seeds_%s\'))' 
-            % (policy,str(args.vaccination_time),policy,args.msa_name))
-        exec('history_D2_%s = np.reshape(history_D2_%s,(63,args.num_seeds,M))' %(policy,policy))    
-        exec('history_D2_%s_reverse = np.fromfile(os.path.join(root,args.msa_name,\'vaccination_results_adaptive_reverse_%sd_0.1_0.01\', \'history_D2_%s_adaptive_reverse_%sd_0.1_0.01_30seeds_acceptance_%s_%s\'))' 
-            % (policy,str(args.vaccination_time),policy,str(args.vaccination_time),args.acceptance_scenario,args.msa_name))    
-        exec('history_D2_%s_reverse = np.reshape(history_D2_%s_reverse,(63,args.num_seeds,M))' %(policy,policy))
-    
-print('history_D2_no_vaccination.shape:', history_D2_no_vaccination.shape) # (63, 30, 2943)
-
-###############################################################################
-# Add simulation results to grouping tables
-
-for policy in ['No_Vaccination', 'Baseline']:
-    exec("history_D2_%s = np.array(history_D2_%s)" % (policy.lower(),policy.lower()))
-    exec("avg_history_D2_%s = np.mean(history_D2_%s,axis=1)" % (policy.lower(),policy.lower()))
-    exec("avg_final_deaths_%s = avg_history_D2_%s[-1,:]" % (policy.lower(),policy.lower()))
-    
-    exec("cbg_age_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_race_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower())) #20220225
-    exec("cbg_ethnic_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower())) #20220225
-
-for policy in demo_policy_list:
-    # Prioritize the most disadvantaged
-    exec('history_D2_%s = np.array(history_D2_%s)'%(policy.lower(),policy.lower()))
-    exec("avg_history_D2_%s = np.mean(history_D2_%s,axis=1)" % (policy.lower(),policy.lower()))
-    exec("avg_final_deaths_%s = avg_history_D2_%s[-1,:]" % (policy.lower(),policy.lower()))
-    exec("cbg_age_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_ethnic_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower())) #20220225
-
-    # Prioritize the least disadvantaged
-    exec('history_D2_%s_reverse = np.array(history_D2_%s_reverse)'%(policy.lower(),policy.lower()))
-    exec("avg_history_D2_%s_reverse = np.mean(history_D2_%s_reverse,axis=1)" % (policy.lower(),policy.lower()))
-    exec("avg_final_deaths_%s_reverse = avg_history_D2_%s_reverse[-1,:]" % (policy.lower(),policy.lower()))
-    exec("cbg_age_msa['Final_Deaths_%s_Reverse'] = avg_final_deaths_%s_reverse" % (policy,policy.lower()))
-    exec("cbg_income_msa['Final_Deaths_%s_Reverse'] = avg_final_deaths_%s_reverse" % (policy,policy.lower()))
-    exec("cbg_occupation_msa['Final_Deaths_%s_Reverse'] = avg_final_deaths_%s_reverse" % (policy,policy.lower()))
-    exec("cbg_ethnic_msa['Final_Deaths_%s_Reverse'] = avg_final_deaths_%s" % (policy,policy.lower())) #20220225
-
-# Check whether there is NaN in cbg_tables
-print('Any NaN in cbg_age_msa?', cbg_age_msa.isnull().any().any())
-print('Any NaN in cbg_income_msa?', cbg_income_msa.isnull().any().any())
-print('Any NaN in cbg_occupation_msa?', cbg_occupation_msa.isnull().any().any())
-print('Any NaN in cbg_ethnic_msa?', cbg_ethnic_msa.isnull().any().any()) #20220225
-
-###############################################################################
-# Gini table: efficiency & equity change under different policies
-
-if(args.rel_to=='No_Vaccination'):
-    all_policy_list = ['No_Vaccination','Baseline',
-                       'Age','Age_Reverse',
-                       'Income', 'Income_Reverse',
-                       'Occupation','Occupation_Reverse'] 
-elif(args.rel_to=='Baseline'):
-    all_policy_list = ['Baseline','No_Vaccination', 
-                       'Age','Age_Reverse',
-                       'Income', 'Income_Reverse',
-                       'Occupation','Occupation_Reverse'] 
-
-#save_path = os.path.join(root, 'adaptive_results_diff_willingness_%s_0.1_0.01_%s_%s_will%s_will%s_rel2%s.csv'%(str(args.vaccination_time),args.num_groups, args.msa_name, WILL_1_STR, WILL_2_STR,args.rel_to))
-save_path = os.path.join(root, 'adaptive_results_hesitancy_by_income_%s_0.1_0.01_%s_%s_acceptance_%s_rel2%s.csv'%(str(args.vaccination_time),args.num_groups, args.msa_name,args.acceptance_scenario,args.rel_to))
-print('save_path: ',save_path)
-
-gini_df = make_gini_table(policy_list=all_policy_list, demo_feat_list=demo_feat_list, save_result=True, save_path=save_path)
-print(gini_df)
-
-pdb.set_trace()
+    print(gini_df['Minority'])
