@@ -515,7 +515,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         if(policy == 'Age'):
             print('\nPolicy: Age.')
             if(os.path.exists(os.path.join(root, args.msa_name, subroot,
-                                    'test_history_D2_age_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (str(args.vaccination_time),args.vaccination_ratio,args.recheck_interval,NUM_SEEDS,notation_string, args.msa_name)))):
+                                'test_history_D2_age_flood_adaptive_%sd_%s_%s_%sseeds_%s%s' % (str(args.vaccination_time),args.vaccination_ratio,args.recheck_interval,NUM_SEEDS,notation_string, args.msa_name)))):
                 print('Results for Age already exist. No need to simulate again.')      
             else:    
                 cbg_table = cbg_age_msa
@@ -594,8 +594,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
         if(policy == 'Minority'):
             print('\nPolicy: Minority.')  
-            #filename = os.path.join(saveroot, subroot, f'history_D2_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}' )      
-            filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}' ) #20220304
+            #filename = os.path.join(saveroot, subroot, f'history_D2_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}')      
+            filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
             if(os.path.exists(filename)):
                 print('Results for Minority already exist. No need to simulate again.')       
             else:

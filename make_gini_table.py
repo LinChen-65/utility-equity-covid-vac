@@ -62,14 +62,8 @@ demo_feat_list = ['Elder_Ratio', 'Mean_Household_Income', 'EW_Ratio', 'Minority_
 print('Demographic feature list: ', demo_feat_list)
 
 if(args.rel_to=='No_Vaccination'):
-    #policy_list = ['No_Vaccination','Baseline', 'Age', 'Income', 'Occupation', 'Minority'] 
-    #policy_list = demo_policy_list
-    #all_policy_list = ['No_Vaccination','Baseline'] + policy_list
     policy_list = ['No_Vaccination','Baseline'] + demo_policy_list
 elif(args.rel_to=='Baseline'):
-    #policy_list = ['Baseline', 'No_Vaccination','Age', 'Income', 'Occupation', 'Minority']
-    #policy_list = demo_policy_list
-    #all_policy_list = ['Baseline','No_Vaccination'] + policy_list
     policy_list = ['Baseline','No_Vaccination'] + demo_policy_list
 else:
     print('Invalid args.rel_to.')
@@ -299,6 +293,7 @@ for this_msa in msa_name_list:
                     'occupation': 'jue_ew_flood',
                     'occupation_reverse': 'jue_ew_flood'
                     }
+
     for policy in policy_list:
         print(policy)
         policy = policy.lower()
@@ -325,9 +320,6 @@ for this_msa in msa_name_list:
             exec(f'final_deaths_{policy} = np.array(history_D2_{policy}[-1,:,:])')
             exec(f'final_deaths_{policy}.tofile(final_deaths_result_path)')
             print(f'Final deaths file saved? {os.path.exists(final_deaths_result_path)}')
-            #exec(f'avg_history_D2_{policy} = np.mean(history_D2_{policy},axis=1)')
-            #exec(f'avg_final_deaths_{policy} = avg_history_D2_{policy}[-1,:]')
-            #print(final_deaths_result_path)
         exec(f'avg_final_deaths_{policy} = final_deaths_{policy}.mean(axis=0)')
 
     ###############################################################################
@@ -349,6 +341,5 @@ for this_msa in msa_name_list:
     print('save_path: ',save_path)
 
     gini_df = make_gini_table(policy_list, demo_feat_list, save_result=True, save_path=save_path)
-    #gini_df = make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=save_path) #test 
 
     print(gini_df['Minority'])

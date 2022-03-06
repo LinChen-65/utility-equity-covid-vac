@@ -261,7 +261,7 @@ for column in data.columns:
 
 
 # Scatter plot with density
-new_root = '/data/chenlin/utility-equity-covid-vac/results'
+new_root = '/data/chenlin/utility-equity-covid-vac/results/figures'
 '''
 savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_income.jpg'%(colormap, NUM_GROUPS))
 scatter_kde(data, 'Elder_Ratio', 'Mean_Household_Income', savepath, colormap)

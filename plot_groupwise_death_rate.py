@@ -15,7 +15,7 @@ policy_list = ['Age_Agnostic','No_Vaccination']
 demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
 NUM_GROUPS = 10
 root = '/data/chenlin/COVID-19/Data'
-saveroot = '/data/chenlin/utility-equity-covid-vac/results'
+saveroot = '/data/chenlin/utility-equity-covid-vac/results/figures'
 
 # Drawing settings
 alpha=1

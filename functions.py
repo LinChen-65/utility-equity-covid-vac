@@ -480,8 +480,8 @@ def load_cbg_occupation_msa(cbg_occupation, cbg_ids_msa, cbg_sizes): #20220228
 
     return cbg_occupation_msa
 
-
-def load_cbg_race_msa(cbg_race, cbg_ids_msa, cbg_sizes): #20220228
+'''
+def load_cbg_race_msa(cbg_race, cbg_ids_msa, cbg_sizes): #20220228 #20220306注释
     # Extract cbgs corresponding to the metro area, by merging dataframes
     cbg_race_msa = pd.merge(cbg_ids_msa, cbg_race, on='census_block_group', how='left')
     cbg_race_msa['Sum'] = cbg_sizes.copy()
@@ -497,23 +497,132 @@ def load_cbg_race_msa(cbg_race, cbg_ids_msa, cbg_sizes): #20220228
     cbg_race_msa.fillna(0,inplace=True)
 
     return cbg_race_msa
+'''
 
-
-def load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes): #20220228
+def load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes): #20220306
     # Extract cbgs corresponding to the metro area, by merging dataframes
     cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
     cbg_ethnic_msa['Sum'] = cbg_sizes.copy()
+    cbg_ethnic_msa.rename(columns={'B03002e1':'Sum',
+                                   'B03002e2':'NH_Total',
+                                   'B03002e3':'NH_White',
+                                   'B03002e4':'NH_Black',
+                                   'B03002e5':'NH_Indian',
+                                   'B03002e6':'NH_Asian',
+                                   'B03002e7':'NH_Hawaiian',
+                                   'B03002e12':'Hispanic'}, inplace=True)
+    # Extract columns of interest
+    columns_of_interest = ['census_block_group','Sum','NH_Total','NH_White','NH_Black','NH_Indian','NH_Asian','NH_Hawaiian','Hispanic']
+    cbg_ethnic_msa = cbg_ethnic_msa[columns_of_interest].copy()
+    # Deal with NaN values
+    cbg_ethnic_msa.fillna(0,inplace=True)
+    # Deal with CBGs with 0 populations
+    cbg_ethnic_msa['Sum'] = cbg_ethnic_msa['Sum'].apply(lambda x : x if x!=0 else 1)
+
+    cbg_ethnic_msa['Minority_Absolute'] = cbg_ethnic_msa['NH_White'].copy()
+    cbg_ethnic_msa['Minority_Ratio'] = cbg_ethnic_msa['Minority_Absolute'] / cbg_ethnic_msa['Sum']
+    columns_of_interest = ['census_block_group','Sum', 'Minority_Absolute', 'Minority_Ratio']
+    cbg_ethnic_msa = cbg_ethnic_msa[columns_of_interest].copy()
+    '''
     # Rename
     cbg_ethnic_msa.rename(columns={'B03002e12':'Hispanic_Absolute'},inplace=True)
     cbg_ethnic_msa['Hispanic_Ratio'] = cbg_ethnic_msa['Hispanic_Absolute'] / cbg_ethnic_msa['Sum']
     # Extract columns of interest
     columns_of_interest = ['census_block_group', 'Sum', 'Hispanic_Absolute', 'Hispanic_Ratio']
     cbg_ethnic_msa = cbg_ethnic_msa[columns_of_interest].copy()
+    '''
     # Deal with NaN values
     cbg_ethnic_msa.fillna(0,inplace=True) 
+    # Check whether there is NaN in cbg_tables
+    if(cbg_ethnic_msa.isnull().any().any()):
+        print('NaN exists in cbg_ethnic_msa. Please check.')
+        pdb.set_trace()
 
     return cbg_ethnic_msa
 
+
+def obtain_vulner_damage(cbg_age_msa, msa_name, root): #20220306
+    '''Obtain vulnerability and damage, according to theoretical analysis.'''
+    nyt_included = np.zeros(len(idxs_msa_all))
+    for i in range(len(nyt_included)):
+        if(i in idxs_msa_nyt):
+            nyt_included[i] = 1
+    cbg_age_msa['NYT_Included'] = nyt_included.copy()
+
+    # Retrieve the attack rate for the whole MSA (home_beta, fitted for each MSA)
+    home_beta = constants.parameters_dict[msa_name][1]
+
+    # Get cbg_avg_infect_same, cbg_avg_infect_diff
+    if(os.path.exists(os.path.join(root, f'3cbg_avg_infect_same_{msa_name}.npy'))):
+        #print('cbg_avg_infect_same, cbg_avg_infect_diff: Load existing file.')
+        cbg_avg_infect_same = np.load(os.path.join(root, f'3cbg_avg_infect_same_{msa_name}.npy'))
+        cbg_avg_infect_diff = np.load(os.path.join(root, f'3cbg_avg_infect_diff_{msa_name}.npy'))
+    else:
+        print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
+        pdb.set_trace()
+    #print('cbg_avg_infect_same.shape:',cbg_avg_infect_same.shape)
+
+    SEIR_at_30d = np.load(os.path.join(root, 'SEIR_at_30d.npy'),allow_pickle=True).item()
+    S_ratio = SEIR_at_30d[msa_name]['S'] / (cbg_sizes.sum())
+    I_ratio = SEIR_at_30d[msa_name]['I'] / (cbg_sizes.sum())
+    #print('S_ratio:',S_ratio,'I_ratio:',I_ratio)
+
+    # Deal with nan and inf (https://numpy.org/doc/stable/reference/generated/numpy.nan_to_num.html)
+    cbg_avg_infect_same = np.nan_to_num(cbg_avg_infect_same,nan=0,posinf=0,neginf=0)
+    cbg_avg_infect_diff = np.nan_to_num(cbg_avg_infect_diff,nan=0,posinf=0,neginf=0)
+    cbg_age_msa['Infect'] = cbg_avg_infect_same + cbg_avg_infect_diff
+    # Check whether there is NaN in cbg_tables
+    if(cbg_age_msa['Infect'].isnull().any().any()):
+        print('There are NaNs in cbg_age_msa[\'Infect\']. Please check.')
+        pdb.set_trace()
+
+    # Normalize by cbg population
+    cbg_avg_infect_same_norm = cbg_avg_infect_same / cbg_sizes
+    cbg_avg_infect_diff_norm = cbg_avg_infect_diff / cbg_sizes
+    cbg_avg_infect_all_norm = cbg_avg_infect_same_norm + cbg_avg_infect_diff_norm
+
+    # Compute the average death rate for the whole MSA: perform another weighted average over all CBGs
+    avg_death_rates_scaled = np.matmul(cbg_sizes.T, cbg_death_rates_scaled) / np.sum(cbg_sizes)
+    #print('avg_death_rates_scaled.shape:',avg_death_rates_scaled.shape) # shape: (), because it is a scalar
+
+    # Compute vulnerability and damage for each cbg
+    # New new method # 20210619
+    cbg_vulnerability = cbg_avg_infect_all_norm * cbg_death_rates_scaled 
+    cbg_secondary_damage = cbg_avg_infect_all_norm * (cbg_avg_infect_all_norm*(S_ratio/I_ratio)) * avg_death_rates_scaled
+    cbg_damage = cbg_vulnerability + cbg_secondary_damage
+
+    cbg_age_msa['Vulnerability'] = cbg_vulnerability.copy()
+    cbg_age_msa['Damage'] = cbg_damage.copy()
+
+    cbg_age_msa['Vulner_Rank'] = cbg_age_msa['Vulnerability'].rank(ascending=False,method='first') 
+    cbg_age_msa['Damage_Rank'] = cbg_age_msa['Damage'].rank(ascending=False,method='first')
+
+    # Only those belonging to the MSA (according to nyt) is valid for vaccination.
+    # This is to prevent overlapping of CBGs across MSAs.
+    cbg_age_msa['Vulner_Rank'] = cbg_age_msa.apply(lambda x :  x['Vulner_Rank'] if x['NYT_Included']==1 else M+1, axis=1)
+    cbg_age_msa['Vulner_Rank_New'] = cbg_age_msa['Vulner_Rank'].rank(ascending=True,method='first')
+
+    cbg_age_msa['Damage_Rank'] = cbg_age_msa.apply(lambda x :  x['Damage_Rank'] if x['NYT_Included']==1 else M+1, axis=1)
+    cbg_age_msa['Damage_Rank_New'] = cbg_age_msa['Damage_Rank'].rank(ascending=True,method='first')
+
+    return cbg_age_msa
+
     
+def annotate_group_vulnerability(demo_feat, cbg_table, num_groups): #20220306
+    '''The smaller the group number, the more vulnerable the group.'''
+    final_deaths_rate_current = np.zeros(num_groups)
+    for group_id in range(num_groups):
+        final_deaths_rate_current[group_id] = cbg_table[cbg_table[f'{demo_feat}_Quantile']==group_id]['Final_Deaths_Current'].sum()
+        final_deaths_rate_current[group_id] /= cbg_table[cbg_table[f'{demo_feat}_Quantile']==group_id]['Sum'].sum()
+    # Sort groups according to vulnerability
+    group_vulnerability = np.argsort(-final_deaths_rate_current) # 死亡率从大到小排序
+    group_vulner_dict = dict()
+    for i in range(num_groups):
+        for j in range(num_groups):
+            if(final_deaths_rate_current[i]==final_deaths_rate_current[group_vulnerability[j]]):
+                group_vulner_dict[i] = j
+    # Annotate the CBGs according to the corresponding group vulnerability
+    cbg_table['Group_Vulnerability'] = cbg_table.apply(lambda x : group_vulner_dict[x[f'{demo_feat}_Quantile']], axis=1)
     
+    return cbg_table['Group_Vulnerability']
 

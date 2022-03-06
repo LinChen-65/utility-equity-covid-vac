@@ -20,7 +20,7 @@ import pdb
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', default='/data/chenlin/COVID-19/Data',
                     help='Root to retrieve data. data for dl3, home for rl4.')  
-parser.add_argument('--saveroot', default='/data/chenlin/utility-equity-covid-vac/results',
+parser.add_argument('--saveroot', default='/data/chenlin/utility-equity-covid-vac/results/figures',
                     help='Root to save generated figures.')
 parser.add_argument('--num_groups', type=int, default=50,
                     help='Num of groups to divide CBGs into (for quantization).')   
