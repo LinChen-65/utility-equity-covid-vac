@@ -75,14 +75,7 @@ else:
     print('Invalid args.rel_to.')
 print('policy list:', policy_list)    
 
-##############################################################################
-# Temporarily, make use of previously generated gini_tables #20220302
-'''
-prev_path = os.path.join(saveroot, f'gini_table/test_gini_table_{args.vaccination_time}_{args.vaccination_ratio}_{this_msa}_rel2{args.rel_to}.csv')
-prev_gini_table = pd.read_csv(prev_path)
-print(prev_gini_table)
-pdb.set_trace()
-'''
+
 ############################################################
 # Functions
 
@@ -95,13 +88,13 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to):
         cbg_table['Final_Deaths_' + policy] = eval('avg_final_deaths_' + policy.lower())
         exec("%s = np.zeros(num_groups)" % ('final_deaths_rate_'+ policy.lower()))
         deaths_total_abs = eval('final_deaths_rate_%s_total'%(policy.lower()))
-        deaths_total_abs = np.round(deaths_total_abs,6)
+        #deaths_total_abs = np.round(deaths_total_abs,6) #20220305注释
         
         for i in range(num_groups):
             eval('final_deaths_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Final_Deaths_' + policy].sum()
             eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
         deaths_gini_abs = functions.gini(eval('final_deaths_rate_'+ policy.lower()))
-        deaths_gini_abs = np.round(deaths_gini_abs,6)
+        #deaths_gini_abs = np.round(deaths_gini_abs,6) #20220305注释
        
         if(rel_to=='No_Vaccination'): # compared to No_Vaccination
             if(policy=='No_Vaccination'):
@@ -114,8 +107,10 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to):
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
-                deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_no_vaccination) / deaths_total_no_vaccination
-                deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
+                #deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_no_vaccination) / deaths_total_no_vaccination
+                #deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
+                deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_no_vaccination) / deaths_total_no_vaccination #20220305
+                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination #20220305
                 results[policy] = {'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
@@ -132,8 +127,11 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to):
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
-                deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_baseline) / deaths_total_baseline
-                deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_baseline) / deaths_gini_baseline
+                #deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_baseline) / deaths_total_baseline
+                #deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_baseline) / deaths_gini_baseline
+                deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_baseline) / deaths_total_baseline #20220305
+                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline #20220305
+                #pdb.set_trace()
                 results[policy] = {'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
@@ -176,81 +174,6 @@ def make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=No
     return gini_df_trans
 
 
-def output_result_incremental(deaths_total_ref, deaths_gini_ref, cbg_table, demo_feat, policy_list, num_groups, rel_to):
-    results = {}
-    
-    for policy in policy_list:
-        exec("final_deaths_rate_%s_total = cbg_table['Final_Deaths_%s'].sum()/cbg_table['Sum'].sum()" % (policy.lower(),policy))
-        cbg_table['Final_Deaths_' + policy] = eval('avg_final_deaths_' + policy.lower())
-        exec("%s = np.zeros(num_groups)" % ('final_deaths_rate_'+ policy.lower()))
-        deaths_total_abs = eval('final_deaths_rate_%s_total'%(policy.lower()))
-        deaths_total_abs = np.round(deaths_total_abs,6)
-        
-        for i in range(num_groups):
-            eval('final_deaths_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Final_Deaths_' + policy].sum()
-            eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
-        deaths_gini_abs = functions.gini(eval('final_deaths_rate_'+ policy.lower()))
-        deaths_gini_abs = np.round(deaths_gini_abs,6)
-       
-        deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_ref) / deaths_total_ref
-        deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_ref) / deaths_gini_ref
-        results[policy] = {'deaths_total_abs':'%.6f'% deaths_total_abs,
-                            'deaths_total_rel':'%.6f'% deaths_total_rel,
-                            'deaths_gini_abs':'%.6f'% deaths_gini_abs,
-                            'deaths_gini_rel':'%.6f'% deaths_gini_rel}    
-                     
-    return results
-
-
-def make_gini_table_incremental(prev_gini_table, policy_list, demo_feat_list, save_result=False, save_path=None):
-    cbg_table_name_dict=dict()
-    cbg_table_name_dict['Elder_Ratio'] = cbg_age_msa
-    cbg_table_name_dict['Mean_Household_Income'] = cbg_income_msa
-    cbg_table_name_dict['EW_Ratio'] = cbg_occupation_msa
-    cbg_table_name_dict['Minority_Ratio'] = cbg_ethnic_msa #20220302
-
-    old_name_dict = dict()
-    old_name_dict['Elder_Ratio'] = 'Age'
-    old_name_dict['Mean_Household_Income'] = 'Mean_Household_Income'
-    old_name_dict['EW_Ratio'] = 'Essential_Worker'
-    
-    print('Policy list: ', policy_list)
-    print('Demographic feature list: ', demo_feat_list)
-
-    #gini_df = pd.DataFrame(columns=pd.MultiIndex.from_tuples([('All','deaths_total_abs'),('All','deaths_total_rel')]))
-    #gini_df['Policy'] = policy_list
-    gini_df = prev_gini_table.copy()
-    num_rows = len(gini_df)
-
-    row = 2
-    for demo_feat in demo_feat_list[:4]:
-        if(args.rel_to=='Baseline'):
-            deaths_total_ref = prev_gini_table.loc[0]['Baseline']
-            deaths_gini_ref = prev_gini_table.loc[row]['Baseline']
-        elif(args.rel_to=='No_Vaccination'):
-            deaths_total_ref = prev_gini_table.loc[0]['No_Vaccination']
-            deaths_gini_ref = prev_gini_table.loc[row]['No_Vaccination']
-        results = output_result_incremental(deaths_total_ref, deaths_gini_ref, cbg_table_name_dict[demo_feat], demo_feat, policy_list, num_groups=args.num_groups,rel_to=args.rel_to)
-        print(results)
-        pdb.set_trace()
-        '''
-        for i in range(num_rows, num_rows + len(policy_list)):
-            policy = policy_list[i]
-            gini_df.loc[i,('All','deaths_total_abs')] = results[policy]['deaths_total_abs']
-            gini_df.loc[i,('All','deaths_total_rel')] = results[policy]['deaths_total_rel'] 
-            gini_df.loc[i,(demo_feat,'deaths_gini_abs')] = results[policy]['deaths_gini_abs']
-            gini_df.loc[i,(demo_feat,'deaths_gini_rel')] = results[policy]['deaths_gini_rel'] 
-        '''
-        row += 2
-
-    gini_df.set_index(['Policy'],inplace=True)
-    # Transpose
-    gini_df_trans = pd.DataFrame(gini_df.values.T, index=gini_df.columns, columns=gini_df.index)#转置
-    # Save .csv
-    if(save_result==True):
-        gini_df_trans.to_csv(save_path)
-        
-    return gini_df_trans
 
 ############################################################
 
@@ -273,7 +196,6 @@ filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
 cbg_ethnic = pd.read_csv(filepath)
 
 for this_msa in msa_name_list:
-
     # Extract data specific to one msa, according to ACS data
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[this_msa]
     msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas) #; print('\nMatching MSA_NAME_FULL to MSAs in ACS Data: ',msa_match)
@@ -426,7 +348,7 @@ for this_msa in msa_name_list:
     save_path = os.path.join(saveroot, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
     print('save_path: ',save_path)
 
-    #gini_df = make_gini_table(policy_list, demo_feat_list, save_result=True, save_path=save_path)
-    gini_df = make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=save_path) #test 
+    gini_df = make_gini_table(policy_list, demo_feat_list, save_result=True, save_path=save_path)
+    #gini_df = make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=save_path) #test 
 
     print(gini_df['Minority'])
