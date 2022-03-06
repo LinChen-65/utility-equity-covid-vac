@@ -228,10 +228,13 @@ def vaccine_distribution_flood_new(cbg_table, vaccination_ratio, demo_feat, asce
     cbg_table_sorted = cbg_table.copy()
     
     # Rank CBGs: (1)Put the uncovered ones (Covered=0) on the top; (2)Rank CBGs according to some demographic feature
-    cbg_table_sorted['Covered'] = cbg_table_sorted.apply(lambda x : 1 if x['Vaccination_Vector']==x['Sum'] else 0, axis=1)
+    #cbg_table_sorted['Covered'] = cbg_table_sorted.apply(lambda x : 1 if x['Vaccination_Vector']==x['Sum'] else 0, axis=1)
+    cbg_table_sorted['Covered'] = cbg_table_sorted.apply(lambda x : 1 if abs(x['Vaccination_Vector']-x['Sum'])<2 else 0, axis=1) #20220305
+    
     #print('Num of covered cbgs:', len(cbg_table_sorted[cbg_table_sorted['Covered']==1]))
     # Rank CBGs according to some demographic feature
-    cbg_table_sorted.sort_values(by=['Most_Vulnerable','Covered',demo_feat],ascending=[False, True, ascending],inplace = True)
+    #cbg_table_sorted.sort_values(by=['Most_Vulnerable','Covered',demo_feat],ascending=[False, True, ascending],inplace = True)
+    cbg_table_sorted.sort_values(by=['Covered','Most_Vulnerable',demo_feat],ascending=[ True,False, ascending],inplace = True)#20220305
     
     # Calculate total number of available vaccines
     num_vaccines = cbg_table_sorted['Sum'].sum() * vaccination_ratio * execution_ratio + leftover
