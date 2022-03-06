@@ -62,20 +62,20 @@ elif(hostname=='rl4'):
 # Derived variables
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[args.msa_name] 
 
-#policy_list = ['Baseline','Age_Flood', 'Age_Flood_Reverse','Income_Flood','Income_Flood_Reverse', 'JUE_EW_Flood','JUE_EW_Flood_Reverse','SVI']
+#policy_list = ['Baseline','Age_Flood', 'Age_Flood_Reverse','Income_Flood','Income_Flood_Reverse', 'Occupation_Flood','Occupation_Flood_Reverse','SVI']
 policy_list = ['Minority', 'Minority_Reverse']
 print('Policy list: ', policy_list)
 
 # Vaccine acceptance scenario
 if(args.consider_hesitancy):
     if(args.acceptance_scenario == 'ALL'): ACCEPTANCE_SCENARIO_LIST = ['real','cf18','cf13','cf17']
-    else: ACCEPTANCE_SCENARIO_LIST = [args.acceptance_scenario ]
+    else: ACCEPTANCE_SCENARIO_LIST = [args.acceptance_scenario]
 else:
     ACCEPTANCE_SCENARIO_LIST = ['fully']
 print('Vaccine acceptance scenario list: ', ACCEPTANCE_SCENARIO_LIST)
 
 # Setting num_seeds
-if(args.quick_test == 'True'):
+if(args.quick_test):
     NUM_SEEDS = 2
     NUM_SEEDS_CHECKING = 2
 else:
@@ -130,7 +130,7 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False): #20220302
     # Construct the vaccination vector
     current_vector = np.zeros(len(cbg_table)) # Initially: no vaccines distributed.
-    cbg_table['Covered'] = 0 # Initially, no CBG is covered by vaccination.
+    #cbg_table['Covered'] = 0 # Initially, no CBG is covered by vaccination.
     leftover = 0
     
     for i in range(int(distribution_time)):
@@ -145,18 +145,8 @@ def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False
                                               vaccine_acceptance=vaccine_acceptance, #20211007
                                               protection_rate=args.protection_rate)
         # Average history records across random seeds
-        avg_final_deaths_current = np.mean(final_deaths_current, axis=0); print(avg_final_deaths_current.shape)
+        avg_final_deaths_current = np.mean(final_deaths_current, axis=0); #print(avg_final_deaths_current.shape)
         cbg_table['Final_Deaths_Current'] = avg_final_deaths_current
-
-        '''
-        deaths_cbg_current, _= functions.average_across_random_seeds_only_death(history_D2_current, 
-                                                                                M, idxs_msa_nyt, 
-                                                                                print_results=False)
-        # Analyze deaths in each demographic group
-        avg_final_deaths_current = deaths_cbg_current[-1,:]
-        # Add simulation results to cbg table
-        cbg_table['Final_Deaths_Current'] = avg_final_deaths_current
-        '''
         
         final_deaths_rate_current = np.zeros(args.num_groups)
         for group_id in range(args.num_groups):
@@ -183,6 +173,8 @@ def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False
         leftover_prev = leftover
         current_vector_prev = current_vector.copy() # 20210225
         current_vector += new_vector # 20210224
+        #print((cbg_sizes-current_vector)[current_vector.nonzero()][np.where((cbg_sizes-current_vector)[current_vector.nonzero()]!=0)])
+        #pdb.set_trace()
         current_vector = np.clip(current_vector, None, cbg_sizes) # 20210224
         leftover = np.sum(cbg_sizes) * args.recheck_interval + leftover_prev - (np.sum(current_vector)-np.sum(current_vector_prev))
         assert((current_vector<=cbg_sizes).all())
@@ -391,7 +383,7 @@ if(True):
 
 
 
-if('Minority' in policy_list): #20220302
+if(('Minority' in policy_list) or ('Minority_Reverse' in policy_list)): #20220302
     cbg_ethnic_msa['Minority_Absolute'] = cbg_ethnic_msa['NH_White'].copy()
     cbg_ethnic_msa['Minority_Ratio'] = cbg_ethnic_msa['Minority_Absolute'] / cbg_ethnic_msa['Sum']
     # Deal with NaN values
@@ -445,7 +437,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         print('vaccine_accessibility: ', vaccine_accessibility)
         print('vaccine_acceptance: ', vaccine_acceptance)
         print('accessibility always greater than acceptance?', (vaccine_accessibility<=vaccine_acceptance).all())
-        pdb.set_trace()
+        
         vaccine_acceptance = np.array(cbg_age_msa['Accessibility_Age_Race']) #以此代替原来的acceptance参数传入函数
 
         print('cbg_age_msa[\'Accessibility_Age_Race\'].max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
@@ -618,7 +610,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                               vaccination_vector=vaccination_vector_minority,
                                               vaccine_acceptance = vaccine_acceptance, #20211007
                                               protection_rate = args.protection_rate)
-                if(args.quick_test=='True'): print('Testing. Not saving results.')
+                if(args.quick_test): print('Testing. Not saving results.')
                 else:
                     print(f'Save {policy} results at:\n{filename}.')            
                     #np.array(history_D2_minority).tofile(filename)
@@ -707,7 +699,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                           vaccine_acceptance = vaccine_acceptance, #20211007
                                           protection_rate = args.protection_rate)
             # Save results
-            if(args.quick_test=='True'): print('Testing. Not saving results.')
+            if(args.quick_test): print('Testing. Not saving results.')
             else:
                 policy = policy.lower()
                 print(f'Save {policy} results at:\n{filename}.')            
