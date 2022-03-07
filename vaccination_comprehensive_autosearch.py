@@ -29,12 +29,12 @@ parser.add_argument('--vaccination_time', type=int, default=31,
                     help='Time to distribute vaccines.')
 parser.add_argument('--vaccination_ratio' , type=float, default=0.1,
                     help='Vaccination ratio relative to MSA population.')                    
-#parser.add_argument('--consider_hesitancy', default=False, action='store_true',
-#                    help='If true, consider vaccine hesitancy.')
-#parser.add_argument('--acceptance_scenario', 
-#                    help='Scenario of vaccine hesitancy (fully/real/cf18/cf13/cf17/ALL). Only useful when consider_hesitancy is True.')
-#parser.add_argument('--consider_accessibility', default=False, action='store_true',
-#                    help='If true, consider vaccine accessibility.')
+parser.add_argument('--consider_hesitancy', default=False, action='store_true',
+                    help='If true, consider vaccine hesitancy.')
+parser.add_argument('--acceptance_scenario', 
+                    help='Scenario of vaccine hesitancy (fully/real/cf18/cf13/cf17/ALL). Only useful when consider_hesitancy is True.')
+parser.add_argument('--consider_accessibility', default=False, action='store_true',
+                    help='If true, consider vaccine accessibility.')
 parser.add_argument('--quick_test', default=False, action='store_true',
                     help='If true, reduce num_seeds to 2.')
 parser.add_argument('--num_groups', type=int, default=5,
@@ -63,8 +63,8 @@ print(f'MSA name: {args.msa_name}.')
 print(f'vaccination time: {args.vaccination_time}.')
 print(f'vaccination ratio: {args.vaccination_ratio}.')
 print(f'recheck interval: {args.recheck_interval}.')
-#if(args.consider_hesitancy):
-#    print(f'Consider vaccine hesitancy. Vaccine acceptance scenario: {args.acceptance_scenario}.')
+if(args.consider_hesitancy):
+    print(f'Consider vaccine hesitancy. Vaccine acceptance scenario: {args.acceptance_scenario}.')
 print(f'Quick testing? {args.quick_test}')
 
 # root
@@ -72,10 +72,10 @@ hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname=='fib-dl3'):
     root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results/comprehensive'
+    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
 elif(hostname=='rl4'):
     root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results/comprehensive'
+    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
 
 
 # Policies to compare
@@ -99,6 +99,7 @@ print('policy_savename:',policy_savename)
 
 # Initial weights
 weights = [args.w1, args.w2, args.w3, args.w4, args.w5, args.w6]
+w1,w2,w3,w4,w5,w6 = weights
 print('Weights:', weights)
 
 # Quick Test: prototyping
@@ -117,10 +118,7 @@ STARTING_SEED_CHECKING = range(NUM_SEEDS_CHECKING)
 distribution_time = args.vaccination_ratio / args.recheck_interval # 分几次把疫苗分配完
 
 # Recheck interval for other strategies #20220306
-if(args.vaccination_ratio in [0.4, 0.56]):
-    recheck_interval_others = args.vaccination_ratio / 10
-else:
-    recheck_interval_others = 0.01
+recheck_interval_others = 0.01
 
 ###############################################################################
 # Functions
@@ -136,7 +134,7 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
                                poi_cbg_visits_list=poi_cbg_visits_list,
                                all_hours=all_hours,
                                p_sick_at_t0=constants.parameters_dict[args.msa_name][0],
-                               vaccination_time=24*VACCINATION_TIME, # when to apply vaccination (which hour)
+                               vaccination_time=24*args.vaccination_time, # when to apply vaccination (which hour)
                                vaccination_vector = vaccination_vector,
                                vaccine_acceptance = vaccine_acceptance,#20211007
                                protection_rate = protection_rate,
@@ -154,8 +152,6 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 
     m.init_endogenous_variables()
 
-    #T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
-    #return history_C2, history_D2
     final_cases, final_deaths = m.simulate_disease_spread(no_print=True, store_history=False) #20220304
     return final_deaths #20220304
 
@@ -214,10 +210,10 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to):
 
 def make_gini_table(policy_list, demo_feat_list, num_groups, rel_to, save_path, save_result=False):
     cbg_table_name_dict=dict()
-    cbg_table_name_dict['Age'] = cbg_age_msa
+    cbg_table_name_dict['Elder_Ratio'] = cbg_age_msa
     cbg_table_name_dict['Mean_Household_Income'] = cbg_income_msa
-    cbg_table_name_dict['Essential_Worker'] = cbg_occupation_msa
-    cbg_table_name_dict['Hybrid'] = cbg_age_msa # randomly choose one. it doesn't matter.
+    cbg_table_name_dict['EW_Ratio'] = cbg_occupation_msa
+    cbg_table_name_dict['Minority_Ratio'] = cbg_minority_msa
 
     gini_df = pd.DataFrame(columns=pd.MultiIndex.from_tuples([('All','deaths_total_abs'),('All','deaths_total_rel')]))
     gini_df['Policy'] = policy_list
@@ -272,7 +268,7 @@ MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
 poi_areas = d['feet'].values#面积
-poi_dwell_times = new_d['median'].values#平均逗留时间
+poi_dwell_times = d['median'].values#平均逗留时间
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 
@@ -282,7 +278,7 @@ acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
 msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
 msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
-good_list = list(msa_data['FIPS Code'].values); #print('Counties included: ', good_list)
+good_list = list(msa_data['FIPS Code'].values) #;print('Counties included: ', good_list)
 del acs_data
 
 # Load CBG ids for the MSA
@@ -312,18 +308,15 @@ for i in x:
     if((len(i)==12) & (int(i[0:5])in good_list)):
         y.append(x[i])
     if((len(i)==11) & (int(i[0:4])in good_list)):
-        y.append(x[i])
-        
-idxs_msa_all = list(x.values())
-idxs_msa_nyt = y
-#print('Number of CBGs in this metro area:', len(idxs_msa_all))
-#print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
+        y.append(x[i])   
+idxs_msa_all = list(x.values()) #; print('Number of CBGs in this metro area:', len(idxs_msa_all))
+idxs_msa_nyt = y #; print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
 
 # Load other Safegraph demographic data, and perform grouping
 if('Age' in demo_policy_to_compare):
     # Grouping
     separators = functions.get_separators(cbg_age_msa, args.num_groups, 'Elder_Ratio','Sum', normalized=True)
-    cbg_age_msa['Age_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+    cbg_age_msa['Elder_Ratio_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
     
 if('Occupation' in demo_policy_to_compare):
     filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
@@ -358,14 +351,16 @@ if('Income' in demo_policy_to_compare):
     elif(not args.consider_hesitancy):
         vaccine_acceptance = np.ones(len(cbg_sizes)) # fully accepted scenario
 
+    
 if('Minority' in demo_policy_to_compare): #20220305
     filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
     cbg_ethnic = pd.read_csv(filepath)
-    cbg_ethnic_msa = load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes)f
+    cbg_ethnic_msa = functions.load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes)
     del cbg_ethnic
     # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
     separators = functions.get_separators(cbg_ethnic_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=False)
     cbg_ethnic_msa['Minority_Ratio_Quantile'] =  cbg_ethnic_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+    cbg_minority_msa = cbg_ethnic_msa
 
 ###############################################################################
 # Load results of other policies for comparison
@@ -377,66 +372,71 @@ print('subroot: ', subroot)
 # Preprocessing: from history_D2_xxx to final_deaths_xxx #20220306 # Obtain from make_gini_table.py
 
 file_name_dict = {'baseline': 'baseline',
-                'age': 'age_flood', 
-                'age_reverse': 'age_flood', 
-                'income': 'income_flood',
-                'income_reverse': 'income_flood', 
-                'occupation': 'jue_ew_flood',
-                'occupation_reverse': 'jue_ew_flood'
-                }
+                  'age': 'age_flood', 
+                  'age_reverse': 'age_flood', 
+                  'income': 'income_flood',
+                  'income_reverse': 'income_flood', 
+                  'occupation': 'jue_ew_flood',
+                  'occupation_reverse': 'jue_ew_flood'
+                  }
 
 for policy in policy_to_compare_rel_to_no_vaccination:
     print(policy)
     policy = policy.lower()
 
-    final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
-        if(os.path.exists(final_deaths_result_path)):
-            print('Final deaths file already exists.')
-            exec(f'final_deaths_{policy} = np.fromfile(\'{final_deaths_result_path}\')')
-            exec(f'final_deaths_{policy} = np.reshape(final_deaths_{policy},(args.num_seeds,M))')   
-        else: # Generate final_deaths_xx files
-            if policy in ['minority', 'minority_reverse']:
-                history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
-            elif(policy=='no_vaccination'):
-                history_D2_result_path = os.path.join(root,this_msa,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
-            #elif(policy=='baseline'):
-            #    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
-            else:
-                #history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
-                if('reverse' not in policy):
-                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
-                else:
-                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
-            exec(f'history_D2_{policy} = np.fromfile(\'{history_D2_result_path}\')')
-            exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,args.num_seeds,M))')   
-            exec(f'final_deaths_{policy} = np.array(history_D2_{policy}[-1,:,:])')
-            exec(f'final_deaths_{policy}.tofile(final_deaths_result_path)')
-            print(f'Final deaths file saved? {os.path.exists(final_deaths_result_path)}')
-        exec(f'avg_final_deaths_{policy} = final_deaths_{policy}.mean(axis=0)')
-
-    '''
-    if(policy=='no_vaccination'):
-        history_D2_no_vaccination = np.fromfile(os.path.join(root,args.msa_name, 'vaccination_results_adaptive_31d_0.1_0.01',
-                                                            '20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%args.msa_name))
-        history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,NUM_SEEDS,M))
+    if((policy in ['minority', 'minority_reverse']) & (args.vaccination_ratio == 0.4)):
+        final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}_30seeds_{args.msa_name}')
+    if((policy in ['minority', 'minority_reverse']) & (args.vaccination_ratio == 0.56)):
+        final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_0.056', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_0.056_30seeds_{args.msa_name}')
     else:
-        exec('history_D2_%s = np.fromfile(os.path.join(root,args.msa_name,subroot,\'test_history_D2_%s_adaptive_%sd_%s_%s_30seeds_%s\'))' 
-            %(policy,policy,str(args.vaccination_time),args.vaccination_ratio,recheck_interval_others,args.msa_name))
-        if(len(eval('history_D2_%s'%policy))==(2*63*NUM_SEEDS*M)):
-            print('Get rid of history_C2.')
-            exec('history_D2_%s = np.array(np.reshape(history_D2_%s,(2,63,NUM_SEEDS,M)))[1,:,:,:].squeeze()' % (policy,policy))
-            # Save back results
-            exec('np.array(history_D2_%s).tofile(os.path.join(root,args.msa_name,subroot,\'test_history_D2_%s_adaptive_%sd_%s_%s_30seeds_%s\'))' 
-            %(policy,policy,str(args.vaccination_time),args.vaccination_ratio,recheck_interval_others,args.msa_name))
-        elif(len(eval('history_D2_%s'%policy))==(63*NUM_SEEDS*M)):
-            #print('No need to get rid of history_C2.')
-            exec('history_D2_%s = np.reshape(history_D2_%s,(63,NUM_SEEDS,M))'%(policy,policy))
+        final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}')
+    
+    if(os.path.exists(final_deaths_result_path)):
+        print('Final deaths file already exists.')
+        exec(f'final_deaths_{policy} = np.fromfile(\'{final_deaths_result_path}\')')
+        exec(f'final_deaths_{policy} = np.reshape(final_deaths_{policy},(NUM_SEEDS,M))')   
+    else: # Generate final_deaths_xx files
+        if policy in ['minority', 'minority_reverse']:
+            if(args.vaccination_ratio in [0.03,0.05,0.08,0.1,0.13,0.15,0.18,0.2]):
+                exact_name = f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}'
+                history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}', exact_name)
+            elif(args.vaccination_ratio in [0.4,0.56]):
+                exact_name = f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}_30seeds_{args.msa_name}'
+                history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}', exact_name)
+        elif(policy=='no_vaccination'):
+            history_D2_result_path = os.path.join(root,args.msa_name,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{args.msa_name}')
+        #elif(policy=='baseline'):
+        #    history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}') #20220304
         else:
-            print('Something wrong with the file for policy: %s. Please check.' %(policy))
-    '''
+            #history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}') #20220304
+            if('reverse' not in policy):
+                if(args.vaccination_time==31):
+                    if(args.vaccination_ratio in [0.05,0.1,0.15,0.2]):
+                        exact_name = f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}'
+                    elif(args.vaccination_ratio in [0.03,0.08,0.13,0.18]):
+                        exact_name = f'history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220304
+                    elif(args.vaccination_ratio in [0.4,0.56]):
+                        exact_name = f'test_history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220304
+                else:
+                    if(args.vaccination_time in [26,36,41]):
+                        exact_name = f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220306
+                    elif(args.vaccination_time in [24,29,34,39]):
+                        exact_name = f'history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220306
+                history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', exact_name) #20220307
+            else:
+                history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}') #20220304
+            
+        exec(f'history_D2_{policy} = np.fromfile(\'{history_D2_result_path}\')')
+        exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,NUM_SEEDS,M))')   
+        exec(f'final_deaths_{policy} = np.array(history_D2_{policy}[-1,:,:])')
+        exec(f'final_deaths_{policy}.tofile(final_deaths_result_path)')
+        print(f'Final deaths file saved? {os.path.exists(final_deaths_result_path)}')
+    exec(f'avg_final_deaths_{policy} = final_deaths_{policy}.mean(axis=0)')
+
+
         
 # Add simulation results to grouping tables
-for policy in policy_to_compare:
+for policy in policy_to_compare_rel_to_no_vaccination:
     exec(f"cbg_age_msa['Final_Deaths_{policy}'] = avg_final_deaths_{policy.lower()}")
     exec(f"cbg_income_msa['Final_Deaths_{policy}'] = avg_final_deaths_{policy.lower()}")
     exec(f"cbg_occupation_msa['Final_Deaths_{policy}'] = avg_final_deaths_{policy.lower()}")
@@ -457,27 +457,22 @@ print('Gini table of all the other policies (relative to baseline): \n', gini_ta
 
 
 # Best results from other polices  
+'''
 lowest_death_rate = float(gini_table_no_vac.iloc[0].min())
 lowest_age_gini = float(gini_table_no_vac.iloc[2].min())
 lowest_income_gini = float(gini_table_no_vac.iloc[4].min())
 lowest_occupation_gini = float(gini_table_no_vac.iloc[6].min())
+lowest_minority_gini = float(gini_table_no_vac.iloc[8].min())
+'''
 
 # No_Vaccination results
 data_column = gini_table_no_vac['No_Vaccination']
 no_vaccination_death_rate, no_vaccination_age_gini, no_vaccination_income_gini, no_vaccination_occupation_gini, no_vaccination_minority_gini = get_results_from_data_column(data_column) #20220306
-'''no_vaccination_death_rate = float(data_column.iloc[0])
-no_vaccination_age_gini = float(data_column.iloc[2])
-no_vaccination_income_gini = float(data_column.iloc[4])
-no_vaccination_occupation_gini = float(data_column.iloc[6])'''
 #print(no_vaccination_death_rate,no_vaccination_age_gini,no_vaccination_income_gini,no_vaccination_occupation_gini)
 
 # Baseline results
 data_column = gini_table_no_vac['Baseline']
 baseline_death_rate, baseline_age_gini, baseline_income_gini, baseline_occupation_gini, baseline_minority_gini = get_results_from_data_column(data_column) #20220306
-'''baseline_death_rate = float(data_column.iloc[0])
-baseline_age_gini = float(data_column.iloc[2])
-baseline_income_gini = float(data_column.iloc[4])
-baseline_occupation_gini = float(data_column.iloc[6])'''
 #print(baseline_death_rate,baseline_age_gini,baseline_income_gini,baseline_occupation_gini)
 
 # target: better of No_Vaccination and Baseline
@@ -485,7 +480,7 @@ target_death_rate = min(baseline_death_rate, no_vaccination_death_rate)
 target_age_gini = min(baseline_age_gini, no_vaccination_age_gini)
 target_income_gini = min(baseline_income_gini, no_vaccination_income_gini)
 target_occupation_gini = min(baseline_occupation_gini, no_vaccination_occupation_gini)
-
+target_minority_gini = min(baseline_minority_gini, no_vaccination_minority_gini) #20220306
 
 # Overall performance, relative to Baseline # 20211020
 baseline_overall_performance = 0
@@ -505,7 +500,6 @@ print('income_overall_performance: ', income_overall_performance)
 print('occupation_overall_performance: ', occupation_overall_performance)
 print('target_overall_performance: ', target_overall_performance)
 
-
 ###############################################################################
 # Load and scale age-aware CBG-specific attack/death rates (original)
 
@@ -517,7 +511,7 @@ cbg_death_rates_scaled = cbg_death_rates_original * constants.death_scale_dict[a
 cbg_age_msa['Death_Rate'] =  cbg_death_rates_scaled
 
 # Obtain vulnerability and damage, according to theoretical analysis
-cbg_age_msa = functions.obtain_vulner_damage(cbg_age_msa, args.msa_name, root)
+cbg_age_msa = functions.obtain_vulner_damage(cbg_age_msa, args.msa_name, root, M, idxs_msa_all, idxs_msa_nyt, cbg_death_rates_scaled)
 
 # Construct cbg_hybrid_msa
 columns_of_interest = ['census_block_group','Sum']
@@ -535,16 +529,18 @@ cbg_hybrid_msa['Most_Vulnerable'] = 1
 ###############################################################################
 # Start autosearching
 
+start = time.time()
+
 cnames=["Age", "Income", "Occupation", "Vulner", "Damage", "Minority"]
 criteria = [MIN, MIN, MIN, MIN, MIN, MIN] # Initial weights are input by user. [1,1,1,1,1,1]
 
 num_better_history = 0
 refine_mode = False # First-round search
-refine_threshold = 6 #0#6 
+refine_threshold = 0 #6 #0
 first_time = True
 while(True):
     # if in refine_mode, how to adjust weights
-    if(refine_mode==True):
+    if(refine_mode):
         print('refine_count: ', refine_count)
         if(refine_count<int(0.5*refine_threshold)):
             w1 = round((w1 * 1.1), 1)
@@ -556,22 +552,27 @@ while(True):
                 w1 = refine_w[0]
                 w2 = refine_w[1]
                 w3 = refine_w[2]
+                w6 = refine_w[5]
             w1 = round((w1 * 0.9), 1)
             w2 = round((w2 * 0.9), 1)
             w3 = round((w3 * 0.9), 1)
+            w6 = round((w6 * 0.9), 1)
         weights = [w1,w2,w3,w4,w5,w6]    
     print('\nWeights:',weights)
 
     # path to save comprehensive result
-    subroot = f'vac_results_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}' #20220306
+    subroot = f'comprehensive/vac_results_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}' #20220306
     if not os.path.exists(os.path.join(saveroot, subroot)): # if folder does not exist, create one. #20220302
         os.makedirs(os.path.join(saveroot, subroot))
     file_savename = os.path.join(saveroot, subroot, f'final_deaths_hybrid_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w4}{w5}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
+    vac_vector_savename = os.path.join(saveroot, subroot, f'vac_vector_hybrid_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w4}{w5}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
+    
     # if file for current weights exists, no need to simulate again                                 
     if(os.path.exists(file_savename)):
         print('Result already exists. No need to simulate. Directly load it. Weights: ', weights)  
         final_deaths_hybrid = np.fromfile(file_savename) #20220306
-        final_deaths_hybrid = np.reshape(final_deaths_hybrid,(args.num_seeds,M))  #20220306
+        final_deaths_hybrid = np.reshape(final_deaths_hybrid,(NUM_SEEDS,M))  #20220306
+        avg_final_deaths_hybrid = np.mean(final_deaths_hybrid, axis=0)
     else: # File not exists, start to simulate
         current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
         cbg_hybrid_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
@@ -645,11 +646,11 @@ while(True):
             current_vector += new_vector
             assert((current_vector<=cbg_sizes).all())
         
-        vaccination_vector_hybrid_flood = current_vector
+        vaccination_vector_hybrid = current_vector
 
         # Run simulations
         final_deaths_hybrid = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                             vaccination_vector=vaccination_vector_hybrid_flood,
+                                             vaccination_vector=vaccination_vector_hybrid,
                                              vaccine_acceptance=vaccine_acceptance,
                                              protection_rate = args.protection_rate)
         avg_final_deaths_hybrid = final_deaths_hybrid.mean(axis=0)
@@ -675,29 +676,15 @@ while(True):
 
     data_column = gini_table_no_vac['Hybrid']
     hybrid_death_rate, hybrid_age_gini, hybrid_income_gini, hybrid_occupation_gini, hybrid_minority_gini = get_results_from_data_column(data_column) #20220306
-    '''hybrid_death_rate = float(data_column.iloc[0])
-    hybrid_age_gini = float(data_column.iloc[2])
-    hybrid_income_gini = float(data_column.iloc[4])
-    hybrid_occupation_gini = float(data_column.iloc[6])'''
     hybrid_overall_performance = get_overall_performance(gini_table_baseline['Hybrid'])
 
     # Compare current results to target results
-    better_utility = (hybrid_death_rate<=(target_death_rate)) # 20211013
-    better_age_gini = (hybrid_age_gini<=(target_age_gini))
-    better_income_gini = (hybrid_income_gini<=(target_income_gini))
-    better_occupation_gini = (hybrid_occupation_gini<=(target_occupation_gini))
-    better_minority_gini = (hybrid_minority_gini<=(target_minority_gini)) #20220306
-    better_overall_performance = (hybrid_overall_performance>=(target_overall_performance)) #20211020
-    
-    #########################################
-    # Compare to target
-    # print('Compare to target:')
-    print('Death rate: ', hybrid_death_rate, target_death_rate, 'Good enough?', better_utility)
-    print('Age gini: ', hybrid_age_gini, target_age_gini, 'Good enough?', better_age_gini)
-    print('Income gini: ', hybrid_income_gini, target_income_gini, 'Good enough?', better_income_gini)
-    print('Occupation gini: ', hybrid_occupation_gini, target_occupation_gini, 'Good enough?', better_occupation_gini)
-    print('Minority gini: ', hybrid_minority_gini, target_minority_gini, 'Good enough?', better_minority_gini) #20220306
-    print('Overall performance: ', hybrid_overall_performance, target_overall_performance,'Good enough?', better_overall_performance)
+    better_utility = (hybrid_death_rate<=(target_death_rate)); print('Death rate: ', hybrid_death_rate, target_death_rate, 'Good enough?', better_utility)
+    better_age_gini = (hybrid_age_gini<=(target_age_gini)); print('Age gini: ', hybrid_age_gini, target_age_gini, 'Good enough?', better_age_gini)
+    better_income_gini = (hybrid_income_gini<=(target_income_gini)); print('Income gini: ', hybrid_income_gini, target_income_gini, 'Good enough?', better_income_gini)
+    better_occupation_gini = (hybrid_occupation_gini<=(target_occupation_gini)); print('Occupation gini: ', hybrid_occupation_gini, target_occupation_gini, 'Good enough?', better_occupation_gini)
+    better_minority_gini = (hybrid_minority_gini<=(target_minority_gini)); print('Minority gini: ', hybrid_minority_gini, target_minority_gini, 'Good enough?', better_minority_gini) #20220306
+    better_overall_performance = (hybrid_overall_performance>=(target_overall_performance)); print('Overall performance: ', hybrid_overall_performance, target_overall_performance,'Good enough?', better_overall_performance)   
     #print('Weights:',weights)
 
     # Compared to best in the history, to determine whether to save this one
@@ -727,7 +714,6 @@ while(True):
         best_hybrid_occupation_gini = hybrid_occupation_gini
         best_hybrid_minority_gini = hybrid_minority_gini #20220306
         best_hybrid_overall_performance = hybrid_overall_performance
-        #history_D2_best_hybrid_flood = history_D2_hybrid_flood.copy()
         final_deaths_best_hybrid = final_deaths_hybrid.copy() #20220306
         first_time = False
 
@@ -736,6 +722,7 @@ while(True):
     print('Age gini: ', hybrid_age_gini, best_hybrid_age_gini, 'Good enough?', (hybrid_age_gini<=best_hybrid_age_gini))
     print('Income gini: ', hybrid_income_gini, best_hybrid_income_gini, 'Good enough?', (hybrid_income_gini<=best_hybrid_income_gini))
     print('Occupation gini: ', hybrid_occupation_gini, best_hybrid_occupation_gini, 'Good enough?', (hybrid_occupation_gini<=best_hybrid_occupation_gini))
+    print('Minority gini: ', hybrid_minority_gini, best_hybrid_minority_gini, 'Good enough?', (hybrid_minority_gini<=best_hybrid_minority_gini))
     print('Overall performance: ', hybrid_overall_performance, best_hybrid_overall_performance,'Good enough?',(hybrid_overall_performance>=best_hybrid_overall_performance))
 
     # Better than history: save it
@@ -745,9 +732,10 @@ while(True):
             print('Result already exists. No need to save.')
         else:
             print('Result will be saved. File name: ', file_savename)
-            np.array(history_D2_hybrid_flood).tofile(file_savename)
+            np.array(final_deaths_hybrid).tofile(file_savename)
+            vaccination_vector_hybrid.tofile(vac_vector_savename)
 
-    # Better than history and really good enough
+    # Better than history and really good 
     if((num_better_now==5)&(better_overall_performance)):
         if(refine_mode==False):
             print('Find a better solution. Weights:',weights)
@@ -756,6 +744,7 @@ while(True):
             else:
                 print('Result will be saved. File name: ', file_savename)
                 np.array(final_deaths_hybrid).tofile(file_savename)
+                vaccination_vector_hybrid.tofile(vac_vector_savename)
             
             refine_mode = True; print('######################Will enter refine_mode next round.######################')
             refine_count = 0
@@ -769,9 +758,8 @@ while(True):
             best_hybrid_minority_gini = hybrid_minority_gini #20220306
             best_hybrid_overall_performance = hybrid_overall_performance
             final_deaths_best_hybrid = final_deaths_hybrid.copy() #20220306
-            #continue
         
-        elif(refine_mode==True):
+        elif(refine_mode):
             #if((hybrid_death_rate<=best_hybrid_death_rate)&(hybrid_age_gini<=best_hybrid_age_gini)
             #    &(hybrid_income_gini<best_hybrid_income_gini)&(hybrid_occupation_gini<best_hybrid_occupation_gini)):   
             if(hybrid_overall_performance>best_hybrid_overall_performance): # 20211020
@@ -780,8 +768,8 @@ while(True):
                     print('Result already exists. No need to save.')
                 else:
                     print('Result will be saved. File name: ', file_savename)
-                    #np.array(history_D2_hybrid_flood).tofile(file_savename)
                     np.array(final_deaths_hybrid).tofile(file_savename)
+                    vaccination_vector_hybrid.tofile(vac_vector_savename)
 
                 best_weights = weights.copy()
                 best_hybrid_death_rate = hybrid_death_rate
@@ -792,7 +780,7 @@ while(True):
                 best_hybrid_overall_performance = hybrid_overall_performance
                 final_deaths_best_hybrid = final_deaths_hybrid.copy() #20220306
                     
-    if(refine_mode==True):
+    if(refine_mode):
         refine_count += 1
         if(refine_count>=refine_threshold):
             break 
@@ -825,6 +813,7 @@ while(True):
         print('New weights:',weights)
 
 print('\nFinal weights: ', best_weights) #weights)
+avg_final_deaths_best_hybrid = avg_final_deaths_hybrid #20220306
 
 ################################################################################################
 # Ablation version
@@ -833,13 +822,13 @@ print('\nFinal weights: ', best_weights) #weights)
 cbg_age_msa['Elder_Ratio_Rank'] = cbg_age_msa['Elder_Ratio'].rank(ascending=False,method='first') 
 cbg_income_msa['Mean_Household_Income_Rank'] = cbg_income_msa['Mean_Household_Income'].rank(ascending=True,method='first') 
 cbg_occupation_msa['EW_Ratio_Rank'] = cbg_occupation_msa['EW_Ratio'].rank(ascending=False,method='first') 
-cbg_minority_msa['Minority_Ratio_Rank'] = cbg_age_msa['Minority_Ratio'].rank(ascending=False,method='first') 
+cbg_minority_msa['Minority_Ratio_Rank'] = cbg_minority_msa['Minority_Ratio'].rank(ascending=False,method='first') 
 
-ablation_weights = best_weights[:3]
-w1 = ablation_weights[0]
-w2 = ablation_weights[1]
-w3 = ablation_weights[2]
-w6 = ablation_weights[5]
+w1 = best_weights[0]
+w2 = best_weights[1]
+w3 = best_weights[2]
+w6 = best_weights[5]
+ablation_weights = [w1,w2,w3,w6]
 weights = [w1,w2,w3,w6]
 print('Ablation version, weights: ', weights)
 
@@ -847,12 +836,14 @@ cnames=["Age", "Income", "Occupation", "Minority"]
 criteria = [MIN, MIN, MIN, MIN]
 
 # path to save comprehensive_ablation result
-file_savename = os.path.join(saveroot, subroot, f'final_deaths_hybrid_ablation_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w4}{w5}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
+file_savename = os.path.join(saveroot, subroot, f'final_deaths_hybrid_ablation_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
+vac_vector_savename = os.path.join(saveroot, subroot, f'vac_vector_hybrid_ablation_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
 # if file for current weights exists, no need to simulate again                                 
 if(os.path.exists(file_savename)):
     print('Result already exists. No need to simulate. Directly load it. Weights: ', weights)  
     final_deaths_hybrid_ablation = np.fromfile(file_savename) #20220306
-    final_deaths_hybrid_ablation = np.reshape(final_deaths_hybrid,(args.num_seeds,M))  #20220306
+    final_deaths_hybrid_ablation = np.reshape(final_deaths_hybrid,(NUM_SEEDS,M))  #20220306
+    avg_final_deaths_hybrid_ablation = np.mean(final_deaths_hybrid_ablation, axis=0)  
 else:
     current_vector = np.zeros(len(cbg_sizes)) # Initially: no vaccines distributed.
     cbg_hybrid_msa['Covered'] = 0 # Initially, no CBG is covered by vaccination.
@@ -881,10 +872,6 @@ else:
         # Grouping
         separators = functions.get_separators(cbg_hybrid_msa, args.num_groups, 'Final_Deaths_Current','Sum', normalized=False)
         cbg_hybrid_msa['Final_Deaths_Current_Quantile'] =  cbg_hybrid_msa['Final_Deaths_Current'].apply(lambda x : functions.assign_group(x, separators))
-        cbg_age_msa['Final_Deaths_Current_Quantile'] =  cbg_hybrid_msa['Final_Deaths_Current_Quantile'].copy()
-        cbg_income_msa['Final_Deaths_Current_Quantile'] =  cbg_hybrid_msa['Final_Deaths_Current_Quantile'].copy()
-        cbg_occupation_msa['Final_Deaths_Current_Quantile'] =  cbg_hybrid_msa['Final_Deaths_Current_Quantile'].copy()
-        cbg_minority_msa['Final_Deaths_Current_Quantile'] =  cbg_hybrid_msa['Final_Deaths_Current_Quantile'].copy()# 20220306
 
         # Generate scores according to each policy in policy_to_combine
         cbg_hybrid_msa['Age_Score'] = cbg_age_msa['Elder_Ratio_Rank'].copy()
@@ -902,8 +889,8 @@ else:
         age_scores = cbg_hybrid_msa.apply(lambda x : x['Age_Score'] if x['Final_Deaths_Current_Quantile']==args.num_groups-1 else (len(cbg_hybrid_msa)+1), axis=1) # 20210709
         income_scores = cbg_hybrid_msa.apply(lambda x : x['Income_Score'] if x['Final_Deaths_Current_Quantile']==args.num_groups-1 else (len(cbg_hybrid_msa)+1), axis=1) # 20210709
         occupation_scores = cbg_hybrid_msa.apply(lambda x : x['Occupation_Score'] if x['Final_Deaths_Current_Quantile']==args.num_groups-1 else (len(cbg_hybrid_msa)+1), axis=1) # 20210709
-        minority_scored = cbg_hybrid_msa.apply(lambda x : x['Minority_Score'] if x['Final_Deaths_Current_Quantile']==args.num_groups-1 else (len(cbg_hybrid_msa)+1), axis=1) # 20220306
-        
+        minority_scores = cbg_hybrid_msa.apply(lambda x : x['Minority_Score'] if x['Final_Deaths_Current_Quantile']==args.num_groups-1 else (len(cbg_hybrid_msa)+1), axis=1) # 20220306
+
         # Normalization
         age_scores += 1; age_scores /= np.max(age_scores)
         income_scores += 1; income_scores /= np.max(income_scores)
@@ -913,7 +900,7 @@ else:
         # Combine the scores according to policy weights, to get the final ranking of CBGs
         cbg_multi_scores = []
         for i in range(M):
-            cbg_multi_scores.append([age_scores[i],income_scores[i],occupation_scores[i]])
+            cbg_multi_scores.append([age_scores[i],income_scores[i],occupation_scores[i],minority_scores[i]])
         data = Data(cbg_multi_scores, criteria, weights=weights, cnames=cnames)
         
         decider = closeness.TOPSIS() 
@@ -934,81 +921,60 @@ else:
         leftover = np.sum(cbg_sizes) * args.recheck_interval + leftover_prev - np.sum(new_vector) 
         current_vector += new_vector
         assert((current_vector<=cbg_sizes).all())
-        #print('Newly distributed vaccines: ', np.sum(new_vector))
-        #print('Leftover: ', leftover)
-        #print('Total Num of distributed vaccines: ', np.sum(current_vector))
         
     vaccination_vector_hybrid_ablation = current_vector
 
     # Run simulations
-    _, history_D2_hybrid_ablation = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+    final_deaths_hybrid_ablation = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
                                                 vaccination_vector=vaccination_vector_hybrid_ablation,
                                                 vaccine_acceptance=vaccine_acceptance,
                                                 protection_rate = args.protection_rate)
-                                                                    
+    avg_final_deaths_hybrid_ablation = np.mean(final_deaths_hybrid_ablation, axis=0)   
+    print('Save hybrid_ablation results. File name: ', file_savename)
+    final_deaths_hybrid_ablation.tofile(file_savename) #20220306        
+
 policy_all = policy_to_compare_rel_to_no_vaccination+['Best_Hybrid']+['Hybrid_Ablation']
 policy_all_no_vaccination = policy_to_compare_rel_to_no_vaccination+['Best_Hybrid']+['Hybrid_Ablation']
 policy_all_baseline = policy_to_compare_rel_to_baseline+['Best_Hybrid']+['Hybrid_Ablation']
 
 # Add simulation results to grouping tables
 for policy in policy_all:
-    exec("history_D2_%s = np.array(history_D2_%s)" % (policy.lower(),policy.lower()))
-    exec("avg_history_D2_%s = np.mean(history_D2_%s,axis=1)" % (policy.lower(),policy.lower()))
-    exec("avg_final_deaths_%s = avg_history_D2_%s[-1,:]" % (policy.lower(),policy.lower()))
-    
-    exec("cbg_age_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-    exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
+    exec(f"cbg_age_msa['Final_Deaths_{policy}'] = avg_final_deaths_{policy.lower()}")
+    exec(f"cbg_income_msa['Final_Deaths_{policy}'] = avg_final_deaths_{policy.lower()}")
+    exec(f"cbg_occupation_msa['Final_Deaths_{policy}'] = avg_final_deaths_{policy.lower()}")
+    exec(f"cbg_minority_msa['Final_Deaths_{policy}'] = avg_final_deaths_{policy.lower()}")
     
 gini_table_no_vac = make_gini_table(policy_list=policy_all_no_vaccination, demo_feat_list=demo_feat_list, num_groups=args.num_groups, 
-                                            rel_to='No_Vaccination', save_path=None, save_result=False)
+                                    rel_to='No_Vaccination', save_path=None, save_result=False)
 gini_table_baseline = make_gini_table(policy_list=policy_all_baseline, demo_feat_list=demo_feat_list, num_groups=args.num_groups, 
                                       rel_to='Baseline', save_path=None, save_result=False)
 print('Gini table of all policies: \n', gini_table_no_vac)
 
 data_column = gini_table_no_vac['Hybrid_Ablation']
-hybrid_ablation_death_rate = float(data_column.iloc[0])
-hybrid_ablation_age_gini = float(data_column.iloc[2])
-hybrid_ablation_income_gini = float(data_column.iloc[4])
-hybrid_ablation_occupation_gini = float(data_column.iloc[6])
+hybrid_ablation_death_rate, hybrid_ablation_age_gini, hybrid_ablation_income_gini, hybrid_ablation_occupation_gini, hybrid_ablation_minority_gini = get_results_from_data_column(data_column) #20220306
 hybrid_ablation_overall_performance = get_overall_performance(data_column)
 
 print('Best weights: ', best_weights)
 print('Ablation weights: ', ablation_weights)
 
 print('###Ablation Compared to Baseline:###')
-print('Death rate: ', hybrid_ablation_death_rate, baseline_death_rate, 
-      'Good enough?', (hybrid_ablation_death_rate<=(baseline_death_rate)))
-print('Age gini: ', hybrid_ablation_age_gini, baseline_age_gini, 
-      'Good enough?', (hybrid_ablation_age_gini<=(baseline_age_gini)))
-print('Income gini: ', hybrid_ablation_income_gini, baseline_income_gini, 
-      'Good enough?', (hybrid_ablation_income_gini<=(baseline_income_gini)))
-print('Occupation gini: ', hybrid_ablation_occupation_gini, baseline_occupation_gini, 
-      'Good enough?', (hybrid_ablation_occupation_gini<=(baseline_occupation_gini)))
-print('Overall performance: ', hybrid_ablation_overall_performance, baseline_overall_performance, 
-      'Good enough?', (hybrid_ablation_overall_performance>=(baseline_overall_performance)))
+print('Death rate: ', hybrid_ablation_death_rate, baseline_death_rate, 'Good enough?', (hybrid_ablation_death_rate<=(baseline_death_rate)))
+print('Age gini: ', hybrid_ablation_age_gini, baseline_age_gini, 'Good enough?', (hybrid_ablation_age_gini<=(baseline_age_gini)))
+print('Income gini: ', hybrid_ablation_income_gini, baseline_income_gini, 'Good enough?', (hybrid_ablation_income_gini<=(baseline_income_gini)))
+print('Occupation gini: ', hybrid_ablation_occupation_gini, baseline_occupation_gini, 'Good enough?', (hybrid_ablation_occupation_gini<=(baseline_occupation_gini)))
+print('Minority gini: ', hybrid_ablation_minority_gini, baseline_minority_gini, 'Good enough?', (hybrid_ablation_minority_gini<=(baseline_minority_gini))) #20220306
+print('Overall performance: ', hybrid_ablation_overall_performance, baseline_overall_performance, 'Good enough?', (hybrid_ablation_overall_performance>=(baseline_overall_performance)))
 
 print('###Ablation Compared to Complete_Hybrid:###')
-print('Death rate: ', hybrid_ablation_death_rate, best_hybrid_death_rate, 
-      'Good enough?', (hybrid_ablation_death_rate<(best_hybrid_death_rate)))
-print('Age gini: ', hybrid_ablation_age_gini, best_hybrid_age_gini, 
-      'Good enough?', (hybrid_ablation_age_gini<(best_hybrid_age_gini)))
-print('Income gini: ', hybrid_ablation_income_gini, best_hybrid_income_gini, 
-      'Good enough?', (hybrid_ablation_income_gini<(best_hybrid_income_gini)))
-print('Occupation gini: ', hybrid_ablation_occupation_gini, best_hybrid_occupation_gini, 
-      'Good enough?', (hybrid_ablation_occupation_gini<(best_hybrid_occupation_gini)))
-print('Overall performance: ', hybrid_ablation_overall_performance, best_hybrid_overall_performance, 
-      'Good enough?', (hybrid_ablation_overall_performance>=(best_hybrid_overall_performance)))
+print('Death rate: ', hybrid_ablation_death_rate, best_hybrid_death_rate, 'Good enough?', (hybrid_ablation_death_rate<(best_hybrid_death_rate)))
+print('Age gini: ', hybrid_ablation_age_gini, best_hybrid_age_gini, 'Good enough?', (hybrid_ablation_age_gini<(best_hybrid_age_gini)))
+print('Income gini: ', hybrid_ablation_income_gini, best_hybrid_income_gini, 'Good enough?', (hybrid_ablation_income_gini<(best_hybrid_income_gini)))
+print('Occupation gini: ', hybrid_ablation_occupation_gini, best_hybrid_occupation_gini, 'Good enough?', (hybrid_ablation_occupation_gini<(best_hybrid_occupation_gini)))
+print('Minority gini: ', hybrid_ablation_minority_gini, best_hybrid_minority_gini, 'Good enough?', (hybrid_ablation_minority_gini<(best_hybrid_minority_gini)))
+print('Overall performance: ', hybrid_ablation_overall_performance, best_hybrid_overall_performance, 'Good enough?', (hybrid_ablation_overall_performance>=(best_hybrid_overall_performance)))
 
-#file_savename = os.path.join(root,args.msa_name,subroot,
-#                             'test_history_D2_adaptive_hybrid_ablation_%sd_%s_%s_%s%s%s_%sseeds_%s'
-#                             % (str(args.vaccination_time),args.vaccination_ratio,args.recheck_interval,w1,w2,w3,NUM_SEEDS,args.msa_name))
-if(os.path.exists(file_savename)):
-    print('Result already exists. No need to save.')
-else:
-    print('Save hybrid_ablation results. File name: ', file_savename)
-    history_D2_hybrid_ablation.tofile(file_savename)
+
 
 end = time.time()
 print('Total time: ', (end-start))
-print('Vaccination ratio:',args.vaccination_ratio,' Vaccination time: ', VACCINATION_TIME)
+print('Vaccination ratio:',args.vaccination_ratio,' Vaccination time: ', args.vaccination_time)
