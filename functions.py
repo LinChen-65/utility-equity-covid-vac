@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import datetime
@@ -503,8 +504,7 @@ def load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes): #20220306
     # Extract cbgs corresponding to the metro area, by merging dataframes
     cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
     cbg_ethnic_msa['Sum'] = cbg_sizes.copy()
-    cbg_ethnic_msa.rename(columns={'B03002e1':'Sum',
-                                   'B03002e2':'NH_Total',
+    cbg_ethnic_msa.rename(columns={'B03002e2':'NH_Total',
                                    'B03002e3':'NH_White',
                                    'B03002e4':'NH_Black',
                                    'B03002e5':'NH_Indian',
@@ -516,8 +516,6 @@ def load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes): #20220306
     cbg_ethnic_msa = cbg_ethnic_msa[columns_of_interest].copy()
     # Deal with NaN values
     cbg_ethnic_msa.fillna(0,inplace=True)
-    # Deal with CBGs with 0 populations
-    cbg_ethnic_msa['Sum'] = cbg_ethnic_msa['Sum'].apply(lambda x : x if x!=0 else 1)
 
     cbg_ethnic_msa['Minority_Absolute'] = cbg_ethnic_msa['NH_White'].copy()
     cbg_ethnic_msa['Minority_Ratio'] = cbg_ethnic_msa['Minority_Absolute'] / cbg_ethnic_msa['Sum']
@@ -541,8 +539,10 @@ def load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes): #20220306
     return cbg_ethnic_msa
 
 
-def obtain_vulner_damage(cbg_age_msa, msa_name, root): #20220306
+def obtain_vulner_damage(cbg_age_msa, msa_name, root, M, idxs_msa_all, idxs_msa_nyt, cbg_death_rates_scaled): #20220306
     '''Obtain vulnerability and damage, according to theoretical analysis.'''
+    
+    cbg_sizes = cbg_age_msa['Sum']
     nyt_included = np.zeros(len(idxs_msa_all))
     for i in range(len(nyt_included)):
         if(i in idxs_msa_nyt):
