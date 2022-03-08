@@ -79,11 +79,6 @@ elif(hostname=='rl4'):
 
 
 # Policies to compare
-'''
-policy_to_compare = ['No_Vaccination','Baseline','Age_Flood', 'Income_Flood','JUE_EW_Flood']
-policy_to_compare_rel_to_no_vaccination = ['No_Vaccination','Baseline','Age_Flood', 'Income_Flood','JUE_EW_Flood']
-policy_to_compare_rel_to_baseline = ['Baseline','No_Vaccination','Age_Flood', 'Income_Flood','JUE_EW_Flood']
-'''
 demo_policy_to_compare = ['Age', 'Income', 'Occupation', 'Minority'] #20220305
 policy_to_compare_rel_to_no_vaccination = ['No_Vaccination','Baseline'] + demo_policy_to_compare
 policy_to_compare_rel_to_baseline = ['Baseline','No_Vaccination'] + demo_policy_to_compare
