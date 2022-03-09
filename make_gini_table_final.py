@@ -1,6 +1,6 @@
 # python make_gini_table --msa_name SanFrancisco --vaccination_time 31 --vaccination_ratio 0.1 --rel_to Baseline
 
-# pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long
+# pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long, unnecessary-semicolon
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
@@ -76,6 +76,9 @@ elif(args.rel_to=='Baseline'):
     policy_list = ['Baseline','No_Vaccination'] + demo_policy_list
 else:
     print('Invalid args.rel_to.')
+
+if(args.vaccination_ratio==0.56): #20220308
+    policy_list.append('Real_Scaled')
 print('policy list:', policy_list)    
 
 # Recheck interval for other strategies #20220306
@@ -299,6 +302,7 @@ for this_msa in msa_name_list:
                       'svi':'svi', #20220307
                       'hybrid':'hybrid', #20220307
                       'hybrid_ablation':'hybrid_ablation', #20220307
+                      'real_scaled': 'real_scaled', #20220308
                       }
 
     for policy in policy_list:
@@ -318,8 +322,11 @@ for this_msa in msa_name_list:
                 this_recheck_interval = 0.056
             else:
                 this_recheck_interval = 0.01
-            list_glob = glob.glob(os.path.join(saveroot, f'comprehensive/vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}_*_30seeds_{this_msa}'))
+            #print(os.path.join(saveroot, f'comprehensive/vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}_*_30seeds_{this_msa}'))
+            #pdb.set_trace()
+            list_glob = glob.glob(os.path.join(saveroot, f'comprehensive/vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}_*_30seeds_{this_msa}'))
             final_deaths_result_path = list_glob[0]
+            
         else:
             final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
         
@@ -338,7 +345,12 @@ for this_msa in msa_name_list:
             elif(policy=='no_vaccination'):
                 history_D2_result_path = os.path.join(root,this_msa,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
             elif(policy=='svi'): #20220307
-                history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', f'history_D2_{file_name_dict[policy]}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_30seeds_{this_msa}') #20220307                       
+                if(args.vaccination_ratio in [0.4,0.56]):
+                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220308   
+                else:
+                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', f'history_D2_{file_name_dict[policy]}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_30seeds_{this_msa}') #20220307 
+            elif(policy=='real_scaled'): #202203038
+                history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220308   
             else:
                 if('reverse' not in policy):
                     if(args.vaccination_time==31):
@@ -387,9 +399,9 @@ for this_msa in msa_name_list:
     print('Any NaN in cbg_ethnic_msa?', cbg_ethnic_msa.isnull().any().any()) #20220225
 
     if(args.with_comprehensive): #20220307
-        save_path = os.path.join(saveroot, f'gini_table/gini_table_comprehensive_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
+        save_path = os.path.join(saveroot, f'gini_table/gini_table_comprehensive_{str(args.vaccination_time)}_{args.vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
     else:
-        save_path = os.path.join(saveroot, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
+        save_path = os.path.join(saveroot, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
     print('save_path: ',save_path)
 
     gini_df = make_gini_table(policy_list, demo_feat_list, save_result=True, save_path=save_path)
