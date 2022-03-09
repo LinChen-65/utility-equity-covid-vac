@@ -380,8 +380,8 @@ for policy in policy_to_compare_rel_to_no_vaccination:
     policy = policy.lower()
 
     if((policy in ['minority', 'minority_reverse']) & (args.vaccination_ratio == 0.4)):
-        final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}_30seeds_{args.msa_name}')
-    if((policy in ['minority', 'minority_reverse']) & (args.vaccination_ratio == 0.56)):
+        final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_0.04', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_0.04_30seeds_{args.msa_name}')
+    elif((policy in ['minority', 'minority_reverse']) & (args.vaccination_ratio == 0.56)):
         final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_0.056', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_0.056_30seeds_{args.msa_name}')
     else:
         final_deaths_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}')

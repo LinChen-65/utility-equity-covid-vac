@@ -1,6 +1,6 @@
 # python plot_comprehensive_utility_equity.py
 
-# pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements
+# pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
@@ -50,25 +50,78 @@ recheck_interval_others = 0.01
 
 policy_list = ['No_Vaccination', 'Baseline', 'Age', 'Income', 'Occupation', 'Minority', 'SVI', 'Hybrid', 'Hybrid_Ablation']
 msa_name_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami', 'Philadelphia', 'SanFrancisco', 'WashingtonDC']
+msa_pop_list = [7191638, 10140946,8895355,7263757,15859681,6635035,6727280,5018570,7536060]
+num_msas = len(msa_name_list)
 
 # Drawing settings
 anno_list = ['Atlanta','Chicago','Dallas','Houston','L.A.','Miami','Phila.','S.F.','D.C.']
-color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum']
+#color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum'] #原
+color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum', '#FF8C00']
+#color_list = ['#29088A','#FFBF00','#5FB404','#81BEF7', '#FF8C00','grey','plum','#FE2E2E'] #de用的
+###########################################################################################################################
+# Functions
+
+def get_gini_dict(vaccination_time, vaccination_ratio,rel_to,msa_list,root): #20220308
+    '''Load gini tables to construct gini_df_dict'''
+    gini_df_dict = dict()
+    for this_msa in msa_list:
+        filepath = os.path.join(root, 'gini_table', f'gini_table_comprehensive_{str(vaccination_time)}_{vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{rel_to}.csv')
+        gini_df = pd.read_csv(filepath)
+        gini_df.rename(columns={'Unnamed: 0':'Dimension','Unnamed: 1':'Metric'},inplace=True)
+        gini_df_dict[this_msa] = gini_df
+    return gini_df_dict
+
+
+def get_l1_norm(data_column):
+    '''get l1 norm'''
+    return -(data_column.iloc[1]+data_column.iloc[3]+data_column.iloc[5]+data_column.iloc[7]+data_column.iloc[9])
+
+
+def get_overall_performance(gini_df_dict,  with_real_scaled=False):
+    baseline_l1_norm = np.zeros(num_msas); 
+    age_l1_norm = np.zeros(num_msas); income_l1_norm = np.zeros(num_msas); occupation_l1_norm = np.zeros(num_msas); minority_l1_norm = np.zeros(num_msas); 
+    hybrid_l1_norm = np.zeros(num_msas); hybrid_ablation_l1_norm = np.zeros(num_msas);svi_l1_norm = np.zeros(num_msas);real_scaled_l1_norm = np.zeros(num_msas);
+
+    for i in range(num_msas):
+        baseline_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Baseline'])
+        age_l1_norm[i] =  get_l1_norm(gini_df_dict[msa_name_list[i]]['Age'])
+        income_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Income'])
+        occupation_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Occupation'])
+        minority_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Minority'])
+        hybrid_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Hybrid'])
+        hybrid_ablation_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'])  
+        svi_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['SVI'])
+        if(with_real_scaled):
+            real_scaled_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Real_Scaled'])
+
+    # Weighted average results for all MSAs
+    avg_baseline_l1_norm = np.average(baseline_l1_norm,weights=msa_pop_list)
+    avg_age_l1_norm = np.average(age_l1_norm,weights=msa_pop_list)
+    avg_income_l1_norm = np.average(income_l1_norm,weights=msa_pop_list)
+    avg_occupation_l1_norm = np.average(occupation_l1_norm,weights=msa_pop_list)
+    avg_minority_l1_norm = np.average(minority_l1_norm,weights=msa_pop_list) #20220308
+    avg_hybrid_l1_norm = np.average(hybrid_l1_norm,weights=msa_pop_list)
+    avg_hybrid_ablation_l1_norm = np.average(hybrid_ablation_l1_norm,weights=msa_pop_list)
+    avg_svi_l1_norm = np.average(svi_l1_norm,weights=msa_pop_list)
+    results = [avg_baseline_l1_norm,avg_age_l1_norm,avg_income_l1_norm,avg_occupation_l1_norm,avg_minority_l1_norm,
+                avg_svi_l1_norm,avg_hybrid_ablation_l1_norm,avg_hybrid_l1_norm]
+    anno_list = ['Homogeneous','Prioritize by age','Prioritize by income','Prioritize by occupation','Prioritize by minority',
+                 'SVI-informed','Comprehensive-ablation', 'Comprehensive']
+    color_list = ['#29088A','#FFBF00','#5FB404','#81BEF7', '#FF8C00',
+                  'grey','plum','#FE2E2E']
+    if(with_real_scaled):
+        avg_real_scaled_l1_norm = np.average(real_scaled_l1_norm,weights=msa_pop_list)
+        results.append(avg_real_scaled_l1_norm)
+        anno_list.append('Real-world')
+        color_list.append('fuchsia')
+
+    return results,anno_list,color_list
 
 ###########################################################################################################################
-# Load gini tables
+# Load gini tables to construct gini_df_dict
 
-gini_df_dict = dict()
-for this_msa in msa_name_list:
-    print(this_msa)
-    filepath = os.path.join(root, 'gini_table', f'gini_table_comprehensive_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2No_Vaccination.csv')
-    gini_df = pd.read_csv(filepath)
-    gini_df.rename(columns={'Unnamed: 0':'Dimension','Unnamed: 1':'Metric'},inplace=True)
-    gini_df_dict[this_msa] = gini_df
-
-num_msas = len(gini_df_dict)
-msa_list = list(gini_df_dict.keys())    
-
+gini_df_dict = get_gini_dict(args.vaccination_time, args.vaccination_ratio, args.rel_to, msa_name_list, root)
+# Get util and equi change in each dimension, for each MSA
 baseline_util = np.zeros(num_msas); baseline_equi_age = np.zeros(num_msas); baseline_equi_income = np.zeros(num_msas); baseline_equi_occupation = np.zeros(num_msas); baseline_equi_minority = np.zeros(num_msas)
 age_util = np.zeros(num_msas); age_equi_age = np.zeros(num_msas); age_equi_income = np.zeros(num_msas); age_equi_occupation = np.zeros(num_msas); age_equi_minority = np.zeros(num_msas)
 income_util = np.zeros(num_msas); income_equi_age = np.zeros(num_msas); income_equi_income = np.zeros(num_msas); income_equi_occupation = np.zeros(num_msas); income_equi_minority = np.zeros(num_msas)
@@ -76,55 +129,185 @@ occupation_util = np.zeros(num_msas); occupation_equi_age = np.zeros(num_msas); 
 minority_util = np.zeros(num_msas); minority_equi_age = np.zeros(num_msas); minority_equi_income = np.zeros(num_msas); minority_equi_occupation = np.zeros(num_msas); minority_equi_minority = np.zeros(num_msas)
 hybrid_util = np.zeros(num_msas); hybrid_equi_age = np.zeros(num_msas); hybrid_equi_income = np.zeros(num_msas); hybrid_equi_occupation = np.zeros(num_msas); hybrid_equi_minority = np.zeros(num_msas)
 hybrid_ablation_util = np.zeros(num_msas); hybrid_ablation_equi_age = np.zeros(num_msas); hybrid_ablation_equi_income = np.zeros(num_msas); hybrid_ablation_equi_occupation = np.zeros(num_msas); hybrid_ablation_equi_minority = np.zeros(num_msas)
+svi_util = np.zeros(num_msas); svi_equi_age = np.zeros(num_msas); svi_equi_income = np.zeros(num_msas); svi_equi_occupation = np.zeros(num_msas); svi_equi_minority = np.zeros(num_msas)
+
 for i in range(num_msas):
     # utility
-    baseline_util[i] = -gini_df_dict[msa_list[i]]['Baseline'].iloc[1] 
-    age_util[i] = -gini_df_dict[msa_list[i]]['Age'].iloc[1] 
-    income_util[i] = -gini_df_dict[msa_list[i]]['Income'].iloc[1] 
-    occupation_util[i] = -gini_df_dict[msa_list[i]]['Occupation'].iloc[1] 
-    minority_util[i] = -gini_df_dict[msa_list[i]]['Minority'].iloc[1] 
-    hybrid_util[i] = -gini_df_dict[msa_list[i]]['Hybrid'].iloc[1] 
-    hybrid_ablation_util[i] = -gini_df_dict[msa_list[i]]['Hybrid_Ablation'].iloc[1] 
+    baseline_util[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[1] 
+    age_util[i] = -gini_df_dict[msa_name_list[i]]['Age'].iloc[1] 
+    income_util[i] = -gini_df_dict[msa_name_list[i]]['Income'].iloc[1] 
+    occupation_util[i] = -gini_df_dict[msa_name_list[i]]['Occupation'].iloc[1] 
+    minority_util[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[1] 
+    hybrid_util[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[1] 
+    hybrid_ablation_util[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[1] 
     
     # equity by age
-    baseline_equi_age[i] = -gini_df_dict[msa_list[i]]['Baseline'].iloc[3] 
-    age_equi_age[i] = -gini_df_dict[msa_list[i]]['Age'].iloc[3] 
-    income_equi_age[i] = -gini_df_dict[msa_list[i]]['Income'].iloc[3] 
-    occupation_equi_age[i] = -gini_df_dict[msa_list[i]]['Occupation'].iloc[3] 
-    minority_equi_age[i] = -gini_df_dict[msa_list[i]]['Minority'].iloc[3] 
-    hybrid_equi_age[i] = -gini_df_dict[msa_list[i]]['Hybrid'].iloc[3] 
-    hybrid_ablation_equi_age[i] = -gini_df_dict[msa_list[i]]['Hybrid_Ablation'].iloc[3] 
+    baseline_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[3] 
+    age_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Age'].iloc[3] 
+    income_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Income'].iloc[3] 
+    occupation_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Occupation'].iloc[3] 
+    minority_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[3] 
+    hybrid_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[3] 
+    hybrid_ablation_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[3] 
 
     # equity by income
-    baseline_equi_income[i] = -gini_df_dict[msa_list[i]]['Baseline'].iloc[5] 
-    age_equi_income[i] = -gini_df_dict[msa_list[i]]['Age'].iloc[5] 
-    income_equi_income[i] = -gini_df_dict[msa_list[i]]['Income'].iloc[5] 
-    occupation_equi_income[i] = -gini_df_dict[msa_list[i]]['Occupation'].iloc[5] 
-    minority_equi_income[i] = -gini_df_dict[msa_list[i]]['Minority'].iloc[5] 
-    hybrid_equi_income[i] = -gini_df_dict[msa_list[i]]['Hybrid'].iloc[5] 
-    hybrid_ablation_equi_income[i] = -gini_df_dict[msa_list[i]]['Hybrid_Ablation'].iloc[5] 
+    baseline_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[5] 
+    age_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Age'].iloc[5] 
+    income_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Income'].iloc[5] 
+    occupation_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Occupation'].iloc[5] 
+    minority_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[5] 
+    hybrid_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[5] 
+    hybrid_ablation_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[5] 
 
     # equity by occupation
-    baseline_equi_occupation[i] = -gini_df_dict[msa_list[i]]['Baseline'].iloc[7] 
-    age_equi_occupation[i] = -gini_df_dict[msa_list[i]]['Age'].iloc[7] 
-    income_equi_occupation[i] = -gini_df_dict[msa_list[i]]['Income'].iloc[7] 
-    occupation_equi_occupation[i] = -gini_df_dict[msa_list[i]]['Occupation'].iloc[7] 
-    minority_equi_occupation[i] = -gini_df_dict[msa_list[i]]['Minority'].iloc[7] 
-    hybrid_equi_occupation[i] = -gini_df_dict[msa_list[i]]['Hybrid'].iloc[7] 
-    hybrid_ablation_equi_occupation[i] = -gini_df_dict[msa_list[i]]['Hybrid_Ablation'].iloc[7] 
+    baseline_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[7] 
+    age_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Age'].iloc[7] 
+    income_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Income'].iloc[7] 
+    occupation_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Occupation'].iloc[7] 
+    minority_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[7] 
+    hybrid_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[7] 
+    hybrid_ablation_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[7] 
 
     # equity by minority
-    baseline_equi_minority[i] = -gini_df_dict[msa_list[i]]['Baseline'].iloc[9] 
-    age_equi_minority[i] = -gini_df_dict[msa_list[i]]['Age'].iloc[9] 
-    income_equi_minority[i] = -gini_df_dict[msa_list[i]]['Income'].iloc[9] 
-    occupation_equi_minority[i] = -gini_df_dict[msa_list[i]]['Occupation'].iloc[9] 
-    minority_equi_minority[i] = -gini_df_dict[msa_list[i]]['Minority'].iloc[9] 
-    hybrid_equi_minority[i] = -gini_df_dict[msa_list[i]]['Hybrid'].iloc[9] 
-    hybrid_ablation_equi_minority[i] = -gini_df_dict[msa_list[i]]['Hybrid_Ablation'].iloc[9] 
+    baseline_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[9] 
+    age_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Age'].iloc[9] 
+    income_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Income'].iloc[9] 
+    occupation_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Occupation'].iloc[9] 
+    minority_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[9] 
+    hybrid_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[9] 
+    hybrid_ablation_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[9] 
+    svi_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['SVI'].iloc[9] 
+
 
 ###########################################################################################################################
 # Fig4a: main scenario, radar plot
 
+def get_avg(inputs, weights): #20220308
+    output = []
+    for i in range(len(inputs)):
+        output.append(np.average(inputs[i],weights=weights))
+    return output
+
+def draw_hybrid_policy(vac_ratio, vac_time, savepath, show_axis_label=False, show_legend=False):
+    print('%s%% Vaccinated on Day %s' % (int(vac_ratio*100), vac_time))
+        
+    # Weighted average results for all MSAs
+    avg_hybrid_util, avg_hybrid_equi_age, avg_hybrid_equi_income, avg_hybrid_equi_occupation, avg_hybrid_equi_minority = get_avg([hybrid_util, hybrid_equi_age, hybrid_equi_income,hybrid_equi_occupation,hybrid_equi_minority], weights=msa_pop_list)
+    avg_baseline_util, avg_baseline_equi_age, avg_baseline_equi_income, avg_baseline_equi_occupation, avg_baseline_equi_minority = get_avg([baseline_util, baseline_equi_age, baseline_equi_income, baseline_equi_occupation, baseline_equi_minority], weights=msa_pop_list)
+    avg_age_util, avg_age_equi_age, avg_age_equi_income, avg_age_equi_occupation, avg_age_equi_minority = get_avg([age_util, age_equi_age, age_equi_income, age_equi_occupation, age_equi_minority], weights=msa_pop_list)
+    avg_income_util, avg_income_equi_age, avg_income_equi_income, avg_income_equi_occupation, avg_income_equi_minority = get_avg([income_util, income_equi_age, income_equi_income, income_equi_occupation, income_equi_minority], weights=msa_pop_list)
+    avg_occupation_util, avg_occupation_equi_age, avg_occupation_equi_income, avg_occupation_equi_occupation, avg_occupation_equi_minority = get_avg([occupation_util, occupation_equi_age, occupation_equi_income, occupation_equi_occupation, occupation_equi_minority], weights=msa_pop_list)
+    avg_minority_util, avg_minority_equi_age, avg_minority_equi_income, avg_minority_equi_occupation, avg_minority_equi_minority = get_avg([minority_util, minority_equi_age, minority_equi_income, minority_equi_occupation, minority_equi_minority], weights=msa_pop_list)
+    avg_hybrid_ablation_util, avg_hybrid_ablation_equi_age, avg_hybrid_ablation_equi_income, avg_hybrid_ablation_equi_occupation, avg_hybrid_ablation_equi_minority = get_avg([hybrid_ablation_util, hybrid_ablation_equi_age, hybrid_ablation_equi_income, hybrid_ablation_equi_occupation,hybrid_ablation_equi_minority], weights=msa_pop_list)
+   
+
+    avg_svi_util, avg_svi_equi_age, avg_svi_equi_income, avg_svi_equi_occupation, avg_svi_equi_minority = get_avg([svi_util, svi_equi_age, svi_equi_income, svi_equi_occupation, svi_equi_minority], weights=msa_pop_list)
+    radar_df = pd.DataFrame([[avg_hybrid_util,avg_hybrid_equi_age,avg_hybrid_equi_income,avg_hybrid_equi_occupation,avg_hybrid_equi_minority],
+                            [avg_baseline_util,avg_baseline_equi_age,avg_baseline_equi_income,avg_baseline_equi_occupation,avg_baseline_equi_minority],
+                            [avg_age_util,avg_age_equi_age,avg_age_equi_income,avg_age_equi_occupation,avg_age_equi_minority],
+                            [avg_income_util,avg_income_equi_age,avg_income_equi_income,avg_income_equi_occupation,avg_income_equi_minority],
+                            [avg_occupation_util,avg_occupation_equi_age,avg_occupation_equi_income,avg_occupation_equi_occupation,avg_occupation_equi_minority],
+                            [avg_hybrid_ablation_util,avg_hybrid_ablation_equi_age,avg_hybrid_ablation_equi_income,avg_hybrid_ablation_equi_occupation,avg_hybrid_ablation_equi_minority],
+                            [avg_minority_util,avg_minority_equi_age,avg_minority_equi_income,avg_minority_equi_occupation,avg_minority_equi_minority], #20220308
+                            [avg_svi_util,avg_svi_equi_age,avg_svi_equi_income,avg_svi_equi_occupation,avg_svi_equi_minority],
+                            ],
+                            columns=list(['Utility','Equity-by-age','Equity-by-income','Equity-by-occupation','Equity-by-minority']))
+
+    # Normalization: 按hybrid policy的值做归一化
+    for column in radar_df.columns:
+        radar_df[column] /= radar_df[column].iloc[0]
+
+    # Start plotting
+    # Number of variables we're plotting.
+    num_vars = 5 #4
+    # Split the circle into even parts and save the angles, so we know where to put each axis.
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    # The plot is a circle, so we need to "complete the loop", and append the start value to the end.
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
+    linewidth = 4 #2.5
+    markersize = 15 #10
+    # Retreive the values
+    # Age-Prioritized
+    values = radar_df.loc[2].tolist()
+    values += values[:1]
+    ax.plot(angles, values, color=color_list[1], linewidth=linewidth,label='Prioritize by age',marker='o',markersize=markersize)
+    # Income-Prioritized
+    values = radar_df.loc[3].tolist()
+    values += values[:1]
+    ax.plot(angles, values, color=color_list[2], linewidth=linewidth,label='Prioritize by income',marker='o',markersize=markersize)
+    # Occupation-Prioritized
+    values = radar_df.loc[4].tolist()
+    values += values[:1]
+    ax.plot(angles, values, color=color_list[3], linewidth=linewidth,label='Prioritize by occupation',marker='o',markersize=markersize)
+    # Minority-Priotized #20220308
+    values = radar_df.loc[6].tolist()
+    values += values[:1]
+    ax.plot(angles, values, color=color_list[7], linewidth=linewidth,label='Prioritize by minority',marker='o',markersize=markersize)
+    
+    # SVI
+    values = radar_df.loc[7].tolist()
+    values += values[:1]
+    ax.plot(angles, values, color=color_list[5], linewidth=linewidth,label='SVI (CDC)',marker='o',markersize=markersize)
+
+    # Hybrid_Ablation
+    values = radar_df.loc[5].tolist()
+    values += values[:1]
+    ax.plot(angles, values, color=color_list[6], linewidth=linewidth,label='Comprehensive-ablation',marker='o',markersize=markersize)
+    
+    # Random Baseline
+    values = radar_df.loc[1].tolist()
+    values += values[:1]
+    ax.plot(angles, values, color=color_list[4], linewidth=linewidth,label='Homogeneous',marker='o',markersize=markersize)
+
+    # Hybrid
+    values = radar_df.loc[0].tolist()
+    # The plot is a circle, so we need to "complete the loop", and append the start value to the end.
+    values += values[:1]
+    # Draw the outline of our data.
+    ax.plot(angles, values, color=color_list[0], linewidth=linewidth,label='Comprehensive',marker='o',markersize=markersize)
+
+    ############################################################
+    # Refinement of the graph
+
+    # Fix axis to go in the right order and start at 12 o'clock.
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # Draw axis lines for each angle and label.
+    if(show_axis_label):
+        show_labels = ['Change in\nsocial utility','Change in\nequity-by-\nage','Change in\nequity-by-income','Change in\nequity-by-\noccupation','Change in\nequity-by-\nminority']
+    else:
+        show_labels = []
+    ax.set_thetagrids((np.array(angles) * 180/np.pi)[0:5], show_labels, fontsize=26)
+
+    # Go through labels and adjust alignment based on where it is in the circle.
+    for label, angle in zip(ax.get_xticklabels(), angles):
+        if angle==np.pi: label.set_verticalalignment('top')
+        if angle==0: label.set_verticalalignment('bottom')
+        if angle in (0, np.pi): label.set_horizontalalignment('center')
+        elif 0 < angle < np.pi: label.set_horizontalalignment('left')
+        else: label.set_horizontalalignment('right')
+
+    # Set position of y-labels (0-100) to be in the middle of the first two axes.
+    ax.set_rlabel_position(180 / num_vars)
+    ax.set_rgrids([0,0.2,0.4,0.6,0.8,1.0,1.2], fontsize=18)
+       
+    # Legend
+    if(show_legend):
+        ax.legend(loc='lower center',ncol=2,bbox_to_anchor=(0.5,-1),fontsize=20.5) 
+    # Save the figure
+    plt.savefig(savepath,bbox_inches = 'tight')
+
+vaccination_time = 31
+vaccination_ratio = 0.1    
+rel_to = 'No_Vaccination'
+gini_df_dict = get_gini_dict(vaccination_time, vaccination_ratio,rel_to,msa_name_list,root)
+# Save the figure
+savepath = os.path.join(root, subroot , '0307_fig4a.png')
+draw_hybrid_policy(vaccination_ratio, vaccination_time, show_axis_label=True, show_legend=True, savepath=savepath)
+print(f'Fig4a, figure saved at: {savepath}.')
 
 ###########################################################################################################################
 # Fig4b: main scenario, utility change in each MSA
@@ -223,3 +406,103 @@ plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Fig4c, figure saved at: {savepath}.')
 
 ###########################################################################################################################
+# Fig4d
+
+rel_to = 'Baseline'
+opt = 'rate' 
+
+ratio_time_list = [[0.05,31],[0.1,31],[0.15,31],[0.2,31],[0.4,31],[0.56,31]]
+x_positions = [5,10,15,20,40,56] #x_positions=np.arange(num_scenarios)
+x_ticks_list = []
+for i in range(len(x_positions)):
+    x_ticks_list.append(str(x_positions[i])+'%')
+
+results_dict = dict()
+for i in range(len(ratio_time_list)):
+    vaccination_ratio = ratio_time_list[i][0]
+    vaccination_time = ratio_time_list[i][1]
+    print('%s%% Vaccinated on Day %s' % (int(vaccination_ratio*100), vaccination_time))
+    
+    if(vaccination_ratio==0.56):
+        with_real_scaled = True
+    else:
+        with_real_scaled = False
+    gini_df_dict = get_gini_dict(vaccination_time,vaccination_ratio, rel_to, msa_name_list, root)
+    if(vaccination_ratio==0.56):
+        results, anno_list, color_list = get_overall_performance(gini_df_dict,with_real_scaled=True)
+    else:
+        results, anno_list, color_list = get_overall_performance(gini_df_dict,with_real_scaled=False)
+    results_dict['%s, %s'%(ratio_time_list[i][0],ratio_time_list[i][1])] = results
+
+plt.figure(figsize=(12,3))
+num_scenarios = len(results_dict.keys())
+num_strategies = len(list(results_dict.values())[0])
+for strategy_idx in range(1,num_strategies): #0 is Baseline, we don't plot it
+    strategy_results = []
+    for i in range(num_scenarios):
+        strategy_results.append(results_dict['%s, %s'%(ratio_time_list[i][0],ratio_time_list[i][1])][strategy_idx])
+    plt.plot(x_positions,strategy_results,
+             color=color_list[strategy_idx],label=anno_list[strategy_idx],marker='^',markersize=14,zorder=1+strategy_idx)
+    
+if('0.56, 31' in results_dict.keys()):
+    #pdb.set_trace()
+    plt.scatter(x_positions[-1],results_dict['0.56, 31'][num_strategies],
+                label='Real-world',color=color_list[num_strategies],marker='*',s=220,zorder=50)
+        
+plt.xticks(x_positions,x_ticks_list,fontsize=15)
+plt.legend(bbox_to_anchor=(1.01, 1),fontsize=13)
+plt.ylim(-0.55,1.85)
+plt.xlabel('Scenarios with different vaccination %ss'%opt,fontsize=18)
+plt.ylabel('Overall performance\n(w.r.t. Homogeneous)',fontsize=17)
+
+# Save the figure
+savepath = os.path.join(root, subroot , '0307_fig4d.png')
+plt.savefig(savepath,bbox_inches = 'tight')
+print(f'Fig4d, figure saved at: {savepath}.')
+
+###########################################################################################################################
+# Fig4e
+
+rel_to = 'Baseline'
+ratio_time_list = [[0.1,26],[0.1,31],[0.1,36],[0.1,41]]
+results_dict = dict()
+for i in range(len(ratio_time_list)):
+    vaccination_ratio = ratio_time_list[i][0]
+    vaccination_time = ratio_time_list[i][1]
+    print('%s%% Vaccinated on Day %s' % (int(vaccination_ratio*100), vaccination_time))
+    gini_df_dict = get_gini_dict(vaccination_time,vaccination_ratio, rel_to, msa_name_list, root)
+    results, anno_list, color_list = get_overall_performance(gini_df_dict,with_real_scaled=False)
+    results_dict['%s, %s'%(ratio_time_list[i][0],ratio_time_list[i][1])] = results
+#print(results_dict)
+    
+plt.figure(figsize=(12,3))
+num_scenarios = len(results_dict.keys())
+num_strategies = len(results)
+for strategy_idx in range(1,num_strategies):
+    strategy_results = []
+    for i in range(num_scenarios):
+        strategy_results.append(results_dict['%s, %s'%(ratio_time_list[i][0],ratio_time_list[i][1])][strategy_idx])
+    plt.plot(np.arange(num_scenarios),strategy_results,
+             color=color_list[strategy_idx],label=anno_list[strategy_idx], marker='^',markersize=15)   
+    plt.xticks(np.arange(num_scenarios),results_dict.keys(),fontsize=15)
+    plt.legend(bbox_to_anchor=(1.01, 1),fontsize=14)
+    plt.ylabel('Overall performance\n(w.r.t. Homogeneous)',fontsize=18)
+    plt.xlabel('Scenarios with different vaccination timings (rate, timing)',fontsize=18)
+
+# Save the figure
+savepath = os.path.join(root, subroot , '0307_fig4e.png')
+plt.savefig(savepath,bbox_inches = 'tight')
+print(f'Fig4e, figure saved at: {savepath}.')
+
+###########################################################################################################################
+# Supplementary
+'''
+vaccination_time = 31
+vaccination_ratio = 0.1    
+rel_to = 'No_Vaccination'
+gini_df_dict = get_gini_dict(vaccination_time, vaccination_ratio,rel_to,msa_name_list,root)
+# Save the figure
+savepath = os.path.join(root, subroot , '0307_fig4a.png')
+draw_hybrid_policy(vaccination_ratio, vaccination_time, show_axis_label=True, show_legend=True, savepath=savepath)
+print(f'Fig4a, figure saved at: {savepath}.')
+'''

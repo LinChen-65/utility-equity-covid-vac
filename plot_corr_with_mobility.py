@@ -1,4 +1,4 @@
-# python corr_with_mobility.py --num_groups 50 --colormap hot
+# python plot_corr_with_mobility.py --num_groups 50 --colormap hot
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")

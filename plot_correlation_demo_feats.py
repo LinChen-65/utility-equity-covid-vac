@@ -1,5 +1,5 @@
-# python correlation_demo_feats_new.py NUM_GROUPS colormap
-# python correlation_demo_feats_new.py 50 hot
+# python plot_correlation_demo_feats_new.py NUM_GROUPS colormap
+# python plot_correlation_demo_feats_new.py 50 hot
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
