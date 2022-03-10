@@ -1,6 +1,6 @@
 # python plot_comprehensive_utility_equity.py
 
-# pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name
+# pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name, consider-using-enumerate
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
@@ -188,31 +188,52 @@ def get_avg(inputs, weights): #20220308
         output.append(np.average(inputs[i],weights=weights))
     return output
 
-def draw_hybrid_policy(vac_ratio, vac_time, savepath, show_axis_label=False, show_legend=False):
+
+
+def draw_hybrid_policy(vac_ratio, vac_time, savepath, overall=True, show_axis_label=False, show_legend=False):
     print('%s%% Vaccinated on Day %s' % (int(vac_ratio*100), vac_time))
+    if(overall): # Weighted average results for all MSAs
+        avg_hybrid_util, avg_hybrid_equi_age, avg_hybrid_equi_income, avg_hybrid_equi_occupation, avg_hybrid_equi_minority = get_avg([hybrid_util, hybrid_equi_age, hybrid_equi_income,hybrid_equi_occupation,hybrid_equi_minority], weights=msa_pop_list)
+        avg_baseline_util, avg_baseline_equi_age, avg_baseline_equi_income, avg_baseline_equi_occupation, avg_baseline_equi_minority = get_avg([baseline_util, baseline_equi_age, baseline_equi_income, baseline_equi_occupation, baseline_equi_minority], weights=msa_pop_list)
+        avg_age_util, avg_age_equi_age, avg_age_equi_income, avg_age_equi_occupation, avg_age_equi_minority = get_avg([age_util, age_equi_age, age_equi_income, age_equi_occupation, age_equi_minority], weights=msa_pop_list)
+        avg_income_util, avg_income_equi_age, avg_income_equi_income, avg_income_equi_occupation, avg_income_equi_minority = get_avg([income_util, income_equi_age, income_equi_income, income_equi_occupation, income_equi_minority], weights=msa_pop_list)
+        avg_occupation_util, avg_occupation_equi_age, avg_occupation_equi_income, avg_occupation_equi_occupation, avg_occupation_equi_minority = get_avg([occupation_util, occupation_equi_age, occupation_equi_income, occupation_equi_occupation, occupation_equi_minority], weights=msa_pop_list)
+        avg_minority_util, avg_minority_equi_age, avg_minority_equi_income, avg_minority_equi_occupation, avg_minority_equi_minority = get_avg([minority_util, minority_equi_age, minority_equi_income, minority_equi_occupation, minority_equi_minority], weights=msa_pop_list)
+        avg_hybrid_ablation_util, avg_hybrid_ablation_equi_age, avg_hybrid_ablation_equi_income, avg_hybrid_ablation_equi_occupation, avg_hybrid_ablation_equi_minority = get_avg([hybrid_ablation_util, hybrid_ablation_equi_age, hybrid_ablation_equi_income, hybrid_ablation_equi_occupation,hybrid_ablation_equi_minority], weights=msa_pop_list)
+        avg_svi_util, avg_svi_equi_age, avg_svi_equi_income, avg_svi_equi_occupation, avg_svi_equi_minority = get_avg([svi_util, svi_equi_age, svi_equi_income, svi_equi_occupation, svi_equi_minority], weights=msa_pop_list)
         
-    # Weighted average results for all MSAs
-    avg_hybrid_util, avg_hybrid_equi_age, avg_hybrid_equi_income, avg_hybrid_equi_occupation, avg_hybrid_equi_minority = get_avg([hybrid_util, hybrid_equi_age, hybrid_equi_income,hybrid_equi_occupation,hybrid_equi_minority], weights=msa_pop_list)
-    avg_baseline_util, avg_baseline_equi_age, avg_baseline_equi_income, avg_baseline_equi_occupation, avg_baseline_equi_minority = get_avg([baseline_util, baseline_equi_age, baseline_equi_income, baseline_equi_occupation, baseline_equi_minority], weights=msa_pop_list)
-    avg_age_util, avg_age_equi_age, avg_age_equi_income, avg_age_equi_occupation, avg_age_equi_minority = get_avg([age_util, age_equi_age, age_equi_income, age_equi_occupation, age_equi_minority], weights=msa_pop_list)
-    avg_income_util, avg_income_equi_age, avg_income_equi_income, avg_income_equi_occupation, avg_income_equi_minority = get_avg([income_util, income_equi_age, income_equi_income, income_equi_occupation, income_equi_minority], weights=msa_pop_list)
-    avg_occupation_util, avg_occupation_equi_age, avg_occupation_equi_income, avg_occupation_equi_occupation, avg_occupation_equi_minority = get_avg([occupation_util, occupation_equi_age, occupation_equi_income, occupation_equi_occupation, occupation_equi_minority], weights=msa_pop_list)
-    avg_minority_util, avg_minority_equi_age, avg_minority_equi_income, avg_minority_equi_occupation, avg_minority_equi_minority = get_avg([minority_util, minority_equi_age, minority_equi_income, minority_equi_occupation, minority_equi_minority], weights=msa_pop_list)
-    avg_hybrid_ablation_util, avg_hybrid_ablation_equi_age, avg_hybrid_ablation_equi_income, avg_hybrid_ablation_equi_occupation, avg_hybrid_ablation_equi_minority = get_avg([hybrid_ablation_util, hybrid_ablation_equi_age, hybrid_ablation_equi_income, hybrid_ablation_equi_occupation,hybrid_ablation_equi_minority], weights=msa_pop_list)
-   
+        radar_df = pd.DataFrame([[avg_hybrid_util,avg_hybrid_equi_age,avg_hybrid_equi_income,avg_hybrid_equi_occupation,avg_hybrid_equi_minority],
+                                [avg_baseline_util,avg_baseline_equi_age,avg_baseline_equi_income,avg_baseline_equi_occupation,avg_baseline_equi_minority],
+                                [avg_age_util,avg_age_equi_age,avg_age_equi_income,avg_age_equi_occupation,avg_age_equi_minority],
+                                [avg_income_util,avg_income_equi_age,avg_income_equi_income,avg_income_equi_occupation,avg_income_equi_minority],
+                                [avg_occupation_util,avg_occupation_equi_age,avg_occupation_equi_income,avg_occupation_equi_occupation,avg_occupation_equi_minority],
+                                [avg_hybrid_ablation_util,avg_hybrid_ablation_equi_age,avg_hybrid_ablation_equi_income,avg_hybrid_ablation_equi_occupation,avg_hybrid_ablation_equi_minority],
+                                [avg_minority_util,avg_minority_equi_age,avg_minority_equi_income,avg_minority_equi_occupation,avg_minority_equi_minority], #20220308
+                                [avg_svi_util,avg_svi_equi_age,avg_svi_equi_income,avg_svi_equi_occupation,avg_svi_equi_minority],
+                                ],
+                                columns=list(['Utility','Equity-by-age','Equity-by-income','Equity-by-occupation','Equity-by-minority']))
 
-    avg_svi_util, avg_svi_equi_age, avg_svi_equi_income, avg_svi_equi_occupation, avg_svi_equi_minority = get_avg([svi_util, svi_equi_age, svi_equi_income, svi_equi_occupation, svi_equi_minority], weights=msa_pop_list)
-    radar_df = pd.DataFrame([[avg_hybrid_util,avg_hybrid_equi_age,avg_hybrid_equi_income,avg_hybrid_equi_occupation,avg_hybrid_equi_minority],
-                            [avg_baseline_util,avg_baseline_equi_age,avg_baseline_equi_income,avg_baseline_equi_occupation,avg_baseline_equi_minority],
-                            [avg_age_util,avg_age_equi_age,avg_age_equi_income,avg_age_equi_occupation,avg_age_equi_minority],
-                            [avg_income_util,avg_income_equi_age,avg_income_equi_income,avg_income_equi_occupation,avg_income_equi_minority],
-                            [avg_occupation_util,avg_occupation_equi_age,avg_occupation_equi_income,avg_occupation_equi_occupation,avg_occupation_equi_minority],
-                            [avg_hybrid_ablation_util,avg_hybrid_ablation_equi_age,avg_hybrid_ablation_equi_income,avg_hybrid_ablation_equi_occupation,avg_hybrid_ablation_equi_minority],
-                            [avg_minority_util,avg_minority_equi_age,avg_minority_equi_income,avg_minority_equi_occupation,avg_minority_equi_minority], #20220308
-                            [avg_svi_util,avg_svi_equi_age,avg_svi_equi_income,avg_svi_equi_occupation,avg_svi_equi_minority],
-                            ],
-                            columns=list(['Utility','Equity-by-age','Equity-by-income','Equity-by-occupation','Equity-by-minority']))
+        draw_radar(radar_df, savepath)
 
+    else: # Draw figures for each MSA
+        assert len(savepath)==len(msa_name_list)
+        for i in range(len(msa_name_list)):
+            radar_df = pd.DataFrame([[hybrid_util[i],hybrid_equi_age[i],hybrid_equi_income[i],hybrid_equi_occupation[i],hybrid_equi_minority[i]],
+                                [baseline_util[i],baseline_equi_age[i],baseline_equi_income[i],baseline_equi_occupation[i],baseline_equi_minority[i]],
+                                [age_util[i],age_equi_age[i],age_equi_income[i],age_equi_occupation[i],age_equi_minority[i]],
+                                [income_util[i],income_equi_age[i],income_equi_income[i],income_equi_occupation[i],income_equi_minority[i]],
+                                [occupation_util[i],occupation_equi_age[i],occupation_equi_income[i],occupation_equi_occupation[i],occupation_equi_minority[i]],
+                                [hybrid_ablation_util[i],hybrid_ablation_equi_age[i],hybrid_ablation_equi_income[i],hybrid_ablation_equi_occupation[i],hybrid_ablation_equi_minority[i]],
+                                [minority_util[i],minority_equi_age[i],minority_equi_income[i],minority_equi_occupation[i],minority_equi_minority[i]], #20220308
+                                [svi_util[i],svi_equi_age[i],svi_equi_income[i],svi_equi_occupation[i],svi_equi_minority[i]],
+                                ],
+                                columns=list(['Utility','Equity-by-age','Equity-by-income','Equity-by-occupation','Equity-by-minority']))
+            draw_radar(radar_df, savepath[i])
+
+        
+
+
+def draw_radar(radar_df, savepath, show_axis_label=False, show_legend=False): #20220309
     # Normalization: 按hybrid policy的值做归一化
     for column in radar_df.columns:
         radar_df[column] /= radar_df[column].iloc[0]
@@ -300,13 +321,14 @@ def draw_hybrid_policy(vac_ratio, vac_time, savepath, show_axis_label=False, sho
     # Save the figure
     plt.savefig(savepath,bbox_inches = 'tight')
 
+
 vaccination_time = 31
 vaccination_ratio = 0.1    
 rel_to = 'No_Vaccination'
 gini_df_dict = get_gini_dict(vaccination_time, vaccination_ratio,rel_to,msa_name_list,root)
 # Save the figure
 savepath = os.path.join(root, subroot , '0307_fig4a.png')
-draw_hybrid_policy(vaccination_ratio, vaccination_time, show_axis_label=True, show_legend=True, savepath=savepath)
+draw_hybrid_policy(vaccination_ratio, vaccination_time, overall=True, show_axis_label=True, show_legend=True, savepath=savepath)
 print(f'Fig4a, figure saved at: {savepath}.')
 
 ###########################################################################################################################
@@ -496,13 +518,25 @@ print(f'Fig4e, figure saved at: {savepath}.')
 
 ###########################################################################################################################
 # Supplementary
-'''
-vaccination_time = 31
-vaccination_ratio = 0.1    
+
+color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum', '#FF8C00']
 rel_to = 'No_Vaccination'
-gini_df_dict = get_gini_dict(vaccination_time, vaccination_ratio,rel_to,msa_name_list,root)
-# Save the figure
-savepath = os.path.join(root, subroot , '0307_fig4a.png')
-draw_hybrid_policy(vaccination_ratio, vaccination_time, show_axis_label=True, show_legend=True, savepath=savepath)
-print(f'Fig4a, figure saved at: {savepath}.')
-'''
+# Subsubroot for supplementary figures
+subsubroot = 'sup'
+if not os.path.exists(os.path.join(root, subroot, subsubroot)): # if folder does not exist, create one. #20220309
+    os.makedirs(os.path.join(root, subroot, subsubroot))
+#ratio_time_list = [[0.1,26],[0.1,31],[0.1,36],[0.1,41],[0.1,24],[0.1,29],[0.1,34],[0.1,39],
+#                   [0.05,31],[0.1,31],[0.15,31],[0.2,31],[0.4,31],[0.56,31],[0.03,31],[0.08,31],[0.13,31],[0.18,31]]
+ratio_time_list = [[0.1,26],[0.1,31],[0.1,36],[0.1,41],
+                   [0.05,31],[0.1,31],[0.15,31],[0.2,31],[0.4,31],[0.56,31]]
+
+for i in range(len(ratio_time_list)):
+    vaccination_ratio = ratio_time_list[i][0]
+    vaccination_time = ratio_time_list[i][1] 
+    gini_df_dict = get_gini_dict(vaccination_time, vaccination_ratio,rel_to,msa_name_list,root)
+    savepath_list = []
+    for this_msa in msa_name_list:
+        savepath = os.path.join(root, subroot , subsubroot, f'0309_sup_{vaccination_time}_{vaccination_ratio}_{this_msa}.png')
+        savepath_list.append(savepath)
+    draw_hybrid_policy(vaccination_ratio, vaccination_time, overall=False, show_axis_label=True, show_legend=True, savepath=savepath_list)
+    print(f'Supplementary, figure saved at: {savepath_list}.')
