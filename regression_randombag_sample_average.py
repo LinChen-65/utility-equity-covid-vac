@@ -29,13 +29,14 @@ import pdb
 # Main variables
 
 root = '/data/chenlin/COVID-19/Data'
+saveroot = '/data/chenlin/utility-equity-covid-vac/results'
 
 timestring = '20210206'
 MSA_NAME = sys.argv[1]
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
 print('\nMSA_NAME: ',MSA_NAME)
 
-RANDOM_SEED_LIST = [66,42,5]
+RANDOM_SEED_LIST = [38,39,40] #RANDOM_SEED_LIST = [66,42,5]
 LEN_SEEDS = int(sys.argv[2])
 print('Num of random seeds: ', LEN_SEEDS)
 print('Random seeds: ',RANDOM_SEED_LIST[:LEN_SEEDS])
@@ -335,8 +336,9 @@ final_deaths_no_vaccination = np.sum(avg_final_deaths_no_vaccination)
 NUM_GROUPWISE = 5 
 for i in range(LEN_SEEDS):
     current_seed = RANDOM_SEED_LIST[i]
-    current_results = pd.read_csv(os.path.join(root,'newdamage_group_randombag_vaccination_results_withgini_0.02_%s_%s_%s_%sseeds.csv'
-                                                  %(MSA_NAME,current_seed, NUM_GROUPWISE, NUM_SEEDS)))  
+    #current_results = pd.read_csv(os.path.join(root,'newdamage_group_randombag_vaccination_results_withgini_0.02_%s_%s_%s_%sseeds.csv'
+    #                                              %(MSA_NAME,current_seed, NUM_GROUPWISE, NUM_SEEDS)))  
+    current_results = pd.read_csv(os.path.join(saveroot, 'vac_randombag_results',f'group_randombag_vac_results_0.02_{MSA_NAME}_{current_seed}_{NUM_GROUPWISE}_60seeds.csv'))
     if(i==0):
         randombag_results = pd.DataFrame(current_results)
         print('Check:',len(current_results),len(randombag_results))
@@ -400,14 +402,13 @@ print('Standardized.')
 
 ###############################################################################
 # Sample and regress
-
+'''
 # Regression target
 target_list = ['Fatality_Rate_Rel','Age_Gini_Rel','Income_Gini_Rel','Occupation_Gini_Rel','Minority_Gini_Rel']
 demo_feat_list = ['Avg_Elder_Ratio','Avg_Mean_Household_Income','Avg_EW_Ratio','Avg_Minority_Ratio',
                   'Std_Elder_Ratio','Std_Mean_Household_Income','Std_EW_Ratio','Avg_EW_Ratio']
                   
 # Get averaged params and stds (Ref: https://blog.csdn.net/chongminglun/article/details/104242342)
-'''
 for target in target_list:
     print('\nRegression target: ', target)
     avg_elder_ratio = np.zeros((4,NUM_SAMPLE))
@@ -541,6 +542,8 @@ income_adj_r2_model1 = []
 income_adj_r2_model2 = []
 occupation_adj_r2_model1 = []
 occupation_adj_r2_model2 = []
+minority_adj_r2_model1 = []
+minority_adj_r2_model2 = []
 
 for sample_idx in range(NUM_SAMPLE):
     sample = randombag_results.sample(frac=SAMPLE_FRAC,random_state=sample_idx)
@@ -564,12 +567,12 @@ for sample_idx in range(NUM_SAMPLE):
 
     # Target: 
     #demo_feat_list = ['Avg_Elder_Ratio','Avg_Mean_Household_Income','Avg_EW_Ratio']
-    demo_feat_list = ['Avg_Elder_Ratio','Avg_Mean_Household_Income','Avg_EW_Ratio',#'Avg_Minority_Ratio',
-                      'Std_Elder_Ratio','Std_Mean_Household_Income','Std_EW_Ratio',#'Avg_Minority_Ratio'
+    demo_feat_list = ['Avg_Elder_Ratio','Avg_Mean_Household_Income','Avg_EW_Ratio','Avg_Minority_Ratio',
+                      'Std_Elder_Ratio','Std_Mean_Household_Income','Std_EW_Ratio','Std_Minority_Ratio'
                       ]
 
     # Regression target
-    target_list = ['Fatality_Rate_Rel','Age_Gini_Rel','Income_Gini_Rel','Occupation_Gini_Rel']#,'Minority_Gini_Rel']
+    target_list = ['Fatality_Rate_Rel','Age_Gini_Rel','Income_Gini_Rel','Occupation_Gini_Rel','Minority_Gini_Rel']
 
     for target in target_list:
         #print('Regression target: ', target)
@@ -626,18 +629,6 @@ for sample_idx in range(NUM_SAMPLE):
         reg.fit(X,Y)
         r2 = reg.score(X,Y)
         adjusted_r2_model3 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-        
-        # Regression with demo_feats and inner mechanisms: Vulnerability, Damage
-        '''
-        #mediator_list = ['Avg_Vulnerability','Avg_Damage']
-        mediator_list = ['Avg_Vulnerability','Avg_Damage','Std_Vulnerability','Std_Damage']
-        X = randombag_results[demo_feat_list+mediator_list]
-        print('Independent Variables: ',demo_feat_list+mediator_list)
-        X = sm.add_constant(X) # adding a constant
-        model = sm.OLS(Y, X).fit()
-        predictions = model.predict(X) 
-        print(model.summary())
-        '''
         
         if(target=='Fatality_Rate_Rel'):
             fatality_adj_r2_model1.append(adjusted_r2_model1)
