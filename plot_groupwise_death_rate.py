@@ -12,7 +12,8 @@ import functions
 import pdb
 
 policy_list = ['Age_Agnostic','No_Vaccination']
-demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
+#demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
+demo_feat_list = ['Race']
 NUM_GROUPS = 10
 root = '/data/chenlin/COVID-19/Data'
 saveroot = '/data/chenlin/utility-equity-covid-vac/results/figures'
@@ -90,17 +91,18 @@ def get_avg_upper_lower(result_dict, num_groups): #20220227
     return avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware
     
 
-def plot_groupwise_death_rate(demo_feat, num_groups, alpha, markersize, save_figure, savepath): #20220227
+def plot_groupwise_death_rate(demo_feat, num_groups, alpha, markersize, save_figure, savepath, show_legend=True): #20220227
     demo_feat_label_dict = dict()
-    demo_feat_label_dict['Elder_Ratio'] = 'older adult percentage'
-    demo_feat_label_dict['Mean_Household_Income'] = 'average household income'
-    demo_feat_label_dict['Essential_Worker_Ratio'] = 'essential worker percentage'
-    demo_feat_label_dict['Black_Ratio'] = 'black resident percentage'
-    demo_feat_label_dict['White_Ratio'] = 'white resident percentage'
-    demo_feat_label_dict['Hispanic_Ratio'] = 'Hispanic resident percentage'
-    demo_feat_label_dict['Minority_Ratio'] = 'Minority resident percentage' #20220302
+    demo_feat_label_dict['Elder_Ratio'] = 'Older adult ratio' #percentage #20220309
+    demo_feat_label_dict['Mean_Household_Income'] = 'Average household income'
+    demo_feat_label_dict['Essential_Worker_Ratio'] = 'Essential worker ratio'
+    demo_feat_label_dict['Black_Ratio'] = 'Black resident ratio'
+    demo_feat_label_dict['White_Ratio'] = 'White resident ratio'
+    demo_feat_label_dict['Hispanic_Ratio'] = 'Hispanic resident ratio'
+    demo_feat_label_dict['Minority_Ratio'] = 'Minority ratio' #20220302
     
-    plt.figure(figsize=((9,4)))
+    #plt.figure(figsize=((9,4)))
+    plt.figure(figsize=((8,4))) #20220309
     plt.plot(np.arange(NUM_GROUPS),np.ones(NUM_GROUPS),
             label='SEIR model',marker='o',markersize=markersize,
             color='grey',alpha=0.6,linewidth=3)
@@ -127,11 +129,13 @@ def plot_groupwise_death_rate(demo_feat, num_groups, alpha, markersize, save_fig
 
     x = np.arange(num_groups)
     plt.xticks(x,np.arange(NUM_GROUPS)+1,fontsize=14)
-    plt.legend(fontsize=20,loc='upper center',bbox_to_anchor=(0.56,1))
+    if(show_legend): #20220310
+        plt.legend(fontsize=23,loc='upper center',bbox_to_anchor=(0.56,1.3), ncol=3)
     if(NUM_GROUPS==5):
         plt.xlabel(f'Quintile of {demo_feat_label_dict[demo_feat]}',fontsize=25)
     elif(NUM_GROUPS==10):
-        plt.xlabel(f'Decile of {demo_feat_label_dict[demo_feat]}',fontsize=25)
+        #plt.xlabel(f'Decile of {demo_feat_label_dict[demo_feat]}',fontsize=25)
+        plt.xlabel(f'{demo_feat_label_dict[demo_feat]} (decile)',fontsize=25)
     plt.ylabel('Relative risks', fontsize=25)
 
     if(save_figure):
@@ -209,8 +213,11 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
 return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
 avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
 
-savepath = os.path.join(saveroot, 'groupwise_death_rate_age.png')
-plot_groupwise_death_rate(demo_feat='Elder_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath)
+#savepath = os.path.join(saveroot, 'groupwise_death_rate_age.png')
+savepath = os.path.join(saveroot, 'fig1d_age_withlegend.pdf') #20220309
+plot_groupwise_death_rate(demo_feat='Elder_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=True)
+savepath = os.path.join(saveroot, 'fig1d_age.pdf') #20220309
+plot_groupwise_death_rate(demo_feat='Elder_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
 ################################################################################
 # Predicted disparities among demographic groups, average version, Income
@@ -267,8 +274,9 @@ if('Income' in demo_feat_list):
 
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
-    savepath = os.path.join(saveroot, 'groupwise_death_rate_income.png')
-    plot_groupwise_death_rate(demo_feat='Mean_Household_Income', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath)
+    #savepath = os.path.join(saveroot, 'groupwise_death_rate_income.png')
+    savepath = os.path.join(saveroot, 'fig1d_income.pdf')
+    plot_groupwise_death_rate(demo_feat='Mean_Household_Income', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
 
 ################################################################################
@@ -356,8 +364,9 @@ if('Occupation' in demo_feat_list):
 
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
-    savepath = os.path.join(saveroot, 'groupwise_death_rate_occupation.png')
-    plot_groupwise_death_rate(demo_feat='Essential_Worker_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath)
+    #savepath = os.path.join(saveroot, 'groupwise_death_rate_occupation.png')
+    savepath = os.path.join(saveroot, 'fig1d_occupation.pdf')
+    plot_groupwise_death_rate(demo_feat='Essential_Worker_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
 
 ################################################################################
@@ -461,7 +470,8 @@ if('Race' in demo_feat_list):
 
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
-    savepath = os.path.join(saveroot, 'groupwise_death_rate_minority.png')
-    plot_groupwise_death_rate(demo_feat='Minority_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath)
+    #savepath = os.path.join(saveroot, 'groupwise_death_rate_minority.png')
+    savepath = os.path.join(saveroot, 'fig1d_minority.pdf')
+    plot_groupwise_death_rate(demo_feat='Minority_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
 pdb.set_trace()
