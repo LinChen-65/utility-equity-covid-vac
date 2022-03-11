@@ -56,22 +56,24 @@ def scatter_kde(df, col_x, col_y, savepath, colormap='Spectral_r', print_corr=Fa
     for t in cbar.ax.get_yticklabels():
          t.set_fontsize(13)
     if(col_x=='Elder_Ratio'):
-        label_x = 'Norm. older adult percentage' #'Normalized elderly rate'
+        label_x = 'Older adult ratio' #'Norm. older adult percentage' 
     elif(col_x=='Essential_Worker_Ratio'):
-        label_x = 'Norm. essential worker percentage' #'Normalized essential worker rate'
+        label_x = 'Essential worker ratio' #'Norm. essential worker percentage' 
     elif(col_x=='Mean_Household_Income'):
-        label_x = 'Norm. average household income'
+        label_x = 'Average household income' #'Norm. average household income'
+    elif(col_x=='Minority_Ratio'):
+        label_x = 'Minority ratio' 
     else:
-        label_x = 'Norm. '+col_x
+        label_x = col_x #'Norm. '+col_x
           
     if(col_y=='Mobility'):
-        label_y = 'Norm. per capita mobility'  #'Normalized mobility'  
+        label_y = 'Per capita mobility' #'Norm. per capita mobility'  #'Normalized mobility'  
     else:
-        label_y = 'Norm. '+col_y
-    plt.xlabel(label_x.replace("_", " "),fontsize=19)
-    plt.ylabel(label_y.replace("_", " "),fontsize=19)
-    plt.xticks(fontsize=13)
-    plt.yticks(fontsize=13)
+        label_y = col_y #'Norm. '+col_y
+    plt.xlabel(label_x.replace("_", " "),fontsize=21) #fontsize=19
+    plt.ylabel(label_y.replace("_", " "),fontsize=21) #fontsize=19
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     if(print_corr==True):
         if(corr==None):
             plt.text(0.4, 0.9, 'Corr: %s'%(np.round(df[col_x].corr(df[col_y]), 2)), fontsize=18, transform=ax.transAxes)
@@ -218,6 +220,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
         print('NaN exists in cbg_race_msa. Please check.')
         pdb.set_trace()
     
+    '''
     print(np.round((cbg_race_msa['Minority_Absolute'].sum()) / (cbg_race_msa['Sum'].sum()),3), 
            '\n', np.round(cbg_race_msa['Minority_Ratio'].mean(),3),
            '\n', np.round(cbg_race_msa['Minority_Ratio'].std(),3),
@@ -225,10 +228,11 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
            '\n', np.round(cbg_race_msa['Minority_Ratio'].max(),3), 
            '\n', np.round(cbg_race_msa['Minority_Ratio'].min(),3))
     pdb.set_trace()
+    '''
 
     ###############################################################################
     # Load and scale age-aware CBG-specific attack/death rates (original)
-    '''
+    
     cbg_death_rates_original = np.loadtxt(os.path.join(args.root, MSA_NAME, 'cbg_death_rates_original_'+MSA_NAME))
     cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape) 
     # Fix attack_scale
@@ -237,10 +241,11 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     # Scale death rates
     cbg_death_rates_scaled = cbg_death_rates_original * constants.death_scale_dict[MSA_NAME]
     cbg_age_msa['Death_Rate'] =  cbg_death_rates_scaled
+    
         
     ###############################################################################
     # Obtain vulnerability and damage, according to theoretical analysis
-
+    
     nyt_included = np.zeros(len(idxs_msa_all))
     for i in range(len(nyt_included)):
         if(i in idxs_msa_nyt):
@@ -416,7 +421,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
 
     data = data.append(data_msa, ignore_index=True)
     print('len(data): ',len(data))
-    '''
+    
 
 print('corr_age_mobility_list: ', corr_age_mobility_list, 'Mean: ', np.mean(np.array(corr_age_mobility_list)))
 print('corr_income_mobility_list: ', corr_income_mobility_list, 'Mean: ', np.mean(np.array(corr_income_mobility_list)))
@@ -428,25 +433,29 @@ print('mobility_age_all_msa_array.shape:',mobility_age_all_msa_array.shape)
 data_temp = pd.DataFrame(columns=['Elder_Ratio','Mobility'])
 data_temp['Elder_Ratio'] = elder_ratio_all_msa_array.flatten()
 data_temp['Mobility'] = mobility_age_all_msa_array.flatten()
-savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_age_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_age_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+savepath = os.path.join(args.saveroot, 'fig1e_age.pdf') #20220310
 scatter_kde(data_temp, 'Elder_Ratio', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_age_mobility_list)))
 
 data_temp = pd.DataFrame(columns=['Mean_Household_Income','Mobility'])
 data_temp['Mean_Household_Income'] = income_all_msa_array.flatten()
 data_temp['Mobility'] = mobility_income_all_msa_array.flatten()
-savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_income_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_income_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+savepath = os.path.join(args.saveroot, 'fig1e_income.pdf') #20220310
 scatter_kde(data_temp, 'Mean_Household_Income', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_income_mobility_list)))
 
 data_temp = pd.DataFrame(columns=['Essential_Worker_Ratio','Mobility'])
 data_temp['Essential_Worker_Ratio'] = ew_ratio_all_msa_array.flatten()
 data_temp['Mobility'] = mobility_occupation_all_msa_array.flatten()
-savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_occupation_mobility_filt0.2_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_occupation_mobility_filt0.2_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+savepath = os.path.join(args.saveroot, 'fig1e_occupation.pdf') #20220310
 scatter_kde(data_temp, 'Essential_Worker_Ratio', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_occupation_mobility_list)))
 
 data_temp = pd.DataFrame(columns=['Minority_Ratio','Mobility'])
-data_temp['Minority_Ratio'] = ew_ratio_all_msa_array.flatten()
-data_temp['Mobility'] = mobility_occupation_all_msa_array.flatten()
-savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_minority_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+data_temp['Minority_Ratio'] = minority_ratio_all_msa_array.flatten()
+data_temp['Mobility'] = mobility_minority_all_msa_array.flatten()
+#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_minority_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
+savepath = os.path.join(args.saveroot, 'fig1e_minority.pdf') #20220310
 scatter_kde(data_temp, 'Minority_Ratio', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_minority_mobility_list)))
 
 pdb.set_trace()
