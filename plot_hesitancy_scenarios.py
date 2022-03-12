@@ -11,6 +11,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 import constants
 import functions
@@ -44,11 +45,17 @@ subroot = 'figures'
 if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
     os.makedirs(os.path.join(root, subroot))
 
+'''
 notation_string_list = ['','acceptance_real_', 'access_acceptance_real_','acceptance_cf18_','acceptance_cf13_','acceptance_cf17_']
 anno_list = ['Fully-Accepted','Estimated Hesitancy', 'Hesitancy+Accessibility', 'Hypothetical-1', 'Hypothetical-2', 'Hypothetical-3']
+'''
+notation_string_list = ['','acceptance_new1_', 'access_acceptance_new1_']
+anno_list = ['Fully-Accepted','Estimated Hesitancy', 'Hesitancy+Accessibility']
+
 msa_name_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami', 'Philadelphia', 'SanFrancisco', 'WashingtonDC']
 msa_pop_list = [7191638, 10140946,8895355,7263757,15859681,6635035,6727280,5018570,7536060]
 num_msas = len(msa_name_list)
+color_list = ['#e63946', '#fa7921', '#f4a261', '#348aa7', '#2a9d8f', '#4ecdc4']
 
 
 def get_gini_dict(vaccination_time, vaccination_ratio,notation_string,rel_to,msa_list,root): #20220308
@@ -110,7 +117,8 @@ for notation_string in notation_string_list:
 
 
 # Draw figure
-figsize = (7.5, 4.2)
+#figsize = (7.5, 4.2)
+figsize = (7.5, 3.8)
 
 def draw_boxplot(results,medians,figsize,policy,boxplot=True,show_legend=True): #20220309
     policy = policy.lower()
@@ -118,7 +126,10 @@ def draw_boxplot(results,medians,figsize,policy,boxplot=True,show_legend=True): 
     plt.axhline(0,color='k',linestyle='--')
     num_scenarios = len(results)
     if(boxplot):
-        plt.boxplot(results,widths=0.3) # showfliers=False      
+        #plt.boxplot(results,widths=0.3) # showfliers=False      
+        bp = plt.boxplot(results, widths=0.3, patch_artist=True) #labels=anno_list,
+        
+        [bp['boxes'][i].set(facecolor=color_list[i], alpha=0.7) for i in range(num_scenarios)]
         plt.plot(np.arange(num_scenarios)+1,medians,marker='o',markersize=10)
     else:
         for i in range(num_scenarios):
@@ -126,12 +137,19 @@ def draw_boxplot(results,medians,figsize,policy,boxplot=True,show_legend=True): 
                 plt.scatter(i,results[i][j])
     if(show_legend):
         plt.xticks(np.arange(num_scenarios)+1,anno_list,fontsize=16,rotation=-20,ha='left')
-    plt.xlabel(f'Prioritize by {policy}',fontsize=22)
+    else:
+        #plt.xticks(np.arange(num_scenarios)+1,['','','','','',''],fontsize=16,rotation=-20,ha='left')
+        plt.xticks(np.arange(num_scenarios)+1,['','',''],fontsize=16,rotation=-20,ha='left')
+    if(policy=='minority'):
+        plt.xlabel(f'Prioritize by race-ethnicity',fontsize=22)
+    else:
+        plt.xlabel(f'Prioritize by {policy}',fontsize=22)
     plt.ylabel('Change in social utility',fontsize=21)
+    plt.yticks(fontsize=15)
     # Save the figure
-    savepath = os.path.join(root, subroot , f'0307_fig2c_{policy}.png')
+    savepath = os.path.join(root, subroot , f'fig2b_{policy}.pdf')
     plt.savefig(savepath,bbox_inches = 'tight')
-    print(f'Fig2c_{policy}, figure saved at: {savepath}.')
+    print(f'fig2b_{policy}, figure saved at: {savepath}.')
 
 # Age
 results = []
@@ -139,7 +157,7 @@ medians = []
 for notation_string in notation_string_list:
     results.append(age_util_dict[notation_string])
     medians.append(np.median(age_util_dict[notation_string]))
-draw_boxplot(results,medians,figsize,policy='age',show_legend=True)
+draw_boxplot(results,medians,figsize,policy='age',show_legend=False)
 
 # Income
 results = []
@@ -164,3 +182,13 @@ for notation_string in notation_string_list:
     results.append(minority_util_dict[notation_string])
     medians.append(np.median(minority_util_dict[notation_string]))
 draw_boxplot(results,medians,figsize,policy='minority',show_legend=False)
+
+# Legend
+num_scenarios = len(results)
+plt.figure()
+patches = [mpatches.Patch(color=color_list[i], label="{:s}".format(anno_list[i])) for i in range(num_scenarios) ]
+plt.legend(handles=patches,ncol=2,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
+# Save figure
+savepath = os.path.join(root, 'figures', f'fig2c_legend.pdf')
+plt.savefig(savepath,bbox_inches = 'tight')
+print(f'fig2b_legend, saved at {savepath}')
