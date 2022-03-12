@@ -210,7 +210,7 @@ class Model:
         
         #return T1,L_1,I_1,R_1,self.C2,self.D2, total_affected, history_C2, history_D2, cbg_all_affected
         if(store_history): #20220304
-            return history_C2, history_D2
+            return np.array(history_C2), np.array(history_D2)
         else:
             return np.array(history_C2)[-1,:,:], np.array(history_D2)[-1,:,:]
             #return self.C2, self.D2
