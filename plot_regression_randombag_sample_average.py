@@ -723,7 +723,10 @@ def plot_equity_explained_variance(demo_feat, show_yticks=True):
         plt.yticks(np.arange(9)*step_1-0.5*step_2,empty_list, fontsize=20)  
     #plt.xlim(0,1)
     plt.xticks(fontsize=14) 
-    plt.xlabel(f'Explained variance\nof equity-by-{demo_feat}',fontsize=18)
+    if(demo_feat=='minority'):
+        plt.xlabel(f'Explained variance\nof equity-by-race-ethnicity',fontsize=18)
+    else:
+        plt.xlabel(f'Explained variance\nof equity-by-{demo_feat}',fontsize=18)
     # Save figure
     savepath = os.path.join(saveroot, 'figures', f'fig3c_{demo_feat}.pdf')
     plt.savefig(savepath,bbox_inches = 'tight')
