@@ -57,7 +57,7 @@ minority_util_dict = dict(); minority_equi_dict = dict()
 gini_df_dict = dict()
 for this_msa in constants.MSA_NAME_LIST:
     if(this_msa=='NewYorkCity'):continue
-    filepath = os.path.join(root, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
+    filepath = os.path.join(root, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
     gini_df = pd.read_csv(filepath)
     gini_df.rename(columns={'Unnamed: 0':'Dimension','Unnamed: 1':'Metric'},inplace=True)
     gini_df_dict[this_msa] = gini_df
@@ -160,10 +160,10 @@ plt.xlabel('Prioritize by age',fontsize=25)
 
 # 象限背景填色
 x = (np.arange(22)-10)*0.01
-plt.fill_between(x[:11], 0, ymax, facecolor='orange',alpha=0.15)
-plt.fill_between(x[10:], ymin, 0, facecolor='green',alpha=0.15)
-plt.fill_between(x[:11], ymin, 0, facecolor='blue',alpha=0.15)
-plt.fill_between(x[10:], 0, ymax, facecolor='red',alpha=0.15)
+plt.fill_between(x[:11], 0, ymax, facecolor='orange',alpha=0.2) #alpha=0.15
+plt.fill_between(x[10:], ymin, 0, facecolor='green',alpha=0.2) #alpha=0.15
+plt.fill_between(x[:11], ymin, 0, facecolor='blue',alpha=0.2) #alpha=0.15
+plt.fill_between(x[10:], 0, ymax, facecolor='red',alpha=0.35) #alpha=0.15
 
 #设置图片的边框为不显示
 ax=plt.gca()  #gca:get current axis得到当前轴
@@ -179,7 +179,7 @@ ax.arrow(0, ymax-0.25,0, 0.25,length_includes_head=True,
 t = ax.text(-0.006, ymax, "Equity", ha="center", va="top", rotation=90, size=22)
 
 # Save the figure
-savepath = os.path.join(root, subroot , '0305_fig2a_age.png')
+savepath = os.path.join(root, subroot , 'fig2a_age.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Age, figure saved at: {savepath}.')
 
@@ -227,10 +227,10 @@ plt.xlabel('Prioritize by income',fontsize=25)
 
 # 象限背景填色
 x = (np.arange(32)-15)*0.01
-plt.fill_between(x[:16], 0, ymax, facecolor='orange',alpha=0.15)
-plt.fill_between(x[15:], ymin, 0, facecolor='green',alpha=0.15)
-plt.fill_between(x[:16], ymin, 0, facecolor='blue',alpha=0.15)
-plt.fill_between(x[15:], 0, ymax, facecolor='red',alpha=0.15)
+plt.fill_between(x[:16], 0, ymax, facecolor='orange',alpha=0.2) #alpha=0.15
+plt.fill_between(x[15:], ymin, 0, facecolor='green',alpha=0.2) #alpha=0.15
+plt.fill_between(x[:16], ymin, 0, facecolor='blue',alpha=0.2) #alpha=0.15
+plt.fill_between(x[15:], 0, ymax, facecolor='red',alpha=0.35) #alpha=0.15
 
 #设置图片的边框为不显示
 ax=plt.gca()  #gca:get current axis得到当前轴
@@ -246,7 +246,7 @@ ax.arrow(0, ymax-0.45,0, 0.45,length_includes_head=True,
 t = ax.text(-0.01, ymax, "Equity", ha="center", va="top", rotation=90, size=22)
 
 # Save the figure
-savepath = os.path.join(root, subroot , '0305_fig2a_income.png')
+savepath = os.path.join(root, subroot , 'fig2a_income.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Income, figure saved at: {savepath}.')
 
@@ -293,10 +293,10 @@ plt.xlabel('Prioritize by occupation',fontsize=25)
 
 # 象限背景填色
 x = (np.arange(20)-8)*0.01
-plt.fill_between(x[:9], 0, ymax, facecolor='orange',alpha=0.15)
-plt.fill_between(x[8:], ymin, 0, facecolor='green',alpha=0.15)
-plt.fill_between(x[:9], ymin, 0, facecolor='blue',alpha=0.15)
-plt.fill_between(x[8:], 0, ymax, facecolor='red',alpha=0.15)
+plt.fill_between(x[:9], 0, ymax, facecolor='orange',alpha=0.2) #alpha=0.15
+plt.fill_between(x[8:], ymin, 0, facecolor='green',alpha=0.2) #alpha=0.15
+plt.fill_between(x[:9], ymin, 0, facecolor='blue',alpha=0.2) #alpha=0.15
+plt.fill_between(x[8:], 0, ymax, facecolor='red',alpha=0.35)#alpha=0.15
 
 #设置图片的边框为不显示
 ax=plt.gca()  #gca:get current axis得到当前轴
@@ -312,7 +312,7 @@ ax.arrow(-0.0002, ymax-0.35,0, 0.35,length_includes_head=True,
 t = ax.text(-0.006, ymax, "Equity", ha="center", va="top", rotation=90, size=22)
 
 # Save the figure
-savepath = os.path.join(root, subroot , '0305_fig2a_occupation.png')
+savepath = os.path.join(root, subroot , 'fig2a_occupation.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Occupation, figure saved at: {savepath}.')
 
@@ -346,7 +346,6 @@ adjust_text(texts,
 # Ranges for simulteneously plotting 3 policies
 xmin = -0.09 
 xmax = 0.09 
-pdb.set_trace()
 ymin = -0.6 
 ymax = 0.6 
 
@@ -355,14 +354,14 @@ plt.vlines(0, ymin, ymax, linewidth=0.5, linestyle='dashed')
 plt.xlim(xmin,xmax);plt.ylim(ymin,ymax)
 plt.xticks(fontsize=14);plt.yticks(fontsize=14)
 
-plt.xlabel('Prioritize by minority',fontsize=25)
+plt.xlabel('Prioritize by race-ethnicity',fontsize=25) #'Prioritize by minority' #20220311
 
 # 象限背景填色
 x = (np.arange(20)-9)*0.01
-plt.fill_between(x[:10], 0, ymax, facecolor='orange',alpha=0.15)
-plt.fill_between(x[9:], ymin, 0, facecolor='green',alpha=0.15)
-plt.fill_between(x[:10], ymin, 0, facecolor='blue',alpha=0.15)
-plt.fill_between(x[9:], 0, ymax, facecolor='red',alpha=0.15)
+plt.fill_between(x[:10], 0, ymax, facecolor='orange',alpha=0.2) #alpha=0.15
+plt.fill_between(x[9:], ymin, 0, facecolor='green',alpha=0.2) #alpha=0.15
+plt.fill_between(x[:10], ymin, 0, facecolor='blue',alpha=0.2) #alpha=0.15
+plt.fill_between(x[9:], 0, ymax, facecolor='red',alpha=0.35)#alpha=0.15
 
 #设置图片的边框为不显示
 ax=plt.gca()  #gca:get current axis得到当前轴
@@ -378,6 +377,6 @@ ax.arrow(-0.0002, ymax-0.35,0, 0.35,length_includes_head=True,
 t = ax.text(-0.006, ymax, "Equity", ha="center", va="top", rotation=90, size=22)
 
 # Save the figure
-savepath = os.path.join(root, subroot , '0305_fig2a_minority.png')
+savepath = os.path.join(root, subroot , 'fig2a_minority.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Minority, figure saved at: {savepath}.')
