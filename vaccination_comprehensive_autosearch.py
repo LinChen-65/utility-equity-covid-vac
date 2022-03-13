@@ -13,14 +13,12 @@ import pickle
 import argparse
 import time
 import pdb
-
 from skcriteria import Data, MIN
 from skcriteria.madm import closeness
 
 import constants
 import functions
-
-import disease_model_test
+import disease_model_test as disease_model
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
@@ -56,7 +54,9 @@ parser.add_argument('--w4', type=float, default=1,
 parser.add_argument('--w5', type=float, default=1, 
                     help='Initial weight 5.')     
 parser.add_argument('--w6', type=float, default=1, 
-                    help='Initial weight 6.')                         
+                    help='Initial weight 6.')       
+parser.add_argument('--store_history', default=False, action='store_true',
+                    help='If true, save history_D2 instead of final_deaths.')                                      
 args = parser.parse_args()
 
 print(f'MSA name: {args.msa_name}.')
@@ -119,7 +119,7 @@ recheck_interval_others = 0.01
 # Functions
 
 def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_acceptance,protection_rate=1):
-    m = disease_model_test.Model(starting_seed=starting_seed, #20211013
+    m = disease_model.Model(starting_seed=starting_seed, #20211013
                                  num_seeds=num_seeds,
                                  debug=False,clip_poisson_approximation=True,ipf_final_match='poi',ipf_num_iter=100)
 
@@ -147,8 +147,12 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 
     m.init_endogenous_variables()
 
-    final_cases, final_deaths = m.simulate_disease_spread(no_print=True, store_history=False) #20220304
-    return final_deaths #20220304
+    if(args.store_history): #20220311
+        history_C2, history_D2 = m.simulate_disease_spread(no_print=True, store_history=True)    
+        return history_D2
+    else:
+        final_cases, final_deaths = m.simulate_disease_spread(no_print=True, store_history=False) #20220304
+        return final_deaths #20220304
 
 
 # Analyze results and produce graphs
@@ -561,9 +565,11 @@ while(True):
         os.makedirs(os.path.join(saveroot, subroot))
     file_savename = os.path.join(saveroot, subroot, f'final_deaths_hybrid_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w4}{w5}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
     vac_vector_savename = os.path.join(saveroot, subroot, f'vac_vector_hybrid_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w4}{w5}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
-    
+    if(args.store_history): #20220311
+        history_D2_savename = os.path.join(saveroot, subroot, f'history_D2_hybrid_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{w1}{w2}{w3}{w4}{w5}{w6}_{NUM_SEEDS}seeds_{args.msa_name}')
+
     # if file for current weights exists, no need to simulate again                                 
-    if(os.path.exists(file_savename)):
+    if((not args.store_history) & (os.path.exists(file_savename))):
         print('Result already exists. No need to simulate. Directly load it. Weights: ', weights)  
         final_deaths_hybrid = np.fromfile(file_savename) #20220306
         final_deaths_hybrid = np.reshape(final_deaths_hybrid,(NUM_SEEDS,M))  #20220306
@@ -578,11 +584,15 @@ while(True):
             cbg_hybrid_msa['Vaccination_Vector'] = current_vector
             
             # Run a simulation to estimate death risks at the moment
-            final_deaths_current = run_simulation(starting_seed=STARTING_SEED_CHECKING, 
+            result = run_simulation(starting_seed=STARTING_SEED_CHECKING, 
                                                   num_seeds=NUM_SEEDS_CHECKING, 
                                                   vaccination_vector=current_vector,
                                                   vaccine_acceptance=vaccine_acceptance,
                                                   protection_rate = args.protection_rate)                                                  
+            if(args.store_history): #20220311
+                final_deaths_current = np.array(result)[-1,:,:]
+            else:
+                final_deaths_current = result
             avg_final_deaths_current = final_deaths_current.mean(axis=0)
             
             # Add simulation results to cbg table
@@ -644,11 +654,19 @@ while(True):
         vaccination_vector_hybrid = current_vector
 
         # Run simulations
-        final_deaths_hybrid = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                             vaccination_vector=vaccination_vector_hybrid,
-                                             vaccine_acceptance=vaccine_acceptance,
-                                             protection_rate = args.protection_rate)
-        avg_final_deaths_hybrid = final_deaths_hybrid.mean(axis=0)
+        result = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+                                vaccination_vector=vaccination_vector_hybrid,
+                                vaccine_acceptance=vaccine_acceptance,protection_rate = args.protection_rate)
+        
+        if(args.store_history): #20220311
+            history_D2_hybrid = result
+            history_D2_hybrid.tofile(history_D2_savename)
+            vaccination_vector_hybrid.tofile(vac_vector_savename)
+            print(f'history_D2 saved at: {history_D2_savename}')
+            break
+        else:
+            final_deaths_hybrid = result
+            avg_final_deaths_hybrid = final_deaths_hybrid.mean(axis=0)
 
     # Obtain the utility and equity of the hybrid policy
     # Check whether the hybrid policy is good enough
@@ -701,7 +719,7 @@ while(True):
     # Compare to current best
     # If this is the first time we simulate, there are no existing best_xxx, 
     # so directly assign them current hybrid values. 
-    if(first_time == True):
+    if(first_time):
         best_weights = weights.copy()
         best_hybrid_death_rate = hybrid_death_rate
         best_hybrid_age_gini = hybrid_age_gini
