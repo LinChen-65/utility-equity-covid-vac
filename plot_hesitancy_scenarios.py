@@ -45,13 +45,13 @@ subroot = 'figures'
 if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
     os.makedirs(os.path.join(root, subroot))
 
-'''
+
 notation_string_list = ['','acceptance_real_', 'access_acceptance_real_','acceptance_cf18_','acceptance_cf13_','acceptance_cf17_']
 anno_list = ['Fully-Accepted','Estimated Hesitancy', 'Hesitancy+Accessibility', 'Hypothetical-1', 'Hypothetical-2', 'Hypothetical-3']
 '''
 notation_string_list = ['','acceptance_new1_', 'access_acceptance_new1_']
 anno_list = ['Fully-Accepted','Estimated Hesitancy', 'Hesitancy+Accessibility']
-
+'''
 msa_name_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami', 'Philadelphia', 'SanFrancisco', 'WashingtonDC']
 msa_pop_list = [7191638, 10140946,8895355,7263757,15859681,6635035,6727280,5018570,7536060]
 num_msas = len(msa_name_list)
@@ -138,10 +138,10 @@ def draw_boxplot(results,medians,figsize,policy,boxplot=True,show_legend=True): 
     if(show_legend):
         plt.xticks(np.arange(num_scenarios)+1,anno_list,fontsize=16,rotation=-20,ha='left')
     else:
-        #plt.xticks(np.arange(num_scenarios)+1,['','','','','',''],fontsize=16,rotation=-20,ha='left')
-        plt.xticks(np.arange(num_scenarios)+1,['','',''],fontsize=16,rotation=-20,ha='left')
+        plt.xticks(np.arange(num_scenarios)+1,['','','','','',''],fontsize=16,rotation=-20,ha='left')
+        #plt.xticks(np.arange(num_scenarios)+1,['','',''],fontsize=16,rotation=-20,ha='left')
     if(policy=='minority'):
-        plt.xlabel(f'Prioritize by race-ethnicity',fontsize=22)
+        plt.xlabel(f'Prioritize by race/ethnicity',fontsize=22)
     else:
         plt.xlabel(f'Prioritize by {policy}',fontsize=22)
     plt.ylabel('Change in social utility',fontsize=21)
