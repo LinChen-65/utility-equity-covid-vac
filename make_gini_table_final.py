@@ -63,7 +63,8 @@ else:
     msa_name_list = [args.msa_name]
 
 if(args.with_comprehensive): # for Fig.4 #20220307
-    demo_policy_list = ['Age', 'Income', 'Occupation', 'Minority', 'SVI', 'Hybrid', 'Hybrid_Ablation'] 
+    #demo_policy_list = ['Age', 'Income', 'Occupation', 'Minority', 'SVI', 'Hybrid', 'Hybrid_Ablation'] 
+    demo_policy_list = ['Age', 'Income', 'Occupation', 'Minority', 'SVI', 'SVI_new', 'Hybrid', 'Hybrid_Ablation'] 
 else: # for Fig.2
     demo_policy_list = ['Age', 'Age_Reverse', 'Income', 'Income_Reverse', 'Occupation', 'Occupation_Reverse','Minority', 'Minority_Reverse'] 
 print('Single_demo_feat based policy list: ', demo_policy_list)
@@ -309,7 +310,7 @@ for this_msa in msa_name_list:
         print(policy)
         policy = policy.lower()
 
-        if((policy in ['minority', 'minority_reverse']) & (args.vaccination_ratio in [0.4, 0.56])):
+        if((policy in ['minority', 'minority_reverse','svi_new']) & (args.vaccination_ratio in [0.4, 0.56])):
             if(args.vaccination_ratio == 0.4):
                 this_recheck_interval = 0.04
             elif(args.vaccination_ratio == 0.56):
