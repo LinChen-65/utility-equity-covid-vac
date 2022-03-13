@@ -19,6 +19,8 @@ import disease_model_test
 import time
 import pdb
 
+print('20220311')
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
@@ -63,8 +65,8 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[args.msa_name]
 
 #policy_list = ['Baseline','Age_Flood', 'Age_Flood_Reverse','Income_Flood','Income_Flood_Reverse', 'Occupation_Flood','Occupation_Flood_Reverse','SVI']
 #policy_list = ['Minority', 'Minority_Reverse']
-policy_list = ['Baseline', 'Age', 'Income', 'Occupation', 'Minority']
-#policy_list = ['Baseline','Minority']
+#policy_list = ['Baseline', 'Age', 'Income', 'Occupation', 'Minority']
+policy_list = ['SVI_new']
 print('Policy list: ', policy_list)
 
 # Vaccine acceptance scenario
@@ -131,7 +133,6 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False): #20220302
     # Construct the vaccination vector
     current_vector = np.zeros(len(cbg_table)) # Initially: no vaccines distributed.
-    #cbg_table['Covered'] = 0 # Initially, no CBG is covered by vaccination.
     leftover = 0
     
     for i in range(int(distribution_time)):
@@ -139,8 +140,7 @@ def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False
         else: is_last=False
         cbg_table['Vaccination_Vector'] = current_vector
         # Run a simulation to determine the most vulnerable group
-        
-        #_, history_D2_current = run_simulation(starting_seed=STARTING_SEED_CHECKING, num_seeds=NUM_SEEDS_CHECKING,                                       
+                                            
         final_deaths_current = run_simulation(starting_seed=STARTING_SEED_CHECKING, num_seeds=NUM_SEEDS_CHECKING, #20220304
                                               vaccination_vector=current_vector,
                                               vaccine_acceptance=vaccine_acceptance, #20211007
@@ -175,7 +175,6 @@ def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False
         current_vector_prev = current_vector.copy() # 20210225
         current_vector += new_vector # 20210224
         #print((cbg_sizes-current_vector)[current_vector.nonzero()][np.where((cbg_sizes-current_vector)[current_vector.nonzero()]!=0)])
-        #pdb.set_trace()
         current_vector = np.clip(current_vector, None, cbg_sizes) # 20210224
         leftover = np.sum(cbg_sizes) * args.recheck_interval + leftover_prev - (np.sum(current_vector)-np.sum(current_vector_prev))
         assert((current_vector<=cbg_sizes).all())
@@ -255,10 +254,8 @@ for i in x:
     if((len(i)==11) & (int(i[0:4])in good_list)):
         y.append(x[i])
         
-idxs_msa_all = list(x.values())
-idxs_msa_nyt = y
-print('Number of CBGs in this metro area:', len(idxs_msa_all))
-print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
+idxs_msa_all = list(x.values()) #; print('Number of CBGs in this metro area:', len(idxs_msa_all))
+idxs_msa_nyt = y #; print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
 
 
 # Load other Safegraph demographic data, and perform grouping
@@ -293,16 +290,19 @@ if(True):
     cbg_occupation_msa.rename(columns={'Essential_Worker_Ratio':'EW_Ratio'},inplace=True)
     # Grouping
     separators = functions.get_separators(cbg_occupation_msa, args.num_groups, 'EW_Ratio','Sum', normalized=True)
-    cbg_occupation_msa['EW_Ratio_Quantile'] =  cbg_occupation_msa['EW_Ratio'].apply(lambda x : functions.assign_group(x, separators))
+    cbg_occupation_msa['EW_Ratio_Quantile'] = cbg_occupation_msa['EW_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
 
-if('SVI' in policy_list):
+if(('SVI' in policy_list) or ('SVI_new' in policy_list)):
     cbg_ids_msa['census_tract'] = cbg_ids_msa['census_block_group'].apply(lambda x:int(str(x)[:-1]))
     svidata = pd.read_csv(os.path.join(root, 'SVI2018_US.csv'))
     columns_of_interest = ['FIPS','RPL_THEMES']
     svidata = svidata[columns_of_interest].copy()
     svidata_msa = pd.merge(cbg_ids_msa, svidata, left_on='census_tract', right_on='FIPS', how='left')
     svidata_msa['Sum'] = cbg_age_msa['Sum'].copy()
+    # Grouping #20220311
+    separators = functions.get_separators(svidata_msa, args.num_groups, 'RPL_THEMES','Sum', normalized=True)
+    svidata_msa['RPL_THEMES_Quantile'] = svidata_msa['RPL_THEMES'].apply(lambda x: functions.assign_group(x, separators))
 
 #if(args.consider_accessibility=='True'):
 if(True):
@@ -473,12 +473,14 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         a = np.array(cbg_age_msa['Accessibility_Age_Race'])
         a = a[a>0]
         print('Minimum nonzero accessibility: ', min(a))
-        cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Accessibility_Age_Race'].apply(lambda x : min(a) if x==0 else x)
+        cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Accessibility_Age_Race'].apply(lambda x : min(a) if ((x==0) or (np.isnan(x))) else x) #20220311
         vaccine_accessibility = np.array(cbg_age_msa['Accessibility_Age_Race']) #20220225
         print('vaccine_accessibility: ', vaccine_accessibility)
         print('vaccine_acceptance: ', vaccine_acceptance)
-        print('accessibility always greater than acceptance?', (vaccine_accessibility<=vaccine_acceptance).all())
-        
+        #print('accessibility always smaller than acceptance?', (vaccine_accessibility<=vaccine_acceptance).all())
+        if(cbg_age_msa.isnull().any().any()):
+            print('NaN exists in cbg_ethnic_msa. Please check.')
+            pdb.set_trace()
         vaccine_acceptance = np.array(cbg_age_msa['Accessibility_Age_Race']) #以此代替原来的acceptance参数传入函数
 
         print('cbg_age_msa[\'Accessibility_Age_Race\'].max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
@@ -645,6 +647,27 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                                 vaccination_vector=vaccination_vector_svi,
                                                 vaccine_acceptance = vaccine_acceptance, #20211007
                                                 protection_rate = args.protection_rate)
+
+        # New version #20220311
+        if(policy == 'SVI_new'):
+            print(f'Policy: {policy}.')
+            filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
+            if(os.path.exists(filename)):
+                print(f'Results for {policy} already exist. No need to simulate again.')   
+            else:   
+                cbg_table = svidata_msa
+                demo_feat = 'RPL_THEMES'
+                this_start = time.time()
+                vaccination_vector_svi_new = distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False)
+                print('Policy constructed. Time: ', time.time()-this_start)
+                final_deaths = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, #20220304
+                                              vaccination_vector=vaccination_vector_svi_new,
+                                              vaccine_acceptance = vaccine_acceptance, #20211007
+                                              protection_rate = args.protection_rate)
+                if(args.quick_test): print('Testing. Not saving results.')
+                else:
+                    print(f'Save {policy} results at:\n{filename}.')
+                    final_deaths.tofile(filename) 
 
         ###############################################################################
         # Minority, prioritized the most disadvantaged
