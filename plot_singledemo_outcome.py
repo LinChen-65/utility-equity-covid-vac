@@ -354,7 +354,7 @@ plt.vlines(0, ymin, ymax, linewidth=0.5, linestyle='dashed')
 plt.xlim(xmin,xmax);plt.ylim(ymin,ymax)
 plt.xticks(fontsize=14);plt.yticks(fontsize=14)
 
-plt.xlabel('Prioritize by race-ethnicity',fontsize=25) #'Prioritize by minority' #20220311
+plt.xlabel('Prioritize by race/ethnicity',fontsize=25) #'Prioritize by minority' #20220311
 
 # 象限背景填色
 x = (np.arange(20)-9)*0.01
