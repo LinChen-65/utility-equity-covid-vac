@@ -41,7 +41,7 @@ args = parser.parse_args()
 # root
 hostname = socket.gethostname()
 print('hostname: ', hostname)
-if(hostname=='fib-dl3'): 
+if(hostname in ['fib-dl3','rl3','rl2']): 
     root = '/data/chenlin/utility-equity-covid-vac/results'
 elif(hostname=='rl4'):
     root = '/home/chenlin/utility-equity-covid-vac/results'
@@ -564,8 +564,8 @@ plt.close()
 
 ###########################################################################################################################
 # Supplementary
-
-color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum', '#FF8C00']
+#color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum', '#FF8C00']
+color_list = ['#29088A','#FFBF00','#5FB404','#81BEF7', '#FF8C00','grey','plum','#FE2E2E']
 rel_to = 'No_Vaccination'
 # Subsubroot for supplementary figures
 subsubroot = 'sup'
