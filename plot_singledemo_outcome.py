@@ -32,10 +32,11 @@ parser.add_argument('--rel_to', default='Baseline',
                     help='Relative to which strategy (either No_Vaccination or Baseline).')
 args = parser.parse_args()
 
+
 # root
 hostname = socket.gethostname()
 print('hostname: ', hostname)
-if(hostname=='fib-dl3'):
+if(hostname in ['fib-dl3','rl3','rl2']):
     root = '/data/chenlin/utility-equity-covid-vac/results'
 elif(hostname=='rl4'):
     root = '/home/chenlin/utility-equity-covid-vac/results'
@@ -336,13 +337,14 @@ for msa_idx in range(num_msas):
               linestyle='--'
              )
     
-# Annotation of MSAs        
+# Annotation of MSAs  
+'''      
 texts = [plt.text(minority_util_dict[policy_idx][msa_idx], minority_equi_dict[policy_idx][msa_idx],
                   anno_list[msa_idx],fontsize=20) for msa_idx in range(num_msas) for policy_idx in range(1)]
 adjust_text(texts,
             arrowprops=dict(arrowstyle="-", color='k', lw=1),
             expand_text=[1.1,1.1],force_text=1.5,force_points=1.2,lim=5000,only_move={'text':'y','points':'x'})
-
+'''
 # Ranges for simulteneously plotting 3 policies
 xmin = -0.09 
 xmax = 0.09 
