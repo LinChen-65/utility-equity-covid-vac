@@ -1,40 +1,47 @@
-# python plot_correlation_demo_feats_new.py NUM_GROUPS colormap
-# python plot_correlation_demo_feats_new.py 50 hot
+# python plot_correlation_demo_feats_new.py 
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
 
-import sys
+import socket
 import os
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import KBinsDiscretizer
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+import argparse
 
 import constants
 import functions
 
 import pdb
 
-############################################################
-# Constants
+parser = argparse.ArgumentParser()
+parser.add_argument('--num_groups', type=int, default=50,
+                    help='Num of groups for quantization.') 
+parser.add_argument('--colormap', default='hot',
+                    help='Colormap for figures.') 
+args = parser.parse_args()
 
-root = '/data/chenlin/COVID-19/Data' #dl3
-#root = '/home/chenlin/COVID-19/Data' #rl4
-
-############################################################
-# Main variable settings
-
-#demo_policy_list = ['Age_Flood', 'Income_Flood', 'JUE_EW_Flood'] 
+# root
+hostname = socket.gethostname()
+print('hostname: ', hostname)
+if(hostname in ['fib-dl3','rl3','rl2']):
+    root = '/data/chenlin/COVID-19/Data'
+    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
+elif(hostname=='rl4'):
+    root = '/home/chenlin/COVID-19/Data' #rl4
+    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
+# subroot
+subroot = 'figures'
+if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
+    os.makedirs(os.path.join(root, subroot))
 
 # Number of groups for quantization
-NUM_GROUPS = int(sys.argv[1])
-print('NUM_GROUPS: ',NUM_GROUPS)
-
+print('args.num_groups: ',args.num_groups)
 # Color map for scatter plot
-colormap = sys.argv[2]
-print('Color map:', colormap)
+print('Color map:', args.colormap)
 
 ############################################################
 # Functions
@@ -52,15 +59,15 @@ def get_avg_feat(cbg_list, data_df, feat_str):
 # Scatter plot with density
 def scatter_kde(df, col_x, col_y, savepath, colormap='Spectral_r'): 
     label_dict = dict() #20220226
-    label_dict['Elder_Ratio'] = 'Percentage of older adults'
+    label_dict['Elder_Ratio'] = 'Older adult ratio' #'Percentage of older adults'
     label_dict['Mean_Household_Income'] = 'Average household income'
-    label_dict['Essential_Worker_Ratio'] = 'Percentage of essential workers'
-    label_dict['Employed_Ratio'] = 'Percentage of employed workers' #20220227
-    label_dict['EW_Over_Employed_Ratio'] = 'Percentage of essential workers' #20220227
-    label_dict['Black_Ratio'] = 'Percentage of black residents'
-    label_dict['White_Ratio'] = 'Percentage of white residents' #20220227
-    label_dict['Hispanic_Ratio'] = 'Percentage of Hispanic residents'
-    label_dict['Minority_Ratio'] = 'Percentage of minority residents'
+    label_dict['Essential_Worker_Ratio'] = 'Essential worker ratio' #'Percentage of essential workers'
+    #label_dict['Employed_Ratio'] = 'Percentage of employed workers' #20220227
+    #label_dict['EW_Over_Employed_Ratio'] = 'Percentage of essential workers' #20220227
+    #label_dict['Black_Ratio'] = 'Percentage of black residents'
+    #label_dict['White_Ratio'] = 'Percentage of white residents' #20220227
+    #label_dict['Hispanic_Ratio'] = 'Percentage of Hispanic residents'
+    label_dict['Minority_Ratio'] = 'Minority ratio' #'Percentage of minority residents'
 
     plt.figure()
     # Calculate the point density
@@ -253,8 +260,8 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
 ###############################################################################
 # Preprocessing: Binning (数据分箱)
 
-print('Discretization, ', NUM_GROUPS)
-enc = KBinsDiscretizer(n_bins=NUM_GROUPS, encode="ordinal",strategy='uniform') #strategy='kmeans''uniform'
+print('Discretization, ', args.num_groups)
+enc = KBinsDiscretizer(n_bins=args.num_groups, encode="ordinal",strategy='uniform') #strategy='kmeans''uniform'
 for column in data.columns:
     data[column] = enc.fit_transform(np.array(data[column]).reshape(-1,1))
     data[column] = enc.inverse_transform(np.array(data[column]).reshape(-1,1))
@@ -263,25 +270,28 @@ for column in data.columns:
 # Scatter plot with density
 new_root = '/data/chenlin/utility-equity-covid-vac/results/figures'
 '''
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_income.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Elder_Ratio', 'Mean_Household_Income', savepath, colormap)
-
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_occupation.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Elder_Ratio', 'Essential_Worker_Ratio', savepath, colormap) 
-
-savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_income_occupation.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Mean_Household_Income', 'Essential_Worker_Ratio', savepath, colormap) 
-
-'''
-savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_age_minority.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Elder_Ratio', 'Minority_Ratio', savepath, colormap)
-savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_income_minority.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Mean_Household_Income', 'Minority_Ratio', savepath, colormap) 
-savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_occupation_minority.jpg'%(colormap, NUM_GROUPS))
-scatter_kde(data, 'Essential_Worker_Ratio', 'Minority_Ratio', savepath, colormap) 
-'''
-savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_ew_over_employed_minority.jpg'%(colormap, NUM_GROUPS))
+savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_ew_over_employed_minority.jpg'%(colormap, args.num_groups))
 scatter_kde(data, 'EW_Over_Employed_Ratio', 'Minority_Ratio', savepath, colormap) 
-savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_employed_minority.jpg'%(colormap, NUM_GROUPS))
+savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_employed_minority.jpg'%(colormap, args.num_groups))
 scatter_kde(data, 'Employed_Ratio', 'Minority_Ratio', savepath, colormap) 
 '''
+
+#savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_income.jpg'%(colormap, args.num_groups))
+savepath = os.path.join(new_root, 'sup', 'sup_correlation_age_income.png')
+scatter_kde(data, 'Elder_Ratio', 'Mean_Household_Income', savepath, args.colormap)
+#savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_age_occupation.jpg'%(colormap, args.num_groups))
+savepath = os.path.join(new_root, 'sup', 'sup_correlation_age_occupation.png')
+scatter_kde(data, 'Elder_Ratio', 'Essential_Worker_Ratio', savepath, args.colormap) 
+#savepath = os.path.join(new_root, '20220227_%s_all_%squant_rank_uniform_income_occupation.jpg'%(colormap, args.num_groups))
+savepath = os.path.join(new_root, 'sup', 'sup_correlation_income_occupation.png')
+scatter_kde(data, 'Mean_Household_Income', 'Essential_Worker_Ratio', savepath, args.colormap) 
+
+#savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_age_minority.jpg'%(colormap, args.num_groups))
+savepath = os.path.join(new_root, 'sup', 'sup_correlation_age_minority.png')
+scatter_kde(data, 'Elder_Ratio', 'Minority_Ratio', savepath, args.colormap)
+#savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_income_minority.jpg'%(colormap, args.num_groups))
+savepath = os.path.join(new_root, 'sup', 'sup_correlation_income_minority.png')
+scatter_kde(data, 'Mean_Household_Income', 'Minority_Ratio', savepath, args.colormap) 
+#savepath = os.path.join(new_root, '20220301_%s_all_%squant_rank_uniform_occupation_minority.jpg'%(colormap, args.num_groups))
+savepath = os.path.join(new_root, 'sup', 'sup_correlation_occupation_minority.png')
+scatter_kde(data, 'Essential_Worker_Ratio', 'Minority_Ratio', savepath, args.colormap) 
