@@ -218,6 +218,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
         #print('cbg_avg_infect_same, cbg_avg_infect_diff: Load existing file.')
         cbg_avg_infect_same = np.load(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
         cbg_avg_infect_diff = np.load(os.path.join(root, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
+        pdb.set_trace()
     else:
         print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
         pdb.set_trace()
