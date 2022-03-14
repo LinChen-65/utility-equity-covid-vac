@@ -36,7 +36,7 @@ args = parser.parse_args()
 # root
 hostname = socket.gethostname()
 print('hostname: ', hostname)
-if(hostname=='fib-dl3'): 
+if(hostname in ['fib-dl3','rl3','rl2']): 
     root = '/data/chenlin/utility-equity-covid-vac/results'
 elif(hostname=='rl4'):
     root = '/home/chenlin/utility-equity-covid-vac/results'
