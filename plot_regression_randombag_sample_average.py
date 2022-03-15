@@ -86,7 +86,8 @@ def get_std_feat(cbg_list, data_df, feat_str):
     average = np.average(np.array(values),weights=weights)
     return math.sqrt(np.average((values-average)**2, weights=weights))
 
-if(os.path.exists(os.path.join(saveroot, 'minority_adj_r2_model2_std_array'))):
+#if(os.path.exists(os.path.join(saveroot, 'minority_adj_r2_model2_std_array'))):
+if(False):
     fatality_adj_r2_model1_mean_array = np.fromfile(os.path.join(saveroot, 'fatality_adj_r2_model1_mean_array'))
     fatality_adj_r2_model2_mean_array = np.fromfile(os.path.join(saveroot, 'fatality_adj_r2_model2_mean_array'))
     age_adj_r2_model1_mean_array = np.fromfile(os.path.join(saveroot, 'age_adj_r2_model1_mean_array'))
@@ -501,38 +502,75 @@ else:
             target_list = ['Fatality_Rate_Rel','Age_Gini_Rel','Income_Gini_Rel','Occupation_Gini_Rel','Minority_Gini_Rel']
 
             for target in target_list:
-                Y = sample[target]
+                print(f'###################################### target: {target} ########################################')
+                #Y = sample[target]
+                Y = -sample[target] #20220314,social utility, equity
 
                 X = sample[demo_feat_list]
-                '''
+                
                 model = sm.OLS(Y, X).fit()
                 predictions = model.predict(X) 
-                print(model.summary())
-                print('model.params:',model.params)
-                print('model.bse:',model.bse)
+                #print(model.summary())
+                #print('model.params:',np.round(model.params.values, 3)) 
+                #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
+                params = list(np.round(model.params.values, 3))
+                bse = list(np.round(model.bse.values, 2))
+                for idx in range(len(list(bse))):
+                    print(f'{params[idx]} ({bse[idx]})')
+                pdb.set_trace()
+
                 '''
                 reg = linear_model.LinearRegression()
                 reg.fit(X,Y)
                 r2 = reg.score(X,Y)
                 adjusted_r2_model1 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
                 #print('adjusted_r2_model1:',adjusted_r2_model1)
+                '''
 
                 # Regression with demo_feats and inner mechanisms: Vulnerability
                 mediator_list = ['Avg_Vulnerability','Std_Vulnerability']
                 X = sample[demo_feat_list+mediator_list]
+                model = sm.OLS(Y, X).fit()
+                predictions = model.predict(X) 
+                #print(model.summary())
+                #print('model.params:',np.round(model.params.values, 3)) 
+                #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
+                params = list(np.round(model.params.values, 3))
+                bse = list(np.round(model.bse.values, 2))
+                for idx in range(len(list(bse))):
+                    print(f'{params[idx]} ({bse[idx]})')
+                pdb.set_trace()
+                '''
                 reg = linear_model.LinearRegression()
                 reg.fit(X,Y)
                 r2 = reg.score(X,Y)
                 adjusted_r2_model2 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
+                '''
                  
                 # Regression with demo_feats and inner mechanisms: Damage
                 mediator_list = ['Avg_Damage','Std_Damage']
                 X = sample[demo_feat_list+mediator_list]
+                model = sm.OLS(Y, X).fit()
+                predictions = model.predict(X) 
+                #print(model.summary())
+                #print('model.params:',np.round(model.params.values, 3)) 
+                #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
+                params = list(np.round(model.params.values, 3))
+                bse = list(np.round(model.bse.values, 2))
+                for idx in range(len(list(bse))):
+                    print(f'{params[idx]} ({bse[idx]})')
+                pdb.set_trace()
+                '''
                 reg = linear_model.LinearRegression()
                 reg.fit(X,Y)
                 r2 = reg.score(X,Y)
                 adjusted_r2_model3 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-                
+                '''
+
+                '''
                 if(target=='Fatality_Rate_Rel'):
                     fatality_adj_r2_model1.append(adjusted_r2_model1)
                     fatality_adj_r2_model2.append(adjusted_r2_model3)
@@ -548,7 +586,7 @@ else:
                 elif(target=='Minority_Gini_Rel'): #20220308
                     minority_adj_r2_model1.append(adjusted_r2_model1)
                     minority_adj_r2_model2.append(adjusted_r2_model2)       
-
+                '''
         print('Mean and Std: ')
         print('fatality_adj_r2_model1:',np.mean(np.array(fatality_adj_r2_model1)),np.std(np.array(fatality_adj_r2_model1)))
         print('fatality_adj_r2_model2:',np.mean(np.array(fatality_adj_r2_model2)),np.std(np.array(fatality_adj_r2_model2)))         
