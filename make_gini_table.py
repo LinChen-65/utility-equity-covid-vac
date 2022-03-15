@@ -1,4 +1,4 @@
-# python make_gini_table --msa_name SanFrancisco --vaccination_time 31 --vaccination_ratio 0.1 --rel_to Baseline
+# python make_gini_table.py --msa_name SanFrancisco --vaccination_time 31 --vaccination_ratio 0.1 --rel_to Baseline
 
 # pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long
 
