@@ -18,6 +18,8 @@ import functions
 
 import pdb
 
+print('0315')
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--vaccination_time', type=int, default=31,
                     help='Time to distribute vaccines.')
@@ -63,6 +65,7 @@ num_msas = len(msa_name_list)
 
 # Drawing settings
 anno_list = ['Atlanta','Chicago','Dallas','Houston','L.A.','Miami','Phila.','S.F.','D.C.']
+msa_name_anno_list = anno_list #20220315
 #color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum'] #原
 color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum', '#FF8C00']
 #color_list = ['#29088A','#FFBF00','#5FB404','#81BEF7', '#FF8C00','grey','plum','#FE2E2E'] #de用的
@@ -262,7 +265,8 @@ def draw_hybrid_policy(vac_ratio, vac_time, savepath, overall=True, show_axis_la
                                 [svi_util[i],svi_equi_age[i],svi_equi_income[i],svi_equi_occupation[i],svi_equi_minority[i]],
                                 ],
                                 columns=list(['Utility','Equity-by-age','Equity-by-income','Equity-by-occupation','Equity-by-minority']))
-            draw_radar(radar_df, savepath[i], title=msa_name_list[i])       
+            #draw_radar(radar_df, savepath[i], title=msa_name_list[i])  
+            draw_radar(radar_df, savepath[i], title=msa_name_anno_list[i])  #20220315         
 
 
 def draw_radar(radar_df, savepath, show_axis_label=False, show_legend=False, title=None): #20220309
@@ -279,7 +283,7 @@ def draw_radar(radar_df, savepath, show_axis_label=False, show_legend=False, tit
     angles += angles[:1]
 
     fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
-    linewidth = 4 #2.5
+    linewidth = 5 #4 #2.5
     markersize = 15 #10
     value_max_list = [] #20220312
     # Retreive the values
@@ -356,6 +360,7 @@ def draw_radar(radar_df, savepath, show_axis_label=False, show_legend=False, tit
 
     # Title (MSA name) #20220312
     if(title):
+        #print('title: ', title)
         ax.set_title(title, fontsize=28)
 
     # Save the figure
@@ -564,17 +569,17 @@ plt.close()
 
 ###########################################################################################################################
 # Supplementary
-#color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum', '#FF8C00']
-color_list = ['#29088A','#FFBF00','#5FB404','#81BEF7', '#FF8C00','grey','plum','#FE2E2E']
+color_list = ['#FE2E2E','#FFBF00','#5FB404','#81BEF7','#29088A','grey','plum', '#FF8C00']
+#color_list = ['#29088A','#FFBF00','#5FB404','#81BEF7', '#FF8C00','grey','plum','#FE2E2E']
 rel_to = 'No_Vaccination'
 # Subsubroot for supplementary figures
 subsubroot = 'sup'
 if not os.path.exists(os.path.join(root, subroot, subsubroot)): # if folder does not exist, create one. #20220309
     os.makedirs(os.path.join(root, subroot, subsubroot))
-ratio_time_list = [[0.1,24],[0.1,29],[0.1,34],[0.1,39],
-                   [0.4,31],[0.56,31],[0.03,31],[0.08,31],[0.13,31],[0.18,31]]
-#ratio_time_list = [[0.1,26],[0.1,31],[0.1,36],[0.1,41],
-#                   [0.05,31],[0.1,31],[0.15,31],[0.2,31],[0.4,31],[0.56,31]]
+#ratio_time_list = [[0.1,24],[0.1,29],[0.1,34],[0.1,39],
+#                   [0.4,31],[0.56,31],[0.03,31],[0.08,31],[0.13,31],[0.18,31]]
+ratio_time_list = [[0.1,26],[0.1,31],[0.1,36],[0.1,41],
+                   [0.05,31],[0.1,31],[0.15,31],[0.2,31],[0.4,31],[0.56,31]]
 
 if(args.with_supplementary):
     for i in range(len(ratio_time_list)):
