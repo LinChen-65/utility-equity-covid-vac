@@ -95,7 +95,7 @@ FIPS_CODES_FOR_50_STATES_PLUS_DC = { # https://gist.github.com/wavded/1250983/bf
     }     
 
 
-MSA_NAME_LIST = ['Atlanta','Chicago','Dallas','Houston', 'LosAngeles','Miami','NewYorkCity','Philadelphia','SanFrancisco','WashingtonDC']
+MSA_NAME_LIST = ['Atlanta','Chicago','Dallas','Houston', 'LosAngeles','Miami','Philadelphia','SanFrancisco','WashingtonDC']
 MSA_NAME_FULL_DICT = {
     'Atlanta':'Atlanta_Sandy_Springs_Roswell_GA',
     'Chicago':'Chicago_Naperville_Elgin_IL_IN_WI',
@@ -103,7 +103,6 @@ MSA_NAME_FULL_DICT = {
     'Houston':'Houston_The_Woodlands_Sugar_Land_TX',
     'LosAngeles':'Los_Angeles_Long_Beach_Anaheim_CA',
     'Miami':'Miami_Fort_Lauderdale_West_Palm_Beach_FL',
-    'NewYorkCity':'New_York_Newark_Jersey_City_NY_NJ_PA',
     'Philadelphia':'Philadelphia_Camden_Wilmington_PA_NJ_DE_MD',
     'SanFrancisco':'San_Francisco_Oakland_Hayward_CA',
     'WashingtonDC':'Washington_Arlington_Alexandria_DC_VA_MD_WV'
@@ -116,7 +115,6 @@ parameters_dict = {'Atlanta':[2e-4, 0.0037, 2388],
                    'Houston': [5e-4, 0.0037,1139],
                    'LosAngeles': [2e-4,0.0088,1452],
                    'Miami': [5e-4, 0.0012, 1764],
-                   'NewYorkCity': [0.001, 0.0037, 827],
                    'Philadelphia': [0.001, 0.0037, 827],
                    'SanFrancisco': [5e-4, 0.0037, 1139],
                    'WashingtonDC': [5e-5, 0.0037, 2700]}
@@ -128,11 +126,33 @@ death_scale_dict = {'Atlanta':[1.20],
                     'Houston':[0.83],
                     'LosAngeles':[1.52],
                     'Miami':[0.78],
-                    'NewYorkCity': [1.36],
                     'Philadelphia':[2.08],
                     'SanFrancisco':[0.64],
                     'WashingtonDC':[1.40]
                     }    
+
+# Upper lower bound of fitted scales
+upper_lower_death_scales = {1.2: {'Atlanta':[1.01,1.36],
+                                    'Chicago':[1.15,1.45],
+                                    'Dallas':[0.9,1.15],
+                                    'Houston':[0.68,0.97],
+                                    'LosAngeles':[1.34,1.68],
+                                    'Miami':[0.65,0.93],
+                                    'Philadelphia':[1.48,2.63],
+                                    'SanFrancisco':[0.54,0.78],
+                                    'WashingtonDC':[1.23,1.54]
+                                    },
+                            1.5: {'Atlanta':[0.9,1.48],
+                                    'Chicago':[1.05,1.55],
+                                    'Dallas':[0.82,1.24],
+                                    'Houston':[0.58,1.07],
+                                    'LosAngeles':[1.23,1.79],
+                                    'Miami':[0.55,1.03],
+                                    'Philadelphia':[1.1,3.02],
+                                    'SanFrancisco':[0.45,0.86],
+                                    'WashingtonDC':[1.14,1.63]
+                                    }
+                            }
 
 # Essential Worker Rates in each work type (Ref: JUE)                   
 ew_rate_dict = {
