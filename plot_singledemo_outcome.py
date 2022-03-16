@@ -382,3 +382,17 @@ t = ax.text(-0.006, ymax, "Equity", ha="center", va="top", rotation=90, size=22)
 savepath = os.path.join(root, subroot , 'fig2a_minority.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Minority, figure saved at: {savepath}.')
+
+
+########################################################################################
+# Legend
+label_list = ['Prioritize the most disadvantaged','Prioritize the least disadvantaged']
+plt.figure()
+#patches = [mpatches.Patch(color=color_list[i], label="{:s}".format(label_list[i]) ) for i in range(2) ]
+patches = [plt.scatter([],[],marker=marker_list[i],s=500,color=color_list[i], label="{:s}".format(label_list[i]) ) for i in range(len(label_list)) ]
+#plt.set_position([box.x0, box.y0, box.width , box.height* 0.8]) #https://blog.csdn.net/yywan1314520/article/details/53740001
+plt.legend(handles=patches,ncol=2,fontsize=30,bbox_to_anchor=(0.8,-0.1)) #,title='Policy',title_fontsize='x-large')
+# Save the figure
+savepath = os.path.join(root, subroot , 'fig2a_legend.pdf')
+plt.savefig(savepath,bbox_inches = 'tight')
+print(f'Legend, figure saved at: {savepath}.')
