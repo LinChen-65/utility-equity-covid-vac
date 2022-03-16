@@ -113,6 +113,10 @@ corr_age_mobility_list = []
 corr_income_mobility_list = []
 corr_occupation_mobility_list = []
 corr_minority_mobility_list = [] #20220302
+corr_age_death_list= [] #20220315
+corr_income_death_list= [] #20220315
+corr_occupation_death_list= [] #20220315
+corr_minority_death_list= [] #20220315
 
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
@@ -219,7 +223,8 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     if(cbg_race_msa.isnull().any().any()):
         print('NaN exists in cbg_race_msa. Please check.')
         pdb.set_trace()
-    
+    cbg_minority_msa = cbg_race_msa #20220315
+
     '''
     print(np.round((cbg_race_msa['Minority_Absolute'].sum()) / (cbg_race_msa['Sum'].sum()),3), 
            '\n', np.round(cbg_race_msa['Minority_Ratio'].mean(),3),
@@ -294,6 +299,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Essential_Worker_Ratio'] = cbg_occupation_msa['Essential_Worker_Ratio'].copy()
     data_msa['Minority_Ratio'] = cbg_race_msa['Minority_Ratio'] #20220302
     data_msa['Mobility'] = cbg_age_msa['Mobility'].copy()
+    data_msa['Death_Rate'] = cbg_age_msa['Death_Rate'].copy() #20220304
     
     data_msa['Valid'] = data_msa.apply(lambda x : 1 if x['Essential_Worker_Ratio']>0.2 else 0, axis=1)
     print('Before filtering, len(data_msa):', len(data_msa))
@@ -326,83 +332,108 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     
     elder_ratio_list = []
     mobility_age_list = []
+    death_age_list = []
     for group_idx in range(args.num_groups):
         selected_cbgs = data_msa[data_msa['Elder_Ratio_Quantile']==group_idx].index
         elder_ratio_list.append(get_avg_feat(selected_cbgs,data_msa, 'Elder_Ratio'))
         mobility_age_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
-    print(np.corrcoef(elder_ratio_list,mobility_age_list)[0][1])
+        death_age_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
+    #print(np.corrcoef(elder_ratio_list,mobility_age_list)[0][1])
     corr_age_mobility_list.append(np.corrcoef(elder_ratio_list,mobility_age_list)[0][1])
+    corr_age_death_list.append(np.corrcoef(elder_ratio_list,death_age_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
     mobility_age_list /= np.max(np.array(mobility_age_list))
     elder_ratio_list /= np.max(np.array(elder_ratio_list))
+    death_age_list /= np.max(np.array(death_age_list)) #20220315
     # Stack to array
     if(msa_idx==0):
         mobility_age_all_msa_array = np.array(mobility_age_list)
         elder_ratio_all_msa_array = np.array(elder_ratio_list)
+        death_age_all_msa_array = np.array(death_age_list) #20220315
     else:
         mobility_age_all_msa_array = np.vstack((mobility_age_all_msa_array, np.array(mobility_age_list)))
         elder_ratio_all_msa_array = np.vstack((elder_ratio_all_msa_array , np.array(elder_ratio_list)))
-    
+        death_age_all_msa_array = np.vstack((death_age_all_msa_array , np.array(death_age_list))) #20220315
 
     income_list = []
     mobility_income_list = []
+    death_income_list = [] #20220315
     for group_idx in range(args.num_groups):
         selected_cbgs = data_msa[data_msa['Mean_Household_Income_Quantile']==group_idx].index
         income_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mean_Household_Income'))
         mobility_income_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
-    print(np.corrcoef(income_list,mobility_income_list)[0][1])
+        death_income_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
+    #print(np.corrcoef(income_list,mobility_income_list)[0][1])
     corr_income_mobility_list.append(np.corrcoef(income_list,mobility_income_list)[0][1])
+    corr_income_death_list.append(np.corrcoef(income_list,death_income_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
     mobility_income_list /= np.max(np.array(mobility_income_list))
     income_list /= np.max(np.array(income_list))
+    death_income_list /= np.max(np.array(death_income_list)) #20220315
     # Stack to array
     if(msa_idx==0):
         mobility_income_all_msa_array = np.array(mobility_income_list)
         income_all_msa_array = np.array(income_list)
+        death_income_all_msa_array = np.array(death_income_list) #20220315
     else:
         mobility_income_all_msa_array = np.vstack((mobility_income_all_msa_array, np.array(mobility_income_list)))
         income_all_msa_array = np.vstack((income_all_msa_array, np.array(income_list)))
+        death_income_all_msa_array = np.vstack((death_income_all_msa_array, np.array(death_income_list))) #20220315
     
     
     ew_ratio_list = []
     mobility_occupation_list = []
+    death_occupation_list = [] #20220315
     for group_idx in range(args.num_groups):
         selected_cbgs = data_msa[data_msa['Essential_Worker_Ratio_Quantile']==group_idx].index
         ew_ratio_list.append(get_avg_feat(selected_cbgs,data_msa, 'Essential_Worker_Ratio'))
         mobility_occupation_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
-    print(np.corrcoef(ew_ratio_list,mobility_occupation_list)[0][1])
+        death_occupation_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
+    #print(np.corrcoef(ew_ratio_list,mobility_occupation_list)[0][1])
     corr_occupation_mobility_list.append(np.corrcoef(ew_ratio_list,mobility_occupation_list)[0][1])
+    corr_occupation_death_list.append(np.corrcoef(ew_ratio_list,death_occupation_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
     mobility_occupation_list /= np.max(np.array(mobility_occupation_list))
     ew_ratio_list /= np.max(np.array(ew_ratio_list))
+    death_occupation_list /= np.max(np.array(death_occupation_list)) #20220315
+
     # Stack to array
     if(msa_idx==0):
         mobility_occupation_all_msa_array = np.array(mobility_occupation_list)
         ew_ratio_all_msa_array = np.array(ew_ratio_list)
+        death_occupation_all_msa_array = np.array(death_occupation_list) #20220315
     else:
         mobility_occupation_all_msa_array = np.vstack((mobility_occupation_all_msa_array, np.array(mobility_occupation_list)))
         ew_ratio_all_msa_array = np.vstack((ew_ratio_all_msa_array, np.array(ew_ratio_list)))
+        death_occupation_all_msa_array = np.vstack((death_occupation_all_msa_array, np.array(death_occupation_list))) #20220315
 
 
     minority_ratio_list = []
     mobility_minority_list = []
+    death_minority_list = [] #20220315
     for group_idx in range(args.num_groups):
         selected_cbgs = data_msa[data_msa['Minority_Ratio_Quantile']==group_idx].index
         minority_ratio_list.append(get_avg_feat(selected_cbgs,data_msa, 'Minority_Ratio'))
         mobility_minority_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
-    print(np.corrcoef(minority_ratio_list,mobility_minority_list)[0][1])
+        death_minority_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
+    #print(np.corrcoef(minority_ratio_list,mobility_minority_list)[0][1])
     corr_minority_mobility_list.append(np.corrcoef(minority_ratio_list,mobility_minority_list)[0][1])
+    corr_minority_death_list.append(np.corrcoef(minority_ratio_list,death_minority_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
     mobility_minority_list /= np.max(np.array(mobility_minority_list))
     minority_ratio_list /= np.max(np.array(minority_ratio_list))
+    death_minority_list /= np.max(np.array(death_minority_list)) #20220315
+
     # Stack to array
     if(msa_idx==0):
         mobility_minority_all_msa_array = np.array(mobility_minority_list)
         minority_ratio_all_msa_array = np.array(minority_ratio_list)
-        
+        death_minority_all_msa_array = np.array(death_minority_list) #20220315
     else:
         mobility_minority_all_msa_array = np.vstack((mobility_minority_all_msa_array, np.array(mobility_minority_list)))
         minority_ratio_all_msa_array = np.vstack((minority_ratio_all_msa_array, np.array(minority_ratio_list)))
+        death_minority_all_msa_array = np.vstack((death_minority_all_msa_array, np.array(death_minority_list))) #20220315
+
 
     ###############################################################################
     # Ranking (dense, percentile)
@@ -412,13 +443,17 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Essential_Worker_Ratio'] = data_msa['Essential_Worker_Ratio'].rank(method='dense',pct=True)
     data_msa['Minority_Ratio'] = data_msa['Minority_Ratio'].rank(method='dense',pct=True) #20220302
     data_msa['Mobility'] = data_msa['Mobility'].rank(method='dense',pct=True)
+    data_msa['Death_Rate'] = data_msa['Death_Rate'].rank(method='dense',pct=True) #20220315
 
     print('After ranking:')
     print('Correlation between Elder_Ratio and Mobility: ', np.corrcoef(data_msa['Elder_Ratio'], data_msa['Mobility'])[0][1]) 
     print('Correlation between Income and Mobility: ', np.corrcoef(data_msa['Mean_Household_Income'],data_msa['Mobility'])[0][1])
     print('Correlation between EW_Ratio and Mobility: ', np.corrcoef(data_msa['Essential_Worker_Ratio'], data_msa['Mobility'])[0][1])
     print('Correlation between Minority_Ratio and Mobility: ', np.corrcoef(data_msa['Minority_Ratio'], data_msa['Mobility'])[0][1])
-
+    print('Correlation between Elder_Ratio and Death_Rate: ', np.corrcoef(data_msa['Elder_Ratio'], data_msa['Death_Rate'])[0][1]) 
+    print('Correlation between Income and Death_Rate: ', np.corrcoef(data_msa['Mean_Household_Income'],data_msa['Death_Rate'])[0][1])
+    print('Correlation between EW_Ratio and Death_Rate: ', np.corrcoef(data_msa['Essential_Worker_Ratio'], data_msa['Death_Rate'])[0][1])
+    
     data = data.append(data_msa, ignore_index=True)
     print('len(data): ',len(data))
     
@@ -427,8 +462,12 @@ print('corr_age_mobility_list: ', corr_age_mobility_list, 'Mean: ', np.mean(np.a
 print('corr_income_mobility_list: ', corr_income_mobility_list, 'Mean: ', np.mean(np.array(corr_income_mobility_list)))
 print('corr_occupation_mobility_list: ', corr_occupation_mobility_list, 'Mean: ', np.mean(np.array(corr_occupation_mobility_list)))
 print('corr_minority_mobility_list: ', corr_minority_mobility_list, 'Mean: ', np.mean(np.array(corr_minority_mobility_list)))
-
-print('mobility_age_all_msa_array.shape:',mobility_age_all_msa_array.shape)
+print('corr_age_death_list: ', corr_age_death_list, 'Mean: ', np.mean(np.array(corr_age_death_list)))
+print('corr_income_death_list: ', corr_income_death_list, 'Mean: ', np.mean(np.array(corr_income_death_list)))
+print('corr_occupation_death_list: ', corr_occupation_death_list, 'Mean: ', np.mean(np.array(corr_occupation_death_list)))
+print('corr_minority_death_list: ', corr_minority_death_list, 'Mean: ', np.mean(np.array(corr_minority_death_list)))
+#print('mobility_age_all_msa_array.shape:',mobility_age_all_msa_array.shape)
+pdb.set_trace()
 
 data_temp = pd.DataFrame(columns=['Elder_Ratio','Mobility'])
 data_temp['Elder_Ratio'] = elder_ratio_all_msa_array.flatten()
@@ -457,21 +496,6 @@ data_temp['Mobility'] = mobility_minority_all_msa_array.flatten()
 #savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_minority_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
 savepath = os.path.join(args.saveroot, 'fig1e_minority.pdf') #20220310
 scatter_kde(data_temp, 'Minority_Ratio', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_minority_mobility_list)))
-
-pdb.set_trace()
-
-###############################################################################
-# Preprocessing: Binning (数据分箱)
-
-print('Discretization, ', args.num_groups)
-enc = KBinsDiscretizer(n_bins=args.num_groups, encode="ordinal",strategy='uniform') #strategy='kmeans''uniform'
-for column in data.columns:
-    data[column] = enc.fit_transform(np.array(data[column]).reshape(-1,1))
-    data[column] = enc.inverse_transform(np.array(data[column]).reshape(-1,1))
-
-print('Correlation between Elder_Ratio and Mobility: ', np.corrcoef(data['Elder_Ratio'], data['Mobility'])[0][1]) 
-print('Correlation between Income and Mobility: ', np.corrcoef(data['Mean_Household_Income'],data['Mobility'])[0][1])
-print('Correlation between EW_Ratio and Mobility: ', np.corrcoef(data['Essential_Worker_Ratio'], data['Mobility'])[0][1])
 
 pdb.set_trace()
 
