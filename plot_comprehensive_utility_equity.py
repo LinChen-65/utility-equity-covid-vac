@@ -18,7 +18,7 @@ import functions
 
 import pdb
 
-print('0315')
+print('0316')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--vaccination_time', type=int, default=31,
@@ -249,7 +249,7 @@ def draw_hybrid_policy(vac_ratio, vac_time, savepath, overall=True, show_axis_la
                                 [avg_svi_util,avg_svi_equi_age,avg_svi_equi_income,avg_svi_equi_occupation,avg_svi_equi_minority],
                                 ],
                                 columns=list(['Utility','Equity-by-age','Equity-by-income','Equity-by-occupation','Equity-by-minority']))
-
+        #pdb.set_trace()
         draw_radar(radar_df, savepath, show_axis_label, show_legend)
 
     else: # Draw figures for each MSA
@@ -272,7 +272,9 @@ def draw_hybrid_policy(vac_ratio, vac_time, savepath, overall=True, show_axis_la
 def draw_radar(radar_df, savepath, show_axis_label=False, show_legend=False, title=None): #20220309
     # Normalization: 按hybrid policy的值做归一化
     for column in radar_df.columns:
-        radar_df[column] /= radar_df[column].iloc[0]
+        #pdb.set_trace()
+        radar_df[column] /= radar_df[column].iloc[0]#this is original
+        #radar_df[column] /= radar_df[column].iloc[1]
 
     # Start plotting
     # Number of variables we're plotting.
