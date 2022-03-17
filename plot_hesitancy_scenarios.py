@@ -47,7 +47,7 @@ if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, 
 
 
 notation_string_list = ['','acceptance_real_', 'access_acceptance_real_','acceptance_cf18_','acceptance_cf13_','acceptance_cf17_']
-anno_list = ['Fully-Accepted','Estimated Hesitancy', 'Hesitancy+Accessibility', 'Hypothetical-1', 'Hypothetical-2', 'Hypothetical-3']
+anno_list = ['Fully-Accepted','Estimated Hesitancy', 'Hesitancy+Capability', 'Hypothetical-1', 'Hypothetical-2', 'Hypothetical-3']
 '''
 notation_string_list = ['','acceptance_new1_', 'access_acceptance_new1_']
 anno_list = ['Fully-Accepted','Estimated Hesitancy', 'Hesitancy+Accessibility']
@@ -189,6 +189,6 @@ plt.figure()
 patches = [mpatches.Patch(color=color_list[i], label="{:s}".format(anno_list[i])) for i in range(num_scenarios) ]
 plt.legend(handles=patches,ncol=2,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
 # Save figure
-savepath = os.path.join(root, 'figures', f'fig2c_legend.pdf')
+savepath = os.path.join(root, 'figures', 'fig2b_legend.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'fig2b_legend, saved at {savepath}')
