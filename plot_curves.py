@@ -146,7 +146,7 @@ savepath = os.path.join(saveroot, subroot , 'sup', f'sup_model_curve_legend.pdf'
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Supplementary legend, saved at {savepath}')
 
-pdb.set_trace()
+#pdb.set_trace()
 
 ####################################################################################################
 # Fig.S18
@@ -209,13 +209,18 @@ for msa_idx in range(len(msa_name_list)):
     plt.plot(min_hybrid,marker='o',markersize=markersize,color=color_list[1],alpha=alpha)
     plt.fill_between(t,max_hybrid,min_hybrid,color=color_list[1],alpha=alpha)
 
+    y_max = np.max(np.array([np.max(mean_no_vac),np.max(max_no_vac),np.max(min_no_vac), 
+                             np.max(mean_baseline),np.max(max_baseline),np.max(min_baseline),
+                             np.max(mean_hybrid),np.max(max_hybrid),np.max(min_hybrid)])) #20220316
+    plt.vlines(31, 0, y_max, colors='black',linestyles ="dashed") #20220316
+
     #plt.ylim(0,11)
     #plt.yticks(np.arange(6)*2,fontsize=14) 
     plt.yticks(fontsize=14) 
     plt.ylabel('Daily deaths', fontsize=25)
 
     plt.xlim(-1,63)
-    plt.xticks(np.arange(13)*5,fontsize=12)
+    plt.xticks(np.arange(13)*5+1,fontsize=12)
     plt.xlabel('Days',fontsize=25)
     #plt.legend(loc='upper left',fontsize=17.5)
 
