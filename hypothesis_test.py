@@ -166,7 +166,7 @@ acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 # Load ACS 5-year (2013-2017) Data: Mean Household Income
-filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(dataroot,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
 # cbg_c24.csv: Occupation

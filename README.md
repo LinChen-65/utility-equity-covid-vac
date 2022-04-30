@@ -59,7 +59,7 @@ python make_gini_table.py --msa_name Atlanta --vaccination_time 31 --vaccination
 # Fig. 2(a)
 python plot_singledemo_outcome.py
 # Fig. 2(b)
-python plot_singledemo_outcome.py
+python hesitancy_scenarios.py
 # Fig. 2(c)
 python hypothesis_test.py --msa_name Atlanta
 # Simulate middle policies (Supplementary Table 1)

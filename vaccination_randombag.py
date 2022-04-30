@@ -307,7 +307,7 @@ cbg_age_msa['NYT_Included'] = nyt_included.copy()
 
 # Load other demographic data
 # Income
-filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(dataroot,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)

@@ -335,7 +335,7 @@ if('Occupation' in demo_policy_to_compare):
 
 
 if('Income' in demo_policy_to_compare):
-    filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
+    filepath = os.path.join(dataroot,"ACS_5years_Income_Filtered_Summary.csv")
     cbg_income = pd.read_csv(filepath)
     cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
     cbg_income_msa = functions.load_cbg_income_msa(cbg_income, cbg_ids_msa) #20220302

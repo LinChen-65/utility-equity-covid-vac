@@ -104,7 +104,7 @@ cbg_sizes = np.array(cbg_sizes,dtype='int32')
 print('Total population: ',np.sum(cbg_sizes))
 
 # Income Data Resource 1: ACS 5-year (2013-2017) Data
-filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(dataroot,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)

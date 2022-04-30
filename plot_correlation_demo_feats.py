@@ -45,6 +45,7 @@ if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, 
 
 # root
 root = os.getcwd()
+dataroot = os.path.join(root, 'data')
 result_root = os.path.join(root, 'results')
 fig_save_root = os.path.join(root, 'figures')
 
@@ -108,7 +109,7 @@ cbg_agesex = pd.read_csv(filepath)
 filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
 cbg_occupation = pd.read_csv(filepath)
 # Load ACS 5-year (2013-2017) Data: Mean Household Income
-filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(dataroot,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
