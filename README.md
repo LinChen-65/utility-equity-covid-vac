@@ -31,7 +31,7 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
 
 ## Running the code
-Note: Parameters inside square brackets should be specified to generate corrsponding results. Example values are provided in the python files.
+Note: Parameters should be specified to generate corrsponding results. Example values are provided in the python files.
 
 1. **Fit epidemic curves (Fig.1, Supplementary Fig.1, Supplementary Fig.18)**
 ```
