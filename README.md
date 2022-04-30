@@ -26,7 +26,7 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 ## Datasets
 - COVID-19 daily death data are available at the New York Times (https://github.com/nytimes/covid-19-data). 
 - Mobile phone mobility data and demographic data for census block groups are available at SafeGraph (https://www.safegraph.com/academics). Safegraph demographic data can be freely downloaded (https://docs.safegraph.com/docs/open-census-data), so we do not include it in the repository.
-- Estimated mobility networks are retrieved from http://covid-mobility.stanford.edu.
+- Estimated mobility networks (ending with '*.pkl') are retrieved from http://covid-mobility.stanford.edu. Here we only attach data file for Atlanta, for testing the code.
 - Social vulnerability indices for communities are available at the website of U.S. Agency for Toxic Substances and Disease Registry (https://www.atsdr.cdc.gov/placeandhealth/svi/data_documentation_download.html).
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
 
