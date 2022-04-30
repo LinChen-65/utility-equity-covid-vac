@@ -29,6 +29,7 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 - Estimated mobility networks (ending with '*.pkl') should be retrieved from http://covid-mobility.stanford.edu, so we do not include it in the repository.
 - Social vulnerability indices for communities are available at the website of U.S. Agency for Toxic Substances and Disease Registry (https://www.atsdr.cdc.gov/placeandhealth/svi/data_documentation_download.html).
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
+- Since the data files and intermediate results needed to test the code are too large, we put it in zenodo (https://sandbox.zenodo.org/record/1056829). Please download them from this link and replace the 'data' and 'results' folder with these downloaded folders.
 
 ## Running the code
 Note: Parameters should be specified to generate corrsponding results. Example values are provided in the python files.
