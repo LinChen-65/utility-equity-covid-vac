@@ -33,6 +33,8 @@ parser.add_argument('--recheck_interval', type=float, default = 0.01,
                     help='Recheck interval (After distributing some portion of vaccines, recheck the most vulnerable demographic group).')                             
 parser.add_argument('--rel_to', 
                     help='Relative to which strategy (either No_Vaccination or Baseline).')
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
 args = parser.parse_args()
 print('args.msa_name:',args.msa_name)
 print('Vaccination Time:',str(args.vaccination_time))
@@ -42,6 +44,7 @@ print('Number of groups: ',args.num_groups)
 print('Relative to: ', args.rel_to)
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname=='fib-dl3'):
@@ -50,7 +53,10 @@ if(hostname=='fib-dl3'):
 elif(hostname=='rl4'):
     root = '/home/chenlin/COVID-19/Data' #rl4
     saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-
+'''
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
 
 # Derived variables
 if(args.msa_name=='all'):
@@ -175,20 +181,20 @@ def make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=No
 
 # MSA list
 # Load ACS Data for matching with NYT Data
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 # Load ACS 5-year (2013-2017) Data: Mean Household Income
-filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
 # cbg_c24.csv: Occupation
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
 cbg_occupation = pd.read_csv(filepath)
 # cbg_b03.csv: Ethnic #20220225
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b03.csv")
 cbg_ethnic = pd.read_csv(filepath)
 
 for this_msa in msa_name_list:
@@ -200,7 +206,7 @@ for this_msa in msa_name_list:
     good_list = list(msa_data['FIPS Code'].values);#print('Indices of counties matched: ',good_list)
 
     # Load CBG ids belonging to a specific metro area
-    cbg_ids_msa = pd.read_csv(os.path.join(root,this_msa,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
     cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
     M = len(cbg_ids_msa);#print('Number of CBGs in this metro area:', M)
     # Mapping from cbg_ids to columns in hourly visiting matrices
@@ -218,7 +224,7 @@ for this_msa in msa_name_list:
     idxs_msa_all = list(x.values());#print('Number of CBGs in this metro area:', len(idxs_msa_all))
     idxs_msa_nyt = y; #print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
 
-    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    # Extract CBGs belonging to the MSA 
     cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
     # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
     # which is defined in Constants.py
@@ -308,15 +314,15 @@ for this_msa in msa_name_list:
             if policy in ['minority', 'minority_reverse']:
                 history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
             elif(policy=='no_vaccination'):
-                history_D2_result_path = os.path.join(root,this_msa,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
+                history_D2_result_path = os.path.join(saveroot,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
             #elif(policy=='baseline'):
             #    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
             else:
                 #history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
                 if('reverse' not in policy):
-                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
                 else:
-                    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
             exec(f'history_D2_{policy} = np.fromfile(\'{history_D2_result_path}\')')
             exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,args.num_seeds,M))')   
             exec(f'final_deaths_{policy} = np.array(history_D2_{policy}[-1,:,:])')

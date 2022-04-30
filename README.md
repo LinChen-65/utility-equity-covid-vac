@@ -54,6 +54,7 @@ python plot_correlation_demo_feats.py
 3. **Simulate vaccine distribution strategies (Fig.2)**
 ```
 python vaccination_singledemo.py --msa_name Atlanta
+python make_gini_table.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1 --rel_to Baseline
 # Fig. 2(a)
 python plot_singledemo_outcome.py
 # Fig. 2(b)
