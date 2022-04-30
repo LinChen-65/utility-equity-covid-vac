@@ -1,12 +1,9 @@
-# python generate_infect_same_diff.py MSA_NAME 
-# python generate_infect_same_diff.py Atlanta 
+# python generate_infect_same_diff.py --msa_name Atlanta 
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
 
-import sys
-import pdb
-
+import argparse
 import os
 import datetime
 import pandas as pd
@@ -15,54 +12,50 @@ import pickle
 
 import constants
 import functions
-import disease_model #disease_model_only_modify_attack_rates
 
 import time
+import pdb
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--msa_name', 
+                    help='MSA name.')
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+args = parser.parse_args()                    
 
 ###############################################################################
 # Constants
 
-root = '/data/chenlin/COVID-19/Data'
+#root = '/data/chenlin/COVID-19/Data'
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
-NUM_DAYS = 63
 
-NUM_GROUPS = 5 
-print('NUM_GROUPS:',NUM_GROUPS)
-
-#############################################################################
-# Main variable settings
-
-MSA_NAME = sys.argv[1]; print('MSA_NAME: ',MSA_NAME)
+MSA_NAME = args.msa_name; print('MSA_NAME: ',MSA_NAME)
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] 
-
 
 ###############################################################################
 # Load Data
 
 # Load POI-CBG visiting matrices
-f = open(os.path.join(root, MSA_NAME, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
+f = open(os.path.join(dataroot, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
 poi_cbg_visits_list = pickle.load(f)
 f.close()
 
 # Load precomputed parameters to adjust(clip) POI dwell times
-d = pd.read_csv(os.path.join(root,MSA_NAME, 'parameters_%s.csv' % MSA_NAME)) 
-
-# No clipping
-new_d = d
-
+d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-poi_areas = new_d['feet'].values#面积
-poi_dwell_times = new_d['median'].values#平均逗留时间
+poi_areas = d['feet'].values#面积
+poi_dwell_times = d['median'].values#平均逗留时间
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
-del new_d
 del d
 poi_trans_rate = constants.parameters_dict[MSA_NAME][2] / poi_areas * poi_dwell_time_correction_factors
 
 # Load ACS Data for MSA-county matching
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
 msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
@@ -72,7 +65,7 @@ print('Counties included: ', good_list)
 del acs_data
 
 # Load CBG ids for the MSA
-cbg_ids_msa = pd.read_csv(os.path.join(root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
 cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
 M = len(cbg_ids_msa)
 
@@ -84,9 +77,9 @@ for i in cbgs_to_idxs:
 print('Number of CBGs in this metro area:', M)
 
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
-# Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+# Extract CBGs belonging to the MSA 
 cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
 del cbg_agesex
 # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
@@ -111,7 +104,7 @@ cbg_sizes = np.array(cbg_sizes,dtype='int32')
 print('Total population: ',np.sum(cbg_sizes))
 
 # Income Data Resource 1: ACS 5-year (2013-2017) Data
-filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
@@ -165,16 +158,17 @@ print('MSA home_beta retrieved.')
 # Compute cbg_avg_N
 start = time.time()
 
-if(os.path.exists(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
+if(os.path.exists(os.path.join(saveroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
     print('avg_N: Load existing file.')
-    cbg_avg_infect_same = np.load(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
-    cbg_avg_infect_diff = np.load(os.path.join(root, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
+    cbg_avg_infect_same = np.load(os.path.join(saveroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
+    cbg_avg_infect_diff = np.load(os.path.join(saveroot, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
 else:
     print('avg_N: Compute on the fly.')
     hourly_N_same_list = []
     hourly_N_diff_list = []
     for hour_idx in range(len(poi_cbg_visits_list)):
-        if(hour_idx%100==0): print(hour_idx)
+        if(hour_idx%100==0): 
+            print(hour_idx)
         poi_cbg_visits_array = poi_cbg_visits_list[hour_idx].toarray() # Extract the visit matrix for this hour
         # poi_cbg_visits_array.shape: (num_poi,num_cbg) e.g.(28713, 2943)
         cbg_out_pop = np.sum(poi_cbg_visits_array, axis=0)
@@ -204,4 +198,3 @@ print('cbg_avg_infect_same.shape:',cbg_avg_infect_same.shape)
 
 end = time.time()
 print('Time: ',(end-start)) # (SanFrancisco used around 10min.)
-

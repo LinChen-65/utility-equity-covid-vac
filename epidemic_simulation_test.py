@@ -1,5 +1,4 @@
-# python gt-gen-no-vac.py MSA_NAME RANDOM_SEED quick_test
-# python gt-gen-no-vac.py Atlanta 66 False
+# python epidemic_simulation_test.py SanFrancisco
 
 import setproctitle
 setproctitle.setproctitle("gnn-simu-vac@chenlin")
@@ -14,7 +13,8 @@ import pickle
 
 import constants
 import functions
-import disease_model #disease_model_only_modify_attack_rates
+#import disease_model #disease_model_only_modify_attack_rates
+import disease_model_test_r0 as disease_model
 
 import pdb
 
@@ -51,7 +51,7 @@ quick_test = sys.argv[2]; print('Quick testing?', quick_test)
 if(quick_test == 'True'):
     NUM_SEEDS = 2
 else:
-    NUM_SEEDS = 60 #30
+    NUM_SEEDS = 30 #60 #30
 print('NUM_SEEDS: ', NUM_SEEDS)
 STARTING_SEED = range(NUM_SEEDS)
 
@@ -78,7 +78,7 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
                                cbg_attack_rates_original = cbg_attack_rates_scaled,
                                cbg_death_rates_original = cbg_death_rates_scaled,
                                poi_psi=constants.parameters_dict[MSA_NAME][2],
-                               just_compute_r0=False,
+                               just_compute_r0=True, #20220314 #False,
                                latency_period=96,  # 4 days
                                infectious_period=84,  # 3.5 days
                                confirmation_rate=.1,
@@ -88,12 +88,9 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 
     m.init_endogenous_variables()
 
-    T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
-    del T1
-    del L_1
-    del I_1
-    del C2
-    del D2
+    #T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
+    history_C2, history_D2 = m.simulate_disease_spread(no_print=True)    
+    
     #return total_affected, history_C2, history_D2, total_affected_each_cbg
     return history_C2, history_D2
 
@@ -105,6 +102,29 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 f = open(os.path.join(epic_data_root, MSA_NAME, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
 poi_cbg_visits_list = pickle.load(f)
 f.close()
+
+#######################################################
+just_compute_r0 = True # 20220314
+
+if just_compute_r0:
+    print('Prelockdown mobility.')
+    print('Running model to compute r0 -> looping first week visit counts')
+    # simulate out 15 weeks just so we are sure all cases are gone.
+    MAX_DATETIME = MIN_DATETIME + datetime.timedelta(hours=(168*15)-1)
+    all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
+    print("Extending time period; simulation now ends at %s (%d hours)" % (max(all_hours), len(all_hours)))
+    if poi_cbg_visits_list is not None:
+        assert len(poi_cbg_visits_list) >= 168  # ensure that we have at least a week to model
+        new_visits_list = []
+        for i in range(168 * 15):
+            first_week_idx = i % 168  # map to corresponding hour in first week
+            new_visits_list.append(poi_cbg_visits_list[first_week_idx].copy())
+        poi_cbg_visits_list = new_visits_list
+        assert len(poi_cbg_visits_list) == len(all_hours)
+    else: 
+        pdb.set_trace()
+#######################################################
+
 
 # Load precomputed parameters to adjust(clip) POI dwell times
 d = pd.read_csv(os.path.join(epic_data_root,MSA_NAME, 'parameters_%s.csv' % MSA_NAME)) 
@@ -206,19 +226,18 @@ print('Age-aware CBG-specific death rates scaled.')
 vaccination_vector_no_vaccination = np.zeros(len(cbg_sizes))
 vaccine_acceptance = np.ones(len(cbg_sizes))
 # Run simulations
-history_C2_no_vaccination, history_D2_no_vaccination = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
-                                                                     vaccination_vector=vaccination_vector_no_vaccination, 
-                                                                     vaccine_acceptance=vaccine_acceptance,
-                                                                     protection_rate = PROTECTION_RATE)
+#history_C2_no_vaccination, history_D2_no_vaccination = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
+history_C2, history_D2 = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, #20220304
+                                        vaccination_vector=vaccination_vector_no_vaccination, 
+                                        vaccine_acceptance=vaccine_acceptance,
+                                        protection_rate = PROTECTION_RATE)
 
 # Average history records across random seeds
-cases_cbg_no_vaccination, deaths_cbg_no_vaccination, _, _ = functions.average_across_random_seeds(history_C2_no_vaccination, history_D2_no_vaccination,
-                                                                     M, idxs_msa_nyt, 
-                                                                     print_results=False,draw_results=False)
+#cases_cbg_no_vaccination, deaths_cbg_no_vaccination, _, _ = functions.average_across_random_seeds(history_C2_no_vaccination, history_D2_no_vaccination,
+#                                                                     M, idxs_msa_nyt, 
+#                                                                     print_results=False,draw_results=False)
 
-savepath = os.path.join(gt_result_root, 'cases_cbg_no_vaccination_%s_%sseeds.npy' % (MSA_NAME, NUM_SEEDS))
-np.save(savepath, cases_cbg_no_vaccination)
-savepath = os.path.join(gt_result_root, 'deaths_cbg_no_vaccination_%s_%sseeds.npy' % (MSA_NAME, NUM_SEEDS))
-np.save(savepath, deaths_cbg_no_vaccination)
-
-
+#savepath = os.path.join(gt_result_root, 'cases_cbg_no_vaccination_%s_%sseeds.npy' % (MSA_NAME, NUM_SEEDS))
+#np.save(savepath, cases_cbg_no_vaccination)
+#savepath = os.path.join(gt_result_root, 'deaths_cbg_no_vaccination_%s_%sseeds.npy' % (MSA_NAME, NUM_SEEDS))
+#np.save(savepath, deaths_cbg_no_vaccination)

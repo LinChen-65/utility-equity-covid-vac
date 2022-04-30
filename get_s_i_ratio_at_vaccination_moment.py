@@ -1,12 +1,9 @@
-# python get_s_i_ratio_at_vaccination_moment.py quick_test 
-# python get_s_i_ratio_at_vaccination_moment.py False 
+# python get_s_i_ratio_at_vaccination_moment.py 
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
 
-import sys
-import pdb
-
+import argparse
 import os
 import datetime
 import pandas as pd
@@ -15,20 +12,32 @@ import pickle
 
 import constants
 import functions
-import disease_model_returnSEIR
+import disease_model_returnSEIR as disease_model
 
 import time
+import pdb
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--quick_test', default=False, action='store_true',
+                    help='If true, reduce num_seeds to 2.')
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+parser.add_argument('--save_result', default=False, action='store_true',
+                    help='If true, save simulation results.')
+args = parser.parse_args()
+
+# root
+#root = '/data/chenlin/COVID-19/Data'
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
 
 ###############################################################################
 # Constants
 
-root = '/data/chenlin/COVID-19/Data'
-
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
-#MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
-#NUM_DAYS = 63
-MAX_DATETIME = datetime.datetime(2020, 3, 30, 23)
-NUM_DAYS = 30
+MAX_DATETIME = datetime.datetime(2020, 3, 30, 23) #MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
+NUM_DAYS = 30 #NUM_DAYS = 63
 print('NUM_DAYS:', NUM_DAYS)
 
 # Vaccination protection rate
@@ -43,24 +52,24 @@ MSA_NAME_LIST = ['Atlanta','Chicago','Dallas','Houston', 'LosAngeles',
 # Main variable settings
 
 # Quick Test: prototyping
-quick_test = sys.argv[1]; print('Quick testing?', quick_test)
-if(quick_test == 'True'): NUM_SEEDS = 2
-else: NUM_SEEDS = 30
+print('Quick testing?', args.quick_test)
+if(args.quick_test): 
+    NUM_SEEDS = 2
+else: 
+    NUM_SEEDS = 30
 print('NUM_SEEDS: ', NUM_SEEDS)
 STARTING_SEED = range(NUM_SEEDS)
 
-file_path = os.path.join(root, 'SEIR_at_30d.npy')
+file_path = os.path.join(saveroot, 'SEIR_at_30d.npy')
 print('File path: ',file_path)
-
 
 ###############################################################################
 # Functions
 
 def run_simulation(starting_seed, num_seeds, vaccination_vector, protection_rate=1):
-
-    m = disease_model_returnSEIR.Model(starting_seed=starting_seed,
-                                       num_seeds=num_seeds,
-                                       debug=False,clip_poisson_approximation=True,ipf_final_match='poi',ipf_num_iter=100)
+    m = disease_model.Model(starting_seed=starting_seed,
+                            num_seeds=num_seeds,
+                            debug=False,clip_poisson_approximation=True,ipf_final_match='poi',ipf_num_iter=100)
 
     m.init_exogenous_variables(poi_areas=poi_areas,
                                poi_dwell_time_correction_factors=poi_dwell_time_correction_factors,
@@ -98,13 +107,11 @@ for MSA_NAME in MSA_NAME_LIST:
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] 
 
     # Load Data
-    print('Start loading data...')
-    
     all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
     print('len(all_hours):',len(all_hours))#;pdb.set_trace()
 
     # Load POI-CBG visiting matrices
-    f = open(os.path.join(root, MSA_NAME, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
+    f = open(os.path.join(dataroot, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
     poi_cbg_visits_list = pickle.load(f)
     f.close()
     # truncated list
@@ -115,18 +122,15 @@ for MSA_NAME in MSA_NAME_LIST:
     del poi_cbg_visits_list
 
     # Load precomputed parameters to adjust(clip) POI dwell times
-    d = pd.read_csv(os.path.join(root,MSA_NAME, 'parameters_%s.csv' % MSA_NAME)) 
-    new_d = d # No clipping
-    
-    poi_areas = new_d['feet'].values#面积
-    poi_dwell_times = new_d['median'].values#平均逗留时间
+    d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
+    poi_areas = d['feet'].values#面积
+    poi_dwell_times = d['median'].values#平均逗留时间
     poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
-    del new_d
     del d
     poi_trans_rate = constants.parameters_dict[MSA_NAME][2] / poi_areas * poi_dwell_time_correction_factors
 
     # Load ACS Data for MSA-county matching
-    acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+    acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
     acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
     msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
     msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
@@ -136,7 +140,7 @@ for MSA_NAME in MSA_NAME_LIST:
     del acs_data
 
     # Load CBG ids for the MSA
-    cbg_ids_msa = pd.read_csv(os.path.join(root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
     cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
     M = len(cbg_ids_msa)
 
@@ -148,9 +152,9 @@ for MSA_NAME in MSA_NAME_LIST:
     print('Number of CBGs in this metro area:', M)
 
     # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
     cbg_agesex = pd.read_csv(filepath)
-    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    # Extract CBGs belonging to the MSA 
     cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
     del cbg_agesex
     # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
@@ -192,17 +196,14 @@ for MSA_NAME in MSA_NAME_LIST:
         if(i in idxs_msa_nyt):
             nyt_included[i] = 1
     cbg_age_msa['NYT_Included'] = nyt_included.copy()
-    print('Data loaded.')
 
     ###############################################################################
-    # Load and scale age-aware CBG-specific attack/death rates (original)
+    # Load and scale age-aware CBG-specific death rates (original)
 
-    cbg_death_rates_original = np.loadtxt(os.path.join(root, MSA_NAME, 'cbg_death_rates_original_'+MSA_NAME))
+    cbg_death_rates_original = np.loadtxt(os.path.join(dataroot, 'cbg_death_rates_original_'+MSA_NAME))
     cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape)
-    print('Age-aware CBG-specific death rates loaded. Attack rates are irrelevant to age.')
 
     # The scaling factors are set according to a grid search
-    # Fix attack_scale
     attack_scale = 1
     cbg_attack_rates_scaled = cbg_attack_rates_original * attack_scale
     cbg_death_rates_scaled = cbg_death_rates_original * constants.death_scale_dict[MSA_NAME]
@@ -220,9 +221,7 @@ for MSA_NAME in MSA_NAME_LIST:
 
     result_dict[MSA_NAME] = {'S':S,'E':E,'I':I,'R':R}
     print('Current result_dict:', result_dict)
-    np.save(file_path, result_dict)
-    
-    
-    
 
-
+    if(args.save_result):
+        np.save(file_path, result_dict)
+    

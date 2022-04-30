@@ -1,11 +1,9 @@
-# python grid_search_parameters.py MSA_NAME quick_test p_sick_at_t0
-# python grid_search_parameters.py Atlanta False 5e-4
+# python grid_search_parameters.py --msa_name Atlanta --quick_test
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
 
-import sys
-
+import argparse
 import os
 import datetime
 import pandas as pd
@@ -14,75 +12,57 @@ import pickle
 import time
 
 import constants
-import helper
-import disease_model #disease_model_original
+import functions
+import disease_model_original as disease_model
 
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 
-############################################################
-# Constants
-root = '/data/chenlin/COVID-19/Data'
+import pdb
 
-MSA_NAME_LIST = ['Atlanta','Chicago','Dallas','Houston', 'LosAngeles','Miami','NewYorkCity','Philadelphia','SanFrancisco','WashingtonDC']
-MSA_NAME_FULL_DICT = {
-    'Atlanta':'Atlanta_Sandy_Springs_Roswell_GA',
-    'Chicago':'Chicago_Naperville_Elgin_IL_IN_WI',
-    'Dallas':'Dallas_Fort_Worth_Arlington_TX',
-    'Houston':'Houston_The_Woodlands_Sugar_Land_TX',
-    'LosAngeles':'Los_Angeles_Long_Beach_Anaheim_CA',
-    'Miami':'Miami_Fort_Lauderdale_West_Palm_Beach_FL',
-    'NewYorkCity':'New_York_Newark_Jersey_City_NY_NJ_PA',
-    'Philadelphia':'Philadelphia_Camden_Wilmington_PA_NJ_DE_MD',
-    'SanFrancisco':'San_Francisco_Oakland_Hayward_CA',
-    'WashingtonDC':'Washington_Arlington_Alexandria_DC_VA_MD_WV'
-}
+# root
+#root = '/data/chenlin/COVID-19/Data'
+root = os.getcwd()
+print(root)
+
+# Parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--msa_name', 
+                    help='MSA name.')
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.')
+parser.add_argument('--quick_test', default=False, action='store_true',
+                    help='If true, reduce number of simulations to test quickly.')   
+parser.add_argument('--save_result', default=False, action='store_true',
+                    help='If true, save simulation results.')  
+args = parser.parse_args()
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
 min_datetime=MIN_DATETIME
 max_datetime=MAX_DATETIME
 
-# beta_and_psi_plausible_range is output of make_param_plausibility_plot and should be updated whenever you recalibrate R0. These numbers allow R0_base to range from 0.1 - 2 and R0_PSI to range from 1-3.
-BETA_AND_PSI_PLAUSIBLE_RANGE = {"min_home_beta": 0.0011982272027079982,
-                                "max_home_beta": 0.023964544054159966,
-                                "max_poi_psi": 4886.41659532027,
-                                "min_poi_psi": 515.4024854336667}
-
-
-print('Constants loaded.')
-
 ############################################################
 # Main variable settings
 
-MSA_NAME = sys.argv[1]; print('MSA_NAME: ',MSA_NAME)
-MSA_NAME_FULL = MSA_NAME_FULL_DICT[MSA_NAME]
-#MSA_NAME = 'SanFrancisco'
-#MSA_NAME_FULL = 'San_Francisco_Oakland_Hayward_CA'
+MSA_NAME = args.msa_name; print('MSA_NAME: ',MSA_NAME) #MSA_NAME = 'SanFrancisco'
+MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Francisco_Oakland_Hayward_CA'
 
 # how_to_select_best_grid_search_models = ['cases','cases_smooth','deaths','deaths_smooth]
 how_to_select_best_grid_search_models = 'cases'
 
-# Quick Test: prototyping
-quick_test = sys.argv[2]
-#quick_test = False
-
-# Which part of parameters to test (ranging from 1 to 10)
-p_sick_at_t0 = sys.argv[3]
-
 # Parameters to experiment
-if(quick_test == True):
+if(args.quick_test):
     NUM_SEEDS = 2
     p_sick_at_t0_list = [1e-2, 5e-3]
-    home_beta_list = np.linspace(BETA_AND_PSI_PLAUSIBLE_RANGE['min_home_beta'],BETA_AND_PSI_PLAUSIBLE_RANGE['max_home_beta'], 2)
-    poi_psi_list = np.linspace(BETA_AND_PSI_PLAUSIBLE_RANGE['min_poi_psi'], BETA_AND_PSI_PLAUSIBLE_RANGE['max_poi_psi'], 2)
+    home_beta_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_home_beta'],constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_home_beta'], 2)
+    poi_psi_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_poi_psi'], constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_poi_psi'], 2)
 else:
     NUM_SEEDS = 30
-    #p_sick_at_t0_list = [1e-2, 5e-3, 2e-3, 1e-3, 5e-4, 2e-4, 1e-4, 5e-5, 2e-5, 1e-5]
-    p_sick_at_t0_list = [p_sick_at_t0]
-    home_beta_list = np.linspace(BETA_AND_PSI_PLAUSIBLE_RANGE['min_home_beta'],BETA_AND_PSI_PLAUSIBLE_RANGE['max_home_beta'], 10)
-    poi_psi_list = np.linspace(BETA_AND_PSI_PLAUSIBLE_RANGE['min_poi_psi'], BETA_AND_PSI_PLAUSIBLE_RANGE['max_poi_psi'], 15)
-
+    p_sick_at_t0_list = [1e-2, 5e-3, 2e-3, 1e-3, 5e-4, 2e-4, 1e-4, 5e-5, 2e-5, 1e-5]
+    #p_sick_at_t0_list = [float(p_sick_at_t0)]
+    home_beta_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_home_beta'],constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_home_beta'], 10)
+    poi_psi_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_poi_psi'], constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_poi_psi'], 15)
 
 STARTING_SEED = range(NUM_SEEDS)
 
@@ -90,10 +70,6 @@ STARTING_SEED = range(NUM_SEEDS)
 # functions
 
 def match_msa_name_to_msas_in_acs_data(msa_name, acs_msas):
-    '''
-    Matches the MSA name from our annotated SafeGraph data to the
-    MSA name in the external datasource in MSA_COUNTY_MAPPING
-    '''
     msa_pieces = msa_name.split('_')
     query_states = set()
     i = len(msa_pieces) - 1
@@ -121,20 +97,16 @@ def match_msa_name_to_msas_in_acs_data(msa_name, acs_msas):
 def get_fips_codes_from_state_and_county_fp(state, county):
     state = str(int(state))
     county = str(int(county))
-    #state = str(state)
     if len(state) == 1:
         state = '0' + state
-    #county = str(county)
     if len(county) == 1:
         county = '00' + county
     elif len(county) == 2:
         county = '0' + county
-    #fips_codes.append(np.int64(state + county))
-    #return np.int64(state + county)
     return int(state + county)
     
 # Average history records across random seeds
-def average_across_random_seeds(policy, history_C2, history_D2, num_cbgs, cbg_idxs, print_results=False, draw_results=True):
+def average_across_random_seeds(history_C2, history_D2, num_cbgs, cbg_idxs, print_results=False):
     num_days = len(history_C2)
     
     # Average history records across random seeds
@@ -171,28 +143,19 @@ def apply_smoothing(x, agg_func=np.mean, before=3, after=3):
 # Load Data
 
 # Load POI-CBG visiting matrices
-f = open(os.path.join(root, MSA_NAME, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
+f = open(os.path.join(root, 'data', '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
 poi_cbg_visits_list = pickle.load(f)
 f.close()
 
 # Load precomputed parameters to adjust(clip) POI dwell times
-#d = pd.read_csv(os.path.join(root,'data_after_process(gao)\\parameters1.csv')) # Philadelphia MSA
-d = pd.read_csv(os.path.join(root,MSA_NAME, 'parameters_%s.csv' % MSA_NAME)) 
-#d.rename(columns={"safegraph_computed_area_in_square_feet":"feet"},inplace=True)
-#d.rename(columns={"avg_median_dwell":"median"},inplace=True)
-
-# No clipping
-new_d = d
-
-all_hours = helper.list_hours_in_range(min_datetime, max_datetime)
-#poi_areas = new_d['safegraph_computed_area_in_square_feet'].values#面积
-#poi_dwell_times = new_d['avg_median_dwell'].values#平均逗留时间
-poi_areas = new_d['feet'].values#面积
-poi_dwell_times = new_d['median'].values#平均逗留时间
+d = pd.read_csv(os.path.join(root,'data', 'parameters_%s.csv' % MSA_NAME)) 
+all_hours = functions.list_hours_in_range(min_datetime, max_datetime)
+poi_areas = d['feet'].values#面积
+poi_dwell_times = d['median'].values#平均逗留时间
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 
 # Load ACS Data for MSA-county matching
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(root,'data', 'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 msa_match = match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
 msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
@@ -201,7 +164,7 @@ good_list = list(msa_data['FIPS Code'].values)
 print(good_list)
 
 # Load CBG ids for the MSA
-cbg_ids_msa = pd.read_csv(os.path.join(root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+cbg_ids_msa = pd.read_csv(os.path.join(root,'data','%s_cbg_ids.csv'%MSA_NAME_FULL)) 
 cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
 M = len(cbg_ids_msa)
 
@@ -214,16 +177,15 @@ for i in cbgs_to_idxs:
 print('Number of CBGs in this metro area:', M)
 
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 
 # Extract CBGs belonging to the MSA
-# https://covid-mobility.stanford.edu//datasets/
 cbg_agesex_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
 cbg_age_msa = cbg_agesex_msa.copy()
 
 # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
-# which is defined in Constants.py
+# which is defined in constants.py
 for i in range(3,25+1): # 'B01001e3'~'B01001e25'
     male_column = 'B01001e'+str(i)
     female_column = 'B01001e'+str(i+24)
@@ -245,26 +207,6 @@ cbg_sizes = np.array(cbg_sizes,dtype='int32')
 print('Total population: ',np.sum(cbg_sizes))
 
 # Select counties belonging to the MSA
-'''
-good_list = {
-             'Atlanta':[13013, 13015, 13035, 13045, 13057, 13063, 13067, 13077, 13085, 13089, 13097, 13113, 13117, 13121, 
-                        13135, 13143, 13149, 13151, 13159, 13171, 13199, 13211, 13217, 13223, 13227, 13231, 13247, 13255, 13297],
-             'Chicago':[17031, 17037, 17043, 17063, 17089, 17093, 17097, 17111, 17197, 18073, 18089, 18111, 18127, 55059],
-             'Dallas': [48085, 48113, 48121, 48139, 48221, 48231, 48251, 48257, 48367, 48397, 48425, 48439, 48497],
-             'Houston':[48015, 48039, 48071, 48157, 48167, 48201, 48291, 48339, 48473],
-             'LosAngeles':[6111, 6071, 6065, 6037, 6059],
-             'Miami': [12011, 12086, 12099],
-             'NewYorkCity': [34003, 34013, 34017, 34019, 34023, 34025, 34027, 34029, 34031, 34035, 34037, 34039, 36005, 36027, 
-                             36047, 36059, 36061, 36071, 36079, 36081, 36085, 36087, 36103, 36119, 42103],
-             'Philadelphia':[34005,34007,34015,42017,42029,42091,42045,42101,10003,24015,34033,42011,10001,34001,34009,34011],
-             'SanFrancisco': [6001, 6013, 6041, 6075, 6081],
-             'WashingtonDC': [24009, 24017, 24021, 24031, 24033, 51013, 51043, 51047, 51059, 51061, 51107, 51153, 51157, 51177, 
-                              51179, 51187, 51510, 51600, 51610, 51630, 51683, 51683, 51685]
-            }
-'''
-
-#good_list = [6111, 6071, 6065, 6037, 6059] # Los Angeles
-
 y = []
 
 for i in x:
@@ -279,7 +221,7 @@ print('Number of CBGs in this metro area:', len(idxs_msa))
 print('Number of CBGs in to compare with NYT data:', len(idxs_county))
 
 # Load ground truth: NYT Data
-nyt_data = pd.read_csv(os.path.join(root, 'us-counties.csv'))
+nyt_data = pd.read_csv(os.path.join(root, 'data', 'us-counties.csv'))
 nyt_data['in_msa'] = nyt_data.apply(lambda x : x['fips'] in good_list , axis=1)
 nyt_data_msa = nyt_data[nyt_data['in_msa']==True].copy()
 # Extract data according to simulation time range
@@ -316,7 +258,7 @@ if(len(deaths_daily_smooth)<len(deaths_total_no_vaccination)):
 
 
 # Initialization: only need to be performed once    
-m = disease_model_original.Model(starting_seed=STARTING_SEED,
+m = disease_model.Model(starting_seed=STARTING_SEED,
                  num_seeds=NUM_SEEDS,
                  debug=False,
                  clip_poisson_approximation=True,
@@ -366,8 +308,7 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
 
             # Average history records across random seeds
             policy = 'Age_Agnostic'
-            _, _, cases_total_age_agnostic, deaths_total_age_agnostic = average_across_random_seeds(policy, history_C2_age_agnostic, history_D2_age_agnostic, M, idxs_county, 
-                                                                                      print_results=False,draw_results=False)
+            _, _, cases_total_age_agnostic, deaths_total_age_agnostic = average_across_random_seeds(history_C2_age_agnostic, history_D2_age_agnostic, M, idxs_county, print_results=False)
 
             print(cases_total_age_agnostic[-1], deaths_total_age_agnostic[-1])
             cases_total_age_agnostic_final = cases_total_age_agnostic[-1]
@@ -428,22 +369,19 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
             isfirst = False
             
             # Save rmse dicts
-            np.save(os.path.join(root,MSA_NAME, '20210127_rmse_cases_%s_%s'%(MSA_NAME,p_sick_at_t0)),(rmse_dict_cases_agnostic)
-            np.save(os.path.join(root,MSA_NAME, '20210127_rmse_cases_smooth_%s'%(MSA_NAME,p_sick_at_t0)),rmse_dict_cases_smooth_agnostic)
-            np.save(os.path.join(root,MSA_NAME, '20210127_rmse_deaths_%s_%s'%(MSA_NAME,p_sick_at_t0)),rmse_dict_deaths_agnostic)
-            np.save(os.path.join(root,MSA_NAME, '20210127_rmse_deaths_smooth_%s_%s'%(MSA_NAME,p_sick_at_t0)),rmse_dict_deaths_smooth_agnostic)
+            if(args.save_result):
+                np.save(os.path.join(root,'results', '20210127_rmse_cases_%s_%s'%(MSA_NAME,p_sick_at_t0)),rmse_dict_cases_agnostic)
+                np.save(os.path.join(root,'results', '20210127_rmse_cases_smooth_%s_%s'%(MSA_NAME,p_sick_at_t0)),rmse_dict_cases_smooth_agnostic)
+                np.save(os.path.join(root,'results', '20210127_rmse_deaths_%s_%s'%(MSA_NAME,p_sick_at_t0)),rmse_dict_deaths_agnostic)
+                np.save(os.path.join(root,'results', '20210127_rmse_deaths_smooth_%s_%s'%(MSA_NAME,p_sick_at_t0)),rmse_dict_deaths_smooth_agnostic)
+                
+                # Save best results
+                best_results = dict()
+                best_results['rmse'] = best_rmse
+                best_results['parameters'] = best_parameters
+                np.save(os.path.join(root,'results', '20210127_best_results_%s_%s_%s'%(how_to_select_best_grid_search_models,MSA_NAME,p_sick_at_t0)),best_results)
             
-            # Save best results
-            best_results = dict()
-            best_results['rmse'] = best_rmse
-            best_results['parameters'] = best_parameters
-            np.save(os.path.join(root,MSA_NAME, '20210127_best_results_%s_%s_%s'%(how_to_select_best_grid_search_models,MSA_NAME,p_sick_at_t0)),best_results)
 
 end = time.time()
 print('Total Time:',(end-start))
-
-
-
-
-
 
