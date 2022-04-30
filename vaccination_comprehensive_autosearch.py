@@ -1,4 +1,4 @@
-# python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1 --recheck_interval 0.01 
+# python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
@@ -57,6 +57,8 @@ parser.add_argument('--w6', type=float, default=1,
                     help='Initial weight 6.')       
 parser.add_argument('--store_history', default=False, action='store_true',
                     help='If true, save history_D2 instead of final_deaths.')                                      
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
 args = parser.parse_args()
 
 print(f'MSA name: {args.msa_name}.')
@@ -68,6 +70,7 @@ if(args.consider_hesitancy):
 print(f'Quick testing? {args.quick_test}')
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname=='fib-dl3'):
@@ -76,7 +79,10 @@ if(hostname=='fib-dl3'):
 elif(hostname=='rl4'):
     root = '/home/chenlin/COVID-19/Data' #rl4
     saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-
+'''
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
 
 # Policies to compare
 demo_policy_to_compare = ['Age', 'Income', 'Occupation', 'Minority'] #20220305
@@ -258,11 +264,11 @@ def get_results_from_data_column(data_column): #20220306
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[args.msa_name] 
 
 # Load POI-CBG visiting matrices
-f = open(os.path.join(root, args.msa_name, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
+f = open(os.path.join(dataroot, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
 poi_cbg_visits_list = pickle.load(f)
 f.close()
 # Load precomputed parameters to adjust(clip) POI dwell times
-d = pd.read_csv(os.path.join(root,args.msa_name, 'parameters_%s.csv' % args.msa_name)) 
+d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % args.msa_name)) 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
@@ -272,7 +278,7 @@ poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 
 del d
 
 # Load ACS Data for MSA-county matching
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
 msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
@@ -281,7 +287,7 @@ good_list = list(msa_data['FIPS Code'].values) #;print('Counties included: ', go
 del acs_data
 
 # Load CBG ids for the MSA
-cbg_ids_msa = pd.read_csv(os.path.join(root,args.msa_name,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
 cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
 M = len(cbg_ids_msa); #print('Number of CBGs in this metro area:', M)
 
@@ -292,7 +298,7 @@ for i in cbgs_to_idxs:
     x[str(i)] = cbgs_to_idxs[i]
 
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 cbg_age_msa = functions.load_cbg_age_msa(cbg_agesex, cbg_ids_msa) #20220306
 del cbg_agesex
@@ -318,7 +324,7 @@ if('Age' in demo_policy_to_compare):
     cbg_age_msa['Elder_Ratio_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
     
 if('Occupation' in demo_policy_to_compare):
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
     cbg_occupation = pd.read_csv(filepath)
     cbg_occupation_msa = functions.load_cbg_occupation_msa(cbg_occupation, cbg_ids_msa, cbg_sizes) #20220302
     del cbg_occupation
@@ -329,7 +335,7 @@ if('Occupation' in demo_policy_to_compare):
 
 
 if('Income' in demo_policy_to_compare):
-    filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
+    filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
     cbg_income = pd.read_csv(filepath)
     cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
     cbg_income_msa = functions.load_cbg_income_msa(cbg_income, cbg_ids_msa) #20220302
@@ -352,7 +358,7 @@ if('Income' in demo_policy_to_compare):
 
     
 if('Minority' in demo_policy_to_compare): #20220305
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b03.csv")
     cbg_ethnic = pd.read_csv(filepath)
     cbg_ethnic_msa = functions.load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes)
     del cbg_ethnic
@@ -500,9 +506,9 @@ print('occupation_overall_performance: ', occupation_overall_performance)
 print('target_overall_performance: ', target_overall_performance)
 
 ###############################################################################
-# Load and scale age-aware CBG-specific attack/death rates (original)
+# Load and scale age-aware CBG-specific death rates (original)
 
-cbg_death_rates_original = np.loadtxt(os.path.join(root, args.msa_name, 'cbg_death_rates_original_'+args.msa_name))
+cbg_death_rates_original = np.loadtxt(os.path.join(dataroot, 'cbg_death_rates_original_'+args.msa_name))
 cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape)
 attack_scale = 1
 cbg_attack_rates_scaled = cbg_attack_rates_original * attack_scale
@@ -510,7 +516,7 @@ cbg_death_rates_scaled = cbg_death_rates_original * constants.death_scale_dict[a
 cbg_age_msa['Death_Rate'] =  cbg_death_rates_scaled
 
 # Obtain vulnerability and damage, according to theoretical analysis
-cbg_age_msa = functions.obtain_vulner_damage(cbg_age_msa, args.msa_name, root, M, idxs_msa_all, idxs_msa_nyt, cbg_death_rates_scaled)
+cbg_age_msa = functions.obtain_vulner_damage(cbg_age_msa, args.msa_name, saveroot, M, idxs_msa_all, idxs_msa_nyt, cbg_death_rates_scaled)
 
 # Construct cbg_hybrid_msa
 columns_of_interest = ['census_block_group','Sum']

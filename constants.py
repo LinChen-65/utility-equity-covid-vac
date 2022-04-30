@@ -108,6 +108,11 @@ MSA_NAME_FULL_DICT = {
     'WashingtonDC':'Washington_Arlington_Alexandria_DC_VA_MD_WV'
 }
 
+BETA_AND_PSI_PLAUSIBLE_RANGE = {"min_home_beta": 0.0011982272027079982,
+                                "max_home_beta": 0.023964544054159966,
+                                "max_poi_psi": 4886.41659532027,
+                                "min_poi_psi": 515.4024854336667}
+
 # parameters:[p_sick_at_t0, home_beta, poi_psi]
 parameters_dict = {'Atlanta':[2e-4, 0.0037, 2388],
                    'Chicago': [1e-4,0.0063,2076],

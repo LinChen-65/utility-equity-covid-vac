@@ -1,10 +1,9 @@
-# python vaccination_randombag_newdamage_gini.py MSA_NAME RANDOM_SEED quick_test
-# python vaccination_randombag_newdamage_gini.py Atlanta 66 False
+# python vaccination_randombag.py --msa_name Atlanta --random_seed 66 
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
 
-import sys
+import argparse
 import socket
 import os
 import datetime
@@ -14,15 +13,24 @@ import pickle
 
 import constants
 import functions
-import disease_model_test
+import disease_model_test as disease_model
 
 import time
 import pdb
 
-###############################################################################
-# Constants
+parser = argparse.ArgumentParser()
+parser.add_argument('--msa_name', 
+                    help='MSA name.')
+parser.add_argument('--random_seed', type=int, default=42, 
+                    help='Random seed.')
+parser.add_argument('--quick_test', default=False, action='store_true',
+                    help='If true, reduce num_seeds to 2.')
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+args = parser.parse_args()
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname in ['fib-dl3','rl3','rl2']):
@@ -31,7 +39,11 @@ if(hostname in ['fib-dl3','rl3','rl2']):
 elif(hostname=='rl4'):
     root = '/home/chenlin/COVID-19/Data' #rl4
     saveroot = '/home/chenlin/utility-equity-covid-vac/results/vac_randombag_results'
-
+'''
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+resultroot = os.path.join(root, 'results')
+saveroot = os.path.join(root, 'results', 'vac_randombag_results')
 if not os.path.exists(saveroot): # if folder does not exist, create one. #20220302
     os.makedirs(saveroot)
 
@@ -61,16 +73,16 @@ NUM_DIM = 6 # Age, Income, EW, Minority, Vulner, Damage #20220308
 ###############################################################################
 # Main variable settings
 
-MSA_NAME = sys.argv[1]; print('MSA_NAME: ',MSA_NAME) 
+MSA_NAME = args.msa_name; print('MSA_NAME: ',MSA_NAME) 
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] 
 
 # Random Seed:
-RANDOM_SEED = int(sys.argv[2])
+RANDOM_SEED = args.random_seed
 print('RANDOM_SEED:',RANDOM_SEED)
 
 # Quick Test: prototyping
-quick_test = sys.argv[3]; print('Quick testing?', quick_test)
-if(quick_test == 'True'):
+print('Quick testing?', args.quick_test)
+if(args.quick_test):
     NUM_SEEDS = 2
 else:
     NUM_SEEDS = 60 #30
@@ -95,9 +107,9 @@ REL_TO = 'No_Vaccination'
 # Functions
 
 def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_acceptance, protection_rate=1):
-    m = disease_model_test.Model(starting_seed=starting_seed,
-                                 num_seeds=num_seeds,
-                                 debug=False,clip_poisson_approximation=True,ipf_final_match='poi',ipf_num_iter=100)
+    m = disease_model.Model(starting_seed=starting_seed,
+                            num_seeds=num_seeds,
+                            debug=False,clip_poisson_approximation=True,ipf_final_match='poi',ipf_num_iter=100)
 
     m.init_exogenous_variables(poi_areas=poi_areas,
                                poi_dwell_time_correction_factors=poi_dwell_time_correction_factors,
@@ -215,12 +227,12 @@ def make_gini_table(policy_list, demo_feat_list, rel_to, num_groups, save_result
 # Load Data
 
 # Load POI-CBG visiting matrices
-f = open(os.path.join(root, MSA_NAME, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
+f = open(os.path.join(dataroot, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
 poi_cbg_visits_list = pickle.load(f)
 f.close()
 
 # Load precomputed parameters to adjust(clip) POI dwell times
-d = pd.read_csv(os.path.join(root,MSA_NAME, 'parameters_%s.csv' % MSA_NAME)) 
+d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
 poi_areas = d['feet'].values#面积
 poi_dwell_times = d['median'].values#平均逗留时间
@@ -228,7 +240,7 @@ poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 
 del d
 
 # Load ACS Data for MSA-county matching
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
 msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
@@ -237,7 +249,7 @@ good_list = list(msa_data['FIPS Code'].values)
 del acs_data
 
 # Load CBG ids for the MSA
-cbg_ids_msa = pd.read_csv(os.path.join(root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
 cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
 M = len(cbg_ids_msa)
 
@@ -248,9 +260,9 @@ for i in cbgs_to_idxs:
     x[str(i)] = cbgs_to_idxs[i]
 
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
-# Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+# Extract CBGs belonging to the MSA 
 cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
 del cbg_agesex
 # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
@@ -295,7 +307,7 @@ cbg_age_msa['NYT_Included'] = nyt_included.copy()
 
 # Load other demographic data
 # Income
-filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
@@ -304,14 +316,14 @@ del cbg_income
 cbg_income_msa['Sum'] = cbg_age_msa['Sum'].copy()
 
 # Occupation                       
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
 cbg_occupation = pd.read_csv(filepath)
 cbg_occupation_msa = functions.load_cbg_occupation_msa(cbg_occupation, cbg_ids_msa, cbg_sizes) #20220302
 del cbg_occupation
 cbg_occupation_msa.rename(columns={'Essential_Worker_Ratio':'EW_Ratio'},inplace=True)
 
 # Minority #20220308
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b03.csv")
 cbg_ethnic = pd.read_csv(filepath)
 cbg_ethnic_msa = functions.load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes)
 del cbg_ethnic
@@ -335,7 +347,7 @@ cbg_minority_msa['Minority_Ratio_Quantile_FOR_GINI'] =  cbg_minority_msa['Minori
 ##############################################################################
 # Load and scale age-aware CBG-specific attack/death rates (original)
 
-cbg_death_rates_original = np.loadtxt(os.path.join(root, MSA_NAME, 'cbg_death_rates_original_'+MSA_NAME))
+cbg_death_rates_original = np.loadtxt(os.path.join(dataroot, 'cbg_death_rates_original_'+MSA_NAME))
 cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape)
 attack_scale = 1
 cbg_attack_rates_scaled = cbg_attack_rates_original * attack_scale
@@ -347,15 +359,15 @@ cbg_death_rates_scaled = cbg_death_rates_original * constants.death_scale_dict[M
 # Retrieve cbg_avg_infect_same, cbg_avg_infect_diff
 # As planned, they have been computed in 'tradeoff_md_mv_theory.py'.
 # Use them to get data['Vulnerability'] and data['Damage']
-if(os.path.exists(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
+if(os.path.exists(os.path.join(resultroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
     print('cbg_avg_infect_same, cbg_avg_infect_diff: Load existing file.')
-    cbg_avg_infect_same = np.load(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
-    cbg_avg_infect_diff = np.load(os.path.join(root, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
+    cbg_avg_infect_same = np.load(os.path.join(resultroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
+    cbg_avg_infect_diff = np.load(os.path.join(resultroot, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
 else:
     print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
     pdb.set_trace()
     
-SEIR_at_30d = np.load(os.path.join(root, 'SEIR_at_30d.npy'),allow_pickle=True).item()
+SEIR_at_30d = np.load(os.path.join(resultroot, 'SEIR_at_30d.npy'),allow_pickle=True).item()
 S_ratio = SEIR_at_30d[MSA_NAME]['S'] / (cbg_sizes.sum())
 I_ratio = SEIR_at_30d[MSA_NAME]['I'] / (cbg_sizes.sum())
 #print('S_ratio:',S_ratio,'I_ratio:',I_ratio)
@@ -384,7 +396,7 @@ vaccine_acceptance = np.ones(len(cbg_sizes)) #20220308
 ###############################################################################
 # Load non-vaccination results for comparison
 
-history_D2_no_vaccination = np.fromfile(os.path.join(root,MSA_NAME,'vaccination_results_adaptive_31d_0.1_0.01','20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%(MSA_NAME)))
+history_D2_no_vaccination = np.fromfile(os.path.join(resultroot,'vaccination_results_adaptive_31d_0.1_0.01','20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%(MSA_NAME)))
 # Average across random seeds
 history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,30,M))
 avg_final_deaths_no_vaccination = np.mean(history_D2_no_vaccination,axis=1)[-1,:]

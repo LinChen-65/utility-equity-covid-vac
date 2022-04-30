@@ -1,8 +1,9 @@
 # python plot_groupwise_death_rate.py
 
+import argparse
+import os
 import numpy as np
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 import copy
 
@@ -11,12 +12,20 @@ import functions
 
 import pdb
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+args = parser.parse_args()
+
 policy_list = ['Age_Agnostic','No_Vaccination']
-#demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
-demo_feat_list = ['Race']
+demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
 NUM_GROUPS = 10
-root = '/data/chenlin/COVID-19/Data'
-saveroot = '/data/chenlin/utility-equity-covid-vac/results/figures'
+#root = '/data/chenlin/COVID-19/Data'
+#saveroot = '/data/chenlin/utility-equity-covid-vac/results/figures'
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+resultroot = os.path.join(root, 'results')
+fig_save_root = os.path.join(root, 'figures')
 
 # Drawing settings
 alpha=1
@@ -27,10 +36,10 @@ markersize=11
 
 def get_cbg_ids_sizes(MSA_NAME): #20220227
     # Load CBG ids for the MSA
-    cbg_ids_msa = pd.read_csv(os.path.join(root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
     cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
 
-    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    # Extract CBGs belonging to the MSA 
     cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
     cbg_age_msa.rename(columns={'B01001e1':'Sum'},inplace=True)
     cbg_age_msa['Sum'] = cbg_age_msa['Sum'].apply(lambda x : x if x!=0 else 1)
@@ -155,7 +164,7 @@ final_deaths_rate_age_agnostic = np.zeros(NUM_GROUPS)
 final_deaths_rate_no_vaccination = np.zeros(NUM_GROUPS)
 
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 
 count=0
@@ -165,11 +174,11 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
     
     # Load CBG ids for the MSA
-    cbg_ids_msa = pd.read_csv(os.path.join(root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
     cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
     M = len(cbg_ids_msa)
     
-    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    # Extract CBGs belonging to the MSA 
     cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
     # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
     # which is defined in Constants.py
@@ -195,8 +204,8 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     cbg_age_msa['Age_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
     # No_Vaccination & Age_Agnostic, accumulated results
-    deaths_cbg_no_vaccination = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-    deaths_cbg_age_agnostic = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+    deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+    deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
 
     # Add simulation results to grouping table
     cbg_age_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
@@ -214,9 +223,9 @@ return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #2022022
 avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
 
 #savepath = os.path.join(saveroot, 'groupwise_death_rate_age.png')
-savepath = os.path.join(saveroot, 'fig1d_age_withlegend.pdf') #20220309
+savepath = os.path.join(fig_save_root, 'fig1d_age_withlegend.pdf') #20220309
 plot_groupwise_death_rate(demo_feat='Elder_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=True)
-savepath = os.path.join(saveroot, 'fig1d_age.pdf') #20220309
+savepath = os.path.join(fig_save_root, 'fig1d_age.pdf') #20220309
 plot_groupwise_death_rate(demo_feat='Elder_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
 ################################################################################
@@ -228,7 +237,7 @@ if('Income' in demo_feat_list):
     final_deaths_rate_no_vaccination = np.zeros(NUM_GROUPS)
 
     # Load ACS 5-year (2013-2017) Data: Mean Household Income
-    filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
+    filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
     cbg_income = pd.read_csv(filepath)
     # Drop duplicate column 'Unnamed:0'
     cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
@@ -255,8 +264,8 @@ if('Income' in demo_feat_list):
         cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
         # No_Vaccination & Age_Agnostic, accumulated results
-        deaths_cbg_no_vaccination = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-        deaths_cbg_age_agnostic = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
 
         # Add simulation results to grouping table
         cbg_income_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
@@ -275,7 +284,7 @@ if('Income' in demo_feat_list):
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
     #savepath = os.path.join(saveroot, 'groupwise_death_rate_income.png')
-    savepath = os.path.join(saveroot, 'fig1d_income.pdf')
+    savepath = os.path.join(fig_save_root, 'fig1d_income.pdf')
     plot_groupwise_death_rate(demo_feat='Mean_Household_Income', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
 
@@ -284,7 +293,7 @@ if('Income' in demo_feat_list):
 
 if('Occupation' in demo_feat_list):
     # cbg_c24.csv: Occupation
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
     cbg_occupation = pd.read_csv(filepath)
 
     result_dict = dict()
@@ -320,12 +329,6 @@ if('Occupation' in demo_feat_list):
         # Deal with NaN values
         cbg_occupation_msa.fillna(0,inplace=True)
 
-        print(np.round(cbg_occupation_msa['Employed_Ratio'].max(),4), 
-            np.round(cbg_occupation_msa['Employed_Ratio'].min(),4), 
-            np.round(cbg_occupation_msa['Employed_Ratio'].mean(),4), 
-            np.round(cbg_occupation_msa['Employed_Ratio'].std(),4)
-            )
-
         # 先filter再分组
         #cbg_occupation_msa['Valid'] = cbg_occupation_msa.apply(lambda x : 1 if (x['Essential_Worker_Ratio']>0.2) else 0, axis=1)
         cbg_occupation_msa['Valid'] = cbg_occupation_msa.apply(lambda x : 1 if (True) else 0, axis=1) #20220227, 先不filter
@@ -337,12 +340,12 @@ if('Occupation' in demo_feat_list):
         cbg_occupation_msa['Essential_Worker_Quantile'] =  cbg_occupation_msa.apply(lambda x : x['Essential_Worker_Quantile'] if x['Valid'] 
                                                                                     else NUM_GROUPS, axis=1)
         
-        print(cbg_occupation_msa['Essential_Worker_Ratio'].mean(), cbg_occupation_msa['Essential_Worker_Ratio'].max())
-        print(len(cbg_occupation_msa),len(cbg_occupation_msa[cbg_occupation_msa['Essential_Worker_Quantile']==NUM_GROUPS]))
+        #print(cbg_occupation_msa['Essential_Worker_Ratio'].mean(), cbg_occupation_msa['Essential_Worker_Ratio'].max())
+        #print(len(cbg_occupation_msa),len(cbg_occupation_msa[cbg_occupation_msa['Essential_Worker_Quantile']==NUM_GROUPS]))
         
         # No_Vaccination & Age_Agnostic, accumulated results
-        deaths_cbg_no_vaccination = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-        deaths_cbg_age_agnostic = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
         # Add simulation results to grouping table
         cbg_occupation_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
         cbg_occupation_msa['Final_Deaths_Age_Agnostic'] = deaths_cbg_age_agnostic[-1,:]
@@ -354,18 +357,18 @@ if('Occupation' in demo_feat_list):
             print('NaN exists in cbg_occupation_msa. Please check.')
             pdb.set_trace()
         data_all = data_all.append(cbg_occupation_msa)
-        print('len(data_all):', len(data_all))
+        #print('len(data_all):', len(data_all))
         
         results = get_msa_result(cbg_table=cbg_occupation_msa, demo_feat='Essential_Worker', num_groups=NUM_GROUPS) #20220227
         count += 1
         result_dict[MSA_NAME] = copy.deepcopy(results)
         cbg_num += len(cbg_occupation_msa[cbg_occupation_msa['Valid']==1])
-        print(cbg_num)
+        #print(cbg_num)
 
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
     #savepath = os.path.join(saveroot, 'groupwise_death_rate_occupation.png')
-    savepath = os.path.join(saveroot, 'fig1d_occupation.pdf')
+    savepath = os.path.join(fig_save_root, 'fig1d_occupation.pdf')
     plot_groupwise_death_rate(demo_feat='Essential_Worker_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
 
@@ -374,10 +377,10 @@ if('Occupation' in demo_feat_list):
 
 if('Race' in demo_feat_list):
     # cbg_b02.csv: Race #20220225
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b02.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b02.csv")
     cbg_race = pd.read_csv(filepath)
     # cbg_b03.csv: Ethnic #20220226
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b03.csv")
     cbg_ethnic = pd.read_csv(filepath)
 
     result_dict = dict()
@@ -418,7 +421,7 @@ if('Race' in demo_feat_list):
         cbg_race_msa['Minority_Ratio_Quantile'] =  cbg_race_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
         print(cbg_race_msa[cbg_race_msa['Minority_Ratio']==0]['Sum'].sum())
         
-        ##################### test #####################
+        ##################### below are tests #####################
         # Examine the average elder_ratio in each ethnic decile
         '''
         # Extract CBGs belonging to the MSA
@@ -448,11 +451,11 @@ if('Race' in demo_feat_list):
             print(np.round(cbg_race_msa[cbg_race_msa['Minority_Ratio_Quantile']==i]['Elder_Ratio'].mean(), 4)) 
         pdb.set_trace()
         '''
-        ##################### test #####################
+        ##################### above are tests #####################
 
         # No_Vaccination & Age_Agnostic, accumulated results
-        deaths_cbg_no_vaccination = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-        deaths_cbg_age_agnostic = np.load(os.path.join(root,MSA_NAME,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
 
         # Add simulation results to grouping table
         cbg_race_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
@@ -471,7 +474,6 @@ if('Race' in demo_feat_list):
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
     #savepath = os.path.join(saveroot, 'groupwise_death_rate_minority.png')
-    savepath = os.path.join(saveroot, 'fig1d_minority.pdf')
+    savepath = os.path.join(fig_save_root, 'fig1d_minority.pdf')
     plot_groupwise_death_rate(demo_feat='Minority_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
-pdb.set_trace()

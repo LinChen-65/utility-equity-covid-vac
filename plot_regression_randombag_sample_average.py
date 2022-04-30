@@ -33,10 +33,15 @@ parser.add_argument('--num_samples',  type=int, default=20,
                     help='Number of samples.')
 parser.add_argument('--sample_frac',  type=float, default=0.2,
                     help='Fraction each sample contains.')
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+parser.add_argument('--stop_to_observe', default=False, action='store_true',
+                    help='If true, stop after regression.')
 args = parser.parse_args()
 print('\nargs.msa_name: ',args.msa_name)
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname in ['fib-dl3','rl3','rl2']):
@@ -45,8 +50,12 @@ if(hostname in ['fib-dl3','rl3','rl2']):
 elif(hostname=='rl4'):
     root = '/home/chenlin/COVID-19/Data' #rl4
     saveroot = '/home/chenlin/utility-equity-covid-vac/results/'
+'''
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+resultroot = os.path.join(root, 'results')
+fig_save_root = os.path.join(root, 'figures')
 
-timestring = '20210206'
 
 # Derived variables
 if(args.msa_name=='all'):
@@ -116,26 +125,26 @@ else:
 
 
     # Load ACS Data for matching with NYT Data
-    acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+    acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
     acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 
     # Load NYT Data
-    nyt_data = pd.read_csv(os.path.join(root, 'us-counties.csv'))
+    nyt_data = pd.read_csv(os.path.join(dataroot, 'us-counties.csv'))
 
     # Load Demographic Data
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
     cbg_agesex = pd.read_csv(filepath)
 
-    filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
+    filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
     cbg_income = pd.read_csv(filepath)
     # Drop duplicate column 'Unnamed:0'
     cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
 
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
     cbg_occupation = pd.read_csv(filepath)
 
     # cbg_b03.csv: Ethnic #20220308
-    filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b03.csv")
+    filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b03.csv")
     cbg_ethnic = pd.read_csv(filepath)
 
     ###############################################################################
@@ -165,13 +174,13 @@ else:
         print(this_msa)
         MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[this_msa]
         # Load POI-CBG visiting matrices
-        f = open(os.path.join(root, this_msa, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
+        f = open(os.path.join(dataroot, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
         poi_cbg_visits_list = pickle.load(f)
         f.close()
 
         data = pd.DataFrame()
 
-        cbg_death_rates_original = np.loadtxt(os.path.join(root, this_msa, 'cbg_death_rates_original_'+this_msa))
+        cbg_death_rates_original = np.loadtxt(os.path.join(dataroot, 'cbg_death_rates_original_'+this_msa))
         cbg_death_rates_scaled = cbg_death_rates_original * constants.death_scale_dict[this_msa]
 
         # Extract data specific to one msa, according to ACS data
@@ -183,7 +192,7 @@ else:
 
         # Load CBG ids belonging to a specific metro area
         # cbg_ids_msa
-        cbg_ids_msa = pd.read_csv(os.path.join(root,this_msa,'%s_cbg_ids.csv' % MSA_NAME_FULL))
+        cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv' % MSA_NAME_FULL))
         cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
         M = len(cbg_ids_msa)
         # Mapping from cbg_ids to columns in hourly visiting matrices
@@ -203,7 +212,7 @@ else:
         idxs_msa_all = list(x.values()) #;print('Number of CBGs in this metro area:', len(idxs_msa_all))
         idxs_msa_nyt = y #;print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
         
-        # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+        # Extract CBGs belonging to the MSA 
         cbg_agesex_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
         cbg_age_msa = cbg_agesex_msa.copy()
         del cbg_agesex_msa
@@ -228,11 +237,11 @@ else:
         cbg_sizes = np.array(cbg_sizes,dtype='int32')
             
         # Income Data
-        # Extract pois corresponding to the metro area (Philadelphia), by merging dataframes
+        # Extract pois corresponding to the metro area, by merging dataframes
         cbg_income_msa = pd.merge(cbg_ids_msa, cbg_income, on='census_block_group', how='left')
         # Deal with NaN values
         cbg_income_msa.fillna(0,inplace=True)
-        # Add information of cbg populations, from cbg_age_Phi(cbg_b01.csv)
+        # Add information of cbg populations
         cbg_income_msa['Sum'] = cbg_age_msa['Sum'].copy()
         # Rename
         cbg_income_msa.rename(columns = {'total_household_income':'Total_Household_Income', 
@@ -272,41 +281,13 @@ else:
         # Retrieve cbg_avg_infect_same, cbg_avg_infect_diff
         # As planned, they have been computed in 'tradeoff_md_mv_theory.py'.
         # Use them to get data['Vulnerability'] and data['Damage']
-        if(os.path.exists(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%this_msa))):
+        if(os.path.exists(os.path.join(resultroot, '3cbg_avg_infect_same_%s.npy'%this_msa))):
             print('cbg_avg_infect_same, cbg_avg_infect_diff: Load existing file.')
-            cbg_avg_infect_same = np.load(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%this_msa))
-            cbg_avg_infect_diff = np.load(os.path.join(root, '3cbg_avg_infect_diff_%s.npy'%this_msa))
+            cbg_avg_infect_same = np.load(os.path.join(resultroot, '3cbg_avg_infect_same_%s.npy'%this_msa))
+            cbg_avg_infect_diff = np.load(os.path.join(resultroot, '3cbg_avg_infect_diff_%s.npy'%this_msa))
         else:
-            print('cbg_avg_infect_same, cbg_avg_infect_diff: Compute on the fly.')
+            print('cbg_avg_infect_same, cbg_avg_infect_diff: not found, please check.')
             pdb.set_trace()
-            hourly_N_same_list = []
-            hourly_N_diff_list = []
-            for hour_idx in range(len(poi_cbg_visits_list)):
-                if(hour_idx%100==0): print(hour_idx)
-                poi_cbg_visits_array = poi_cbg_visits_list[hour_idx].toarray() # Extract the visit matrix for this hour
-                # poi_cbg_visits_array.shape: (num_poi,num_cbg) e.g.(28713, 2943)
-                cbg_out_pop = np.sum(poi_cbg_visits_array, axis=0)
-                cbg_out_rate = cbg_out_pop / cbg_sizes # 每个CBG当前外出人数(去往任何POI)占总人数比例
-                cbg_in_pop = cbg_sizes - cbg_out_pop
-                cbg_in_rate = cbg_in_pop / cbg_sizes # 每个CBG当前留守人数占总人数比例
-                poi_pop = np.sum(poi_cbg_visits_array, axis=1) # 每个POI当前人数(来自所有CBG) 
-
-                hourly_N_same = cbg_in_pop * avg_household_size * home_beta
-                hourly_N_diff = np.matmul(poi_cbg_visits_array.T, poi_pop * poi_trans_rate)
-                
-                hourly_N_same_list.append(hourly_N_same)
-                hourly_N_diff_list.append(hourly_N_diff)
-                
-                if(hour_idx==10):
-                    print('cbg_out_pop.shape:',cbg_out_pop.shape)
-                    print('poi_pop.shape:',poi_pop.shape)
-                    print('len(hourly_N_same_list):',len(hourly_N_same_list))
-
-            cbg_avg_infect_same = np.mean(np.array(hourly_N_same_list),axis=0)
-            cbg_avg_infect_diff = np.mean(np.array(hourly_N_diff_list),axis=0)
-
-            np.save(os.path.join(root, '3cbg_avg_infect_same_%s'%this_msa), cbg_avg_infect_same) 
-            np.save(os.path.join(root, '3cbg_avg_infect_diff_%s'%this_msa), cbg_avg_infect_diff) 
             
         #print('cbg_avg_infect_same.shape:',cbg_avg_infect_same.shape)
 
@@ -319,7 +300,7 @@ else:
         # Check whether there is NaN in cbg_tables
         print('Any NaN in cbg_age_msa[\'Infect\']?', cbg_age_msa['Infect'].isnull().any().any())
 
-        SEIR_at_30d = np.load(os.path.join(root, 'SEIR_at_30d.npy'),allow_pickle=True).item()
+        SEIR_at_30d = np.load(os.path.join(resultroot, 'SEIR_at_30d.npy'),allow_pickle=True).item()
         S_ratio = SEIR_at_30d[this_msa]['S'] / (cbg_sizes.sum())
         I_ratio = SEIR_at_30d[this_msa]['I'] / (cbg_sizes.sum())
         print('S_ratio:',S_ratio,'I_ratio:',I_ratio)
@@ -379,7 +360,7 @@ else:
         # Policy execution ratio
         EXECUTION_RATIO = 1
 
-        history_D2_no_vaccination = np.fromfile(os.path.join(root,this_msa,'vaccination_results_adaptive_31d_%s_0.01'% VACCINATION_RATIO,
+        history_D2_no_vaccination = np.fromfile(os.path.join(resultroot,'vaccination_results_adaptive_31d_%s_0.01'% VACCINATION_RATIO,
                                                             '20210206_history_D2_no_vaccination_adaptive_%s_0.01_%sseeds_%s'% (VACCINATION_RATIO,NUM_SEEDS,this_msa))) 
         history_D2_no_vaccination = np.array(np.reshape(history_D2_no_vaccination,(63,NUM_SEEDS,M)))
 
@@ -395,7 +376,7 @@ else:
         NUM_GROUPWISE = 5 
         for i in range(args.len_seeds):
             current_seed = RANDOM_SEED_LIST[i]
-            current_results = pd.read_csv(os.path.join(saveroot, 'vac_randombag_results',f'group_randombag_vac_results_0.02_{this_msa}_{current_seed}_{NUM_GROUPWISE}_60seeds.csv'))
+            current_results = pd.read_csv(os.path.join(resultroot, 'vac_randombag_results',f'group_randombag_vac_results_0.02_{this_msa}_{current_seed}_{NUM_GROUPWISE}_60seeds.csv'))
             if(i==0):
                 randombag_results = pd.DataFrame(current_results)
                 print('Check:',len(current_results),len(randombag_results))
@@ -502,75 +483,77 @@ else:
             target_list = ['Fatality_Rate_Rel','Age_Gini_Rel','Income_Gini_Rel','Occupation_Gini_Rel','Minority_Gini_Rel']
 
             for target in target_list:
-                print(f'###################################### target: {target} ########################################')
+                if(args.stop_to_observe):
+                    print(f'###################################### target: {target} ########################################')
                 #Y = sample[target]
                 Y = -sample[target] #20220314,social utility, equity
 
                 X = sample[demo_feat_list]
                 
-                model = sm.OLS(Y, X).fit()
-                predictions = model.predict(X) 
-                #print(model.summary())
-                #print('model.params:',np.round(model.params.values, 3)) 
-                #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
-                print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
-                params = list(np.round(model.params.values, 3))
-                bse = list(np.round(model.bse.values, 2))
-                for idx in range(len(list(bse))):
-                    print(f'{params[idx]} ({bse[idx]})')
-                pdb.set_trace()
+                if(args.stop_to_observe):
+                    model = sm.OLS(Y, X).fit()
+                    predictions = model.predict(X) 
+                    #print(model.summary())
+                    #print('model.params:',np.round(model.params.values, 3)) 
+                    #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                    print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
+                    params = list(np.round(model.params.values, 3))
+                    bse = list(np.round(model.bse.values, 2))
+                    for idx in range(len(list(bse))):
+                        print(f'{params[idx]} ({bse[idx]})')
+                    pdb.set_trace()
+                else:
+                    reg = linear_model.LinearRegression()
+                    reg.fit(X,Y)
+                    r2 = reg.score(X,Y)
+                    adjusted_r2_model1 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
+                    #print('adjusted_r2_model1:',adjusted_r2_model1)
 
-                '''
-                reg = linear_model.LinearRegression()
-                reg.fit(X,Y)
-                r2 = reg.score(X,Y)
-                adjusted_r2_model1 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-                #print('adjusted_r2_model1:',adjusted_r2_model1)
-                '''
 
                 # Regression with demo_feats and inner mechanisms: Vulnerability
                 mediator_list = ['Avg_Vulnerability','Std_Vulnerability']
                 X = sample[demo_feat_list+mediator_list]
-                model = sm.OLS(Y, X).fit()
-                predictions = model.predict(X) 
-                #print(model.summary())
-                #print('model.params:',np.round(model.params.values, 3)) 
-                #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
-                print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
-                params = list(np.round(model.params.values, 3))
-                bse = list(np.round(model.bse.values, 2))
-                for idx in range(len(list(bse))):
-                    print(f'{params[idx]} ({bse[idx]})')
-                pdb.set_trace()
-                '''
-                reg = linear_model.LinearRegression()
-                reg.fit(X,Y)
-                r2 = reg.score(X,Y)
-                adjusted_r2_model2 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-                '''
+                if(args.stop_to_observe):
+                    model = sm.OLS(Y, X).fit()
+                    predictions = model.predict(X) 
+                    #print(model.summary())
+                    #print('model.params:',np.round(model.params.values, 3)) 
+                    #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                    print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
+                    params = list(np.round(model.params.values, 3))
+                    bse = list(np.round(model.bse.values, 2))
+                    for idx in range(len(list(bse))):
+                        print(f'{params[idx]} ({bse[idx]})')
+                    pdb.set_trace()
+                else:
+                    reg = linear_model.LinearRegression()
+                    reg.fit(X,Y)
+                    r2 = reg.score(X,Y)
+                    adjusted_r2_model2 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
+
                  
                 # Regression with demo_feats and inner mechanisms: Damage
                 mediator_list = ['Avg_Damage','Std_Damage']
                 X = sample[demo_feat_list+mediator_list]
-                model = sm.OLS(Y, X).fit()
-                predictions = model.predict(X) 
-                #print(model.summary())
-                #print('model.params:',np.round(model.params.values, 3)) 
-                #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
-                print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
-                params = list(np.round(model.params.values, 3))
-                bse = list(np.round(model.bse.values, 2))
-                for idx in range(len(list(bse))):
-                    print(f'{params[idx]} ({bse[idx]})')
-                pdb.set_trace()
-                '''
-                reg = linear_model.LinearRegression()
-                reg.fit(X,Y)
-                r2 = reg.score(X,Y)
-                adjusted_r2_model3 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-                '''
+                if(args.stop_to_observe):
+                    model = sm.OLS(Y, X).fit()
+                    predictions = model.predict(X) 
+                    #print(model.summary())
+                    #print('model.params:',np.round(model.params.values, 3)) 
+                    #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                    print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
+                    params = list(np.round(model.params.values, 3))
+                    bse = list(np.round(model.bse.values, 2))
+                    for idx in range(len(list(bse))):
+                        print(f'{params[idx]} ({bse[idx]})')
+                    pdb.set_trace()
+                else:
+                    reg = linear_model.LinearRegression()
+                    reg.fit(X,Y)
+                    r2 = reg.score(X,Y)
+                    adjusted_r2_model3 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
 
-                '''
+
                 if(target=='Fatality_Rate_Rel'):
                     fatality_adj_r2_model1.append(adjusted_r2_model1)
                     fatality_adj_r2_model2.append(adjusted_r2_model3)
@@ -586,7 +569,8 @@ else:
                 elif(target=='Minority_Gini_Rel'): #20220308
                     minority_adj_r2_model1.append(adjusted_r2_model1)
                     minority_adj_r2_model2.append(adjusted_r2_model2)       
-                '''
+
+        '''
         print('Mean and Std: ')
         print('fatality_adj_r2_model1:',np.mean(np.array(fatality_adj_r2_model1)),np.std(np.array(fatality_adj_r2_model1)))
         print('fatality_adj_r2_model2:',np.mean(np.array(fatality_adj_r2_model2)),np.std(np.array(fatality_adj_r2_model2)))         
@@ -598,7 +582,8 @@ else:
         print('occupation_adj_r2_model2:',np.mean(np.array(occupation_adj_r2_model2)),np.std(np.array(occupation_adj_r2_model2)))
         print('minority_adj_r2_model1:',np.mean(np.array(minority_adj_r2_model1)),np.std(np.array(minority_adj_r2_model1))) #20220308
         print('minority_adj_r2_model2:',np.mean(np.array(minority_adj_r2_model2)),np.std(np.array(minority_adj_r2_model2))) #20220308
-        '''        
+        ''' 
+        '''       
         print('Details: ')
         print('fatality_adj_r2_model1:',fatality_adj_r2_model1)
         print('fatality_adj_r2_model2:',fatality_adj_r2_model2)            
@@ -693,29 +678,29 @@ else:
 
 
     # Save results
-    fatality_adj_r2_model1_mean_array.tofile(os.path.join(saveroot, 'fatality_adj_r2_model1_mean_array'))
-    fatality_adj_r2_model2_mean_array.tofile(os.path.join(saveroot, 'fatality_adj_r2_model2_mean_array'))
-    age_adj_r2_model1_mean_array.tofile(os.path.join(saveroot, 'age_adj_r2_model1_mean_array'))
-    age_adj_r2_model2_mean_array.tofile(os.path.join(saveroot, 'age_adj_r2_model2_mean_array'))
-    income_adj_r2_model1_mean_array.tofile(os.path.join(saveroot, 'income_adj_r2_model1_mean_array'))
-    income_adj_r2_model2_mean_array.tofile(os.path.join(saveroot, 'income_adj_r2_model2_mean_array'))
-    occupation_adj_r2_model1_mean_array.tofile(os.path.join(saveroot, 'occupation_adj_r2_model1_mean_array'))
-    occupation_adj_r2_model2_mean_array.tofile(os.path.join(saveroot, 'occupation_adj_r2_model2_mean_array'))
-    minority_adj_r2_model1_mean_array.tofile(os.path.join(saveroot, 'minority_adj_r2_model1_mean_array'))
-    minority_adj_r2_model2_mean_array.tofile(os.path.join(saveroot, 'minority_adj_r2_model2_mean_array'))
+    fatality_adj_r2_model1_mean_array.tofile(os.path.join(resultroot, 'fatality_adj_r2_model1_mean_array'))
+    fatality_adj_r2_model2_mean_array.tofile(os.path.join(resultroot, 'fatality_adj_r2_model2_mean_array'))
+    age_adj_r2_model1_mean_array.tofile(os.path.join(resultroot, 'age_adj_r2_model1_mean_array'))
+    age_adj_r2_model2_mean_array.tofile(os.path.join(resultroot, 'age_adj_r2_model2_mean_array'))
+    income_adj_r2_model1_mean_array.tofile(os.path.join(resultroot, 'income_adj_r2_model1_mean_array'))
+    income_adj_r2_model2_mean_array.tofile(os.path.join(resultroot, 'income_adj_r2_model2_mean_array'))
+    occupation_adj_r2_model1_mean_array.tofile(os.path.join(resultroot, 'occupation_adj_r2_model1_mean_array'))
+    occupation_adj_r2_model2_mean_array.tofile(os.path.join(resultroot, 'occupation_adj_r2_model2_mean_array'))
+    minority_adj_r2_model1_mean_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model1_mean_array'))
+    minority_adj_r2_model2_mean_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model2_mean_array'))
 
-    fatality_adj_r2_model1_std_array.tofile(os.path.join(saveroot, 'fatality_adj_r2_model1_std_array'))
-    fatality_adj_r2_model2_std_array.tofile(os.path.join(saveroot, 'fatality_adj_r2_model2_std_array'))
-    age_adj_r2_model1_std_array.tofile(os.path.join(saveroot, 'age_adj_r2_model1_std_array'))
-    age_adj_r2_model2_std_array.tofile(os.path.join(saveroot, 'age_adj_r2_model2_std_array'))
-    income_adj_r2_model1_std_array.tofile(os.path.join(saveroot, 'income_adj_r2_model1_std_array'))
-    income_adj_r2_model2_std_array.tofile(os.path.join(saveroot, 'income_adj_r2_model2_std_array'))
-    occupation_adj_r2_model1_std_array.tofile(os.path.join(saveroot, 'occupation_adj_r2_model1_std_array'))
-    occupation_adj_r2_model2_std_array.tofile(os.path.join(saveroot, 'occupation_adj_r2_model2_std_array'))
-    minority_adj_r2_model1_std_array.tofile(os.path.join(saveroot, 'minority_adj_r2_model1_std_array'))
-    minority_adj_r2_model2_std_array.tofile(os.path.join(saveroot, 'minority_adj_r2_model2_std_array'))
+    fatality_adj_r2_model1_std_array.tofile(os.path.join(resultroot, 'fatality_adj_r2_model1_std_array'))
+    fatality_adj_r2_model2_std_array.tofile(os.path.join(resultroot, 'fatality_adj_r2_model2_std_array'))
+    age_adj_r2_model1_std_array.tofile(os.path.join(resultroot, 'age_adj_r2_model1_std_array'))
+    age_adj_r2_model2_std_array.tofile(os.path.join(resultroot, 'age_adj_r2_model2_std_array'))
+    income_adj_r2_model1_std_array.tofile(os.path.join(resultroot, 'income_adj_r2_model1_std_array'))
+    income_adj_r2_model2_std_array.tofile(os.path.join(resultroot, 'income_adj_r2_model2_std_array'))
+    occupation_adj_r2_model1_std_array.tofile(os.path.join(resultroot, 'occupation_adj_r2_model1_std_array'))
+    occupation_adj_r2_model2_std_array.tofile(os.path.join(resultroot, 'occupation_adj_r2_model2_std_array'))
+    minority_adj_r2_model1_std_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model1_std_array'))
+    minority_adj_r2_model2_std_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model2_std_array'))
 
-    print('File saved. Example path:', os.path.join(saveroot, 'minority_adj_r2_model2_std_array'))
+    print('File saved. Example path:', os.path.join(resultroot, 'minority_adj_r2_model2_std_array'))
 
 ##########################################################################################
 # Draw figures
@@ -738,7 +723,7 @@ ax.set_position([box.x0, box.y0, box.width , box.height* 0.8]) #https://blog.csd
 #plt.legend(ncol=3,fontsize=18,bbox_to_anchor=(0.8,-0.1)) #,title='Policy',title_fontsize='x-large')
 plt.legend(fontsize=24,ncol=2,loc='upper center',bbox_to_anchor=(0.5,1.2))
 # Save figure
-savepath = os.path.join(saveroot, 'figures', 'fig3b.pdf')
+savepath = os.path.join(fig_save_root, 'fig3b.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Fig3b, saved at {savepath}')
 
@@ -769,7 +754,7 @@ def plot_equity_explained_variance(demo_feat, show_yticks=True):
         plt.xlabel(f'Explained variance\nof equity-by-{demo_feat}',fontsize=18)
     '''
     # Save figure
-    savepath = os.path.join(saveroot, 'figures', f'fig3c_{demo_feat}.pdf')
+    savepath = os.path.join(fig_save_root, f'fig3c_{demo_feat}.pdf')
     plt.savefig(savepath,bbox_inches = 'tight')
     print(f'Fig3c_{demo_feat}, saved at {savepath}')
     
@@ -791,6 +776,6 @@ alpha_list = [0.8, 0.7]
 patches = [mpatches.Patch(color=color_list[i], alpha=alpha_list[i], label="{:s}".format(label_list[i])) for i in range(2) ]
 plt.legend(handles=patches,ncol=2,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
 # Save figure
-savepath = os.path.join(saveroot, 'figures', f'fig3c_legend.pdf')
+savepath = os.path.join(fig_save_root, f'fig3c_legend.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Fig3c_legend, saved at {savepath}')

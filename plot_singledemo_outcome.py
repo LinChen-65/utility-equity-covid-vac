@@ -34,12 +34,16 @@ args = parser.parse_args()
 
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname in ['fib-dl3','rl3','rl2']):
     root = '/data/chenlin/utility-equity-covid-vac/results'
 elif(hostname=='rl4'):
     root = '/home/chenlin/utility-equity-covid-vac/results'
+'''
+root = os.getcwd()
+resultroot = os.path.join(root, 'results')
 # subroot
 subroot = 'figures'
 if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
@@ -58,7 +62,7 @@ minority_util_dict = dict(); minority_equi_dict = dict()
 gini_df_dict = dict()
 for this_msa in constants.MSA_NAME_LIST:
     if(this_msa=='NewYorkCity'):continue
-    filepath = os.path.join(root, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
+    filepath = os.path.join(resultroot, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
     gini_df = pd.read_csv(filepath)
     gini_df.rename(columns={'Unnamed: 0':'Dimension','Unnamed: 1':'Metric'},inplace=True)
     gini_df_dict[this_msa] = gini_df

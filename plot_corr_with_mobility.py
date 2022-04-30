@@ -1,4 +1,4 @@
-# python plot_corr_with_mobility.py --num_groups 50 --colormap hot
+# python plot_corr_with_mobility.py
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
@@ -6,10 +6,8 @@ setproctitle.setproctitle("covid-19-vac@chenlin")
 import os
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import KBinsDiscretizer
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
-from matplotlib.offsetbox import AnchoredText
 import argparse
 
 import constants
@@ -18,15 +16,22 @@ import functions
 import pdb
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--root', default='/data/chenlin/COVID-19/Data',
-                    help='Root to retrieve data. data for dl3, home for rl4.')  
-parser.add_argument('--saveroot', default='/data/chenlin/utility-equity-covid-vac/results/figures',
-                    help='Root to save generated figures.')
+#parser.add_argument('--root', default='/data/chenlin/COVID-19/Data',
+#                    help='Root to retrieve data. data for dl3, home for rl4.')  
+#parser.add_argument('--saveroot', default='/data/chenlin/utility-equity-covid-vac/results/figures',
+#                    help='Root to save generated figures.')
 parser.add_argument('--num_groups', type=int, default=50,
                     help='Num of groups to divide CBGs into (for quantization).')   
 parser.add_argument('--colormap', default='hot',
                     help='Color map for graph.')                      
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.')
 args = parser.parse_args()
+
+# root
+root = os.getcwd()
+result_root = os.path.join(root, 'results')
+fig_save_root = os.path.join(root, 'figures')
 
 ############################################################
 # Functions
@@ -87,24 +92,24 @@ def scatter_kde(df, col_x, col_y, savepath, colormap='Spectral_r', print_corr=Fa
 # Load Data
 
 # Load ACS Data for matching with NYT Data
-acs_data = pd.read_csv(os.path.join(args.root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(root, 'data', 'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(args.root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 # cbg_c24.csv: Occupation
-filepath = os.path.join(args.root,"safegraph_open_census_data/data/cbg_c24.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
 cbg_occupation = pd.read_csv(filepath)
 # Load ACS 5-year (2013-2017) Data: Mean Household Income
-filepath = os.path.join(args.root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
 # cbg_b02.csv: Race #20220302
-filepath = os.path.join(args.root,"safegraph_open_census_data/data/cbg_b02.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b02.csv")
 cbg_race = pd.read_csv(filepath)
 # cbg_b03.csv: Ethnic #20220302
-filepath = os.path.join(args.root,"safegraph_open_census_data/data/cbg_b03.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b03.csv")
 cbg_ethnic = pd.read_csv(filepath)
 
 data = pd.DataFrame()
@@ -112,11 +117,11 @@ msa_count = 0
 corr_age_mobility_list = []
 corr_income_mobility_list = []
 corr_occupation_mobility_list = []
-corr_minority_mobility_list = [] #20220302
-corr_age_death_list= [] #20220315
-corr_income_death_list= [] #20220315
-corr_occupation_death_list= [] #20220315
-corr_minority_death_list= [] #20220315
+corr_minority_mobility_list = [] 
+corr_age_death_list= [] 
+corr_income_death_list= [] 
+corr_occupation_death_list= [] 
+corr_minority_death_list= [] 
 
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
@@ -131,7 +136,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     good_list = list(msa_data['FIPS Code'].values)
 
     # Load CBG ids belonging to a specific metro area
-    cbg_ids_msa = pd.read_csv(os.path.join(args.root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa = pd.read_csv(os.path.join(root, 'data', '%s_cbg_ids.csv'%MSA_NAME_FULL)) 
     cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
     M = len(cbg_ids_msa)
     # Mapping from cbg_ids to columns in hourly visiting matrices
@@ -154,7 +159,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
     good_list = list(msa_data['FIPS Code'].values)
 
-    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    # Extract CBGs belonging to the MSA
     cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
     # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
     # which is defined in Constants.py
@@ -223,7 +228,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     if(cbg_race_msa.isnull().any().any()):
         print('NaN exists in cbg_race_msa. Please check.')
         pdb.set_trace()
-    cbg_minority_msa = cbg_race_msa #20220315
+    cbg_minority_msa = cbg_race_msa 
 
     '''
     print(np.round((cbg_race_msa['Minority_Absolute'].sum()) / (cbg_race_msa['Sum'].sum()),3), 
@@ -238,7 +243,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     ###############################################################################
     # Load and scale age-aware CBG-specific attack/death rates (original)
     
-    cbg_death_rates_original = np.loadtxt(os.path.join(args.root, MSA_NAME, 'cbg_death_rates_original_'+MSA_NAME))
+    cbg_death_rates_original = np.loadtxt(os.path.join(root, 'data', 'cbg_death_rates_original_'+MSA_NAME))
     cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape) 
     # Fix attack_scale
     attack_scale = 1
@@ -261,15 +266,15 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     home_beta = constants.parameters_dict[MSA_NAME][1]
 
     # Load cbg_avg_infect_same, cbg_avg_infect_diff
-    if(os.path.exists(os.path.join(args.root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
+    if(os.path.exists(os.path.join(result_root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
         print('cbg_avg_infect_same, cbg_avg_infect_diff: Load existing file.')
-        cbg_avg_infect_same = np.load(os.path.join(args.root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
-        cbg_avg_infect_diff = np.load(os.path.join(args.root, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
+        cbg_avg_infect_same = np.load(os.path.join(result_root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
+        cbg_avg_infect_diff = np.load(os.path.join(result_root, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
     else:
         print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
         pdb.set_trace()
 
-    SEIR_at_30d = np.load(os.path.join(args.root, 'SEIR_at_30d.npy'),allow_pickle=True).item()
+    SEIR_at_30d = np.load(os.path.join(result_root, 'SEIR_at_30d.npy'),allow_pickle=True).item()
     S_ratio = SEIR_at_30d[MSA_NAME]['S'] / (cbg_sizes.sum())
     I_ratio = SEIR_at_30d[MSA_NAME]['I'] / (cbg_sizes.sum())
 
@@ -288,8 +293,8 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     cbg_age_msa['Mobility'] = cbg_avg_infect_diff_norm.copy()
 
     # No_Vaccination & Age_Agnostic, accumulated results # 20210802
-    deaths_cbg_no_vaccination = np.load(os.path.join(args.root,MSA_NAME,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-    deaths_cbg_age_agnostic = np.load(os.path.join(args.root,MSA_NAME,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+    deaths_cbg_no_vaccination = np.load(os.path.join(result_root,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+    deaths_cbg_age_agnostic = np.load(os.path.join(result_root,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
     
     # Collect data together
     data_msa = pd.DataFrame()
@@ -302,9 +307,9 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Death_Rate'] = cbg_age_msa['Death_Rate'].copy() #20220304
     
     data_msa['Valid'] = data_msa.apply(lambda x : 1 if x['Essential_Worker_Ratio']>0.2 else 0, axis=1)
-    print('Before filtering, len(data_msa):', len(data_msa))
+    #print('Before filtering, len(data_msa):', len(data_msa))
     data_msa = data_msa[data_msa['Valid']==1]
-    print('After filtering, len(data_msa):', len(data_msa))
+    #print('After filtering, len(data_msa):', len(data_msa))
     data_msa = data_msa.reset_index()
     
     ###############################################################################
@@ -324,12 +329,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Minority_Ratio_Quantile'] =  data_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
     ###############################################################################
-    print('Before ranking:')
-    print('Correlation between Elder_Ratio and Mobility: ', np.corrcoef(data_msa['Elder_Ratio'], data_msa['Mobility'])[0][1]) 
-    print('Correlation between Income and Mobility: ', np.corrcoef(data_msa['Mean_Household_Income'],data_msa['Mobility'])[0][1])
-    print('Correlation between EW_Ratio and Mobility: ', np.corrcoef(data_msa['Essential_Worker_Ratio'], data_msa['Mobility'])[0][1])
-    print('Correlation between Minority_Ratio and Mobility: ', np.corrcoef(data_msa['Minority_Ratio'], data_msa['Mobility'])[0][1])
-    
+
     elder_ratio_list = []
     mobility_age_list = []
     death_age_list = []
@@ -445,58 +445,31 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Mobility'] = data_msa['Mobility'].rank(method='dense',pct=True)
     data_msa['Death_Rate'] = data_msa['Death_Rate'].rank(method='dense',pct=True) #20220315
 
-    print('After ranking:')
-    print('Correlation between Elder_Ratio and Mobility: ', np.corrcoef(data_msa['Elder_Ratio'], data_msa['Mobility'])[0][1]) 
-    print('Correlation between Income and Mobility: ', np.corrcoef(data_msa['Mean_Household_Income'],data_msa['Mobility'])[0][1])
-    print('Correlation between EW_Ratio and Mobility: ', np.corrcoef(data_msa['Essential_Worker_Ratio'], data_msa['Mobility'])[0][1])
-    print('Correlation between Minority_Ratio and Mobility: ', np.corrcoef(data_msa['Minority_Ratio'], data_msa['Mobility'])[0][1])
-    print('Correlation between Elder_Ratio and Death_Rate: ', np.corrcoef(data_msa['Elder_Ratio'], data_msa['Death_Rate'])[0][1]) 
-    print('Correlation between Income and Death_Rate: ', np.corrcoef(data_msa['Mean_Household_Income'],data_msa['Death_Rate'])[0][1])
-    print('Correlation between EW_Ratio and Death_Rate: ', np.corrcoef(data_msa['Essential_Worker_Ratio'], data_msa['Death_Rate'])[0][1])
-    
     data = data.append(data_msa, ignore_index=True)
     print('len(data): ',len(data))
     
 
-print('corr_age_mobility_list: ', corr_age_mobility_list, 'Mean: ', np.mean(np.array(corr_age_mobility_list)))
-print('corr_income_mobility_list: ', corr_income_mobility_list, 'Mean: ', np.mean(np.array(corr_income_mobility_list)))
-print('corr_occupation_mobility_list: ', corr_occupation_mobility_list, 'Mean: ', np.mean(np.array(corr_occupation_mobility_list)))
-print('corr_minority_mobility_list: ', corr_minority_mobility_list, 'Mean: ', np.mean(np.array(corr_minority_mobility_list)))
-print('corr_age_death_list: ', corr_age_death_list, 'Mean: ', np.mean(np.array(corr_age_death_list)))
-print('corr_income_death_list: ', corr_income_death_list, 'Mean: ', np.mean(np.array(corr_income_death_list)))
-print('corr_occupation_death_list: ', corr_occupation_death_list, 'Mean: ', np.mean(np.array(corr_occupation_death_list)))
-print('corr_minority_death_list: ', corr_minority_death_list, 'Mean: ', np.mean(np.array(corr_minority_death_list)))
-#print('mobility_age_all_msa_array.shape:',mobility_age_all_msa_array.shape)
-pdb.set_trace()
-
 data_temp = pd.DataFrame(columns=['Elder_Ratio','Mobility'])
 data_temp['Elder_Ratio'] = elder_ratio_all_msa_array.flatten()
 data_temp['Mobility'] = mobility_age_all_msa_array.flatten()
-#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_age_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
-savepath = os.path.join(args.saveroot, 'fig1e_age.pdf') #20220310
+savepath = os.path.join(fig_save_root, 'fig1e_age.pdf') 
 scatter_kde(data_temp, 'Elder_Ratio', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_age_mobility_list)))
 
 data_temp = pd.DataFrame(columns=['Mean_Household_Income','Mobility'])
 data_temp['Mean_Household_Income'] = income_all_msa_array.flatten()
 data_temp['Mobility'] = mobility_income_all_msa_array.flatten()
-#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_income_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
-savepath = os.path.join(args.saveroot, 'fig1e_income.pdf') #20220310
+savepath = os.path.join(fig_save_root, 'fig1e_income.pdf')
 scatter_kde(data_temp, 'Mean_Household_Income', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_income_mobility_list)))
 
 data_temp = pd.DataFrame(columns=['Essential_Worker_Ratio','Mobility'])
 data_temp['Essential_Worker_Ratio'] = ew_ratio_all_msa_array.flatten()
 data_temp['Mobility'] = mobility_occupation_all_msa_array.flatten()
-#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_occupation_mobility_filt0.2_normbygroupmax.jpg'%(args.colormap,args.num_groups))
-savepath = os.path.join(args.saveroot, 'fig1e_occupation.pdf') #20220310
+savepath = os.path.join(fig_save_root, 'fig1e_occupation.pdf')
 scatter_kde(data_temp, 'Essential_Worker_Ratio', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_occupation_mobility_list)))
 
 data_temp = pd.DataFrame(columns=['Minority_Ratio','Mobility'])
 data_temp['Minority_Ratio'] = minority_ratio_all_msa_array.flatten()
 data_temp['Mobility'] = mobility_minority_all_msa_array.flatten()
-#savepath = os.path.join(args.saveroot, '20220302_grouping_%s_%squant_rank_minority_mobility_normbygroupmax.jpg'%(args.colormap,args.num_groups))
-savepath = os.path.join(args.saveroot, 'fig1e_minority.pdf') #20220310
+savepath = os.path.join(fig_save_root, 'fig1e_minority.pdf') 
 scatter_kde(data_temp, 'Minority_Ratio', 'Mobility', savepath, args.colormap, print_corr=False,corr=np.mean(np.array(corr_minority_mobility_list)))
-
-pdb.set_trace()
-
 

@@ -21,14 +21,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--num_groups', type=int, default=50,
                     help='Number of groups for quantization.')
 parser.add_argument('--color_map', default='hot',
-                    help='Color map for scatter plot.')
-#parser.add_argument('--time_string', default='20210206',
-#                    help='Time string to specify the model.')                    
+                    help='Color map for scatter plot.')                 
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
 args = parser.parse_args()
 print('args.num_groups: ',args.num_groups)
 print('Color map:', args.color_map)
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname in ['fib-dl3','rl3','rl2']):
@@ -37,6 +38,11 @@ if(hostname in ['fib-dl3','rl3','rl2']):
 elif(hostname=='rl4'):
     root = '/home/chenlin/COVID-19/Data' #rl4
     saveroot = '/home/chenlin/utility-equity-covid-vac/results/'
+'''
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
+fig_save_root = os.path.join(root, 'figures')
 
 ############################################################
 # Functions
@@ -82,16 +88,16 @@ def scatter_kde(df, col_x, col_y, savepath, color_map='Spectral_r'):
 # Load Data
 
 # Load ACS Data for matching with NYT Data
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 # cbg_c24.csv: Occupation
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_c24.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
 cbg_occupation = pd.read_csv(filepath)
 # Load ACS 5-year (2013-2017) Data: Mean Household Income
-filepath = os.path.join(root,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
@@ -112,7 +118,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     good_list = list(msa_data['FIPS Code'].values)
 
     # Load CBG ids belonging to a specific metro area
-    cbg_ids_msa = pd.read_csv(os.path.join(root,MSA_NAME,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
     cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
     M = len(cbg_ids_msa)
     # Mapping from cbg_ids to columns in hourly visiting matrices
@@ -140,7 +146,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
     good_list = list(msa_data['FIPS Code'].values)
 
-    # Extract CBGs belonging to the MSA - https://covid-mobility.stanford.edu//datasets/
+    # Extract CBGs belonging to the MSA 
     cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
 
     # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
@@ -192,9 +198,9 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     '''
 
     ###############################################################################
-    # Load and scale age-aware CBG-specific attack/death rates (original)
+    # Load and scale age-aware CBG-specific death rates (original)
     
-    cbg_death_rates_original = np.loadtxt(os.path.join(root, MSA_NAME, 'cbg_death_rates_original_'+MSA_NAME))
+    cbg_death_rates_original = np.loadtxt(os.path.join(dataroot, 'cbg_death_rates_original_'+MSA_NAME))
     cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape) 
     attack_scale = 1
     cbg_attack_rates_scaled = cbg_attack_rates_original * attack_scale
@@ -214,17 +220,16 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     home_beta = constants.parameters_dict[MSA_NAME][1]
 
     # Load cbg_avg_infect_same, cbg_avg_infect_diff
-    if(os.path.exists(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
+    if(os.path.exists(os.path.join(saveroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
         #print('cbg_avg_infect_same, cbg_avg_infect_diff: Load existing file.')
-        cbg_avg_infect_same = np.load(os.path.join(root, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
-        cbg_avg_infect_diff = np.load(os.path.join(root, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
-        pdb.set_trace()
+        cbg_avg_infect_same = np.load(os.path.join(saveroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
+        cbg_avg_infect_diff = np.load(os.path.join(saveroot, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
     else:
         print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
         pdb.set_trace()
     #print('cbg_avg_infect_same.shape:',cbg_avg_infect_same.shape)
 
-    SEIR_at_30d = np.load(os.path.join(root, 'SEIR_at_30d.npy'),allow_pickle=True).item()
+    SEIR_at_30d = np.load(os.path.join(saveroot, 'SEIR_at_30d.npy'),allow_pickle=True).item()
     S_ratio = SEIR_at_30d[MSA_NAME]['S'] / (cbg_sizes.sum())
     I_ratio = SEIR_at_30d[MSA_NAME]['I'] / (cbg_sizes.sum())
     #print('S_ratio:',S_ratio,'I_ratio:',I_ratio)
@@ -284,5 +289,5 @@ for column in data.columns:
     data[column] = enc.inverse_transform(np.array(data[column]).reshape(-1,1))
 
 # Scatter plot with density
-savepath = os.path.join(saveroot, 'figures', 'fig3d.png') #'fig3d.pdf'
+savepath = os.path.join(fig_save_root, 'fig3d.pdf') #'fig3d.png'
 scatter_kde(data, 'Vulnerability', 'Damage', savepath, args.color_map)

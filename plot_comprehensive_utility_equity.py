@@ -1,4 +1,4 @@
-# python plot_comprehensive_utility_equity.py
+# python plot_comprehensive_utility_equity.py --with_supplementary
 
 # pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name, consider-using-enumerate
 
@@ -18,7 +18,6 @@ import functions
 
 import pdb
 
-print('0316')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--vaccination_time', type=int, default=31,
@@ -41,12 +40,16 @@ args = parser.parse_args()
 
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname in ['fib-dl3','rl3','rl2']): 
     root = '/data/chenlin/utility-equity-covid-vac/results'
 elif(hostname=='rl4'):
     root = '/home/chenlin/utility-equity-covid-vac/results'
+'''
+root = os.getcwd()
+resultroot = os.path.join(root, 'results')
 # subroot
 subroot = 'figures'
 if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
@@ -76,7 +79,7 @@ def get_gini_dict(vaccination_time, vaccination_ratio,rel_to,msa_list,root): #20
     '''Load gini tables to construct gini_df_dict'''
     gini_df_dict = dict()
     for this_msa in msa_list:
-        filepath = os.path.join(root, 'gini_table', f'gini_table_comprehensive_{str(vaccination_time)}_{vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{rel_to}.csv')
+        filepath = os.path.join(resultroot, 'gini_table', f'gini_table_comprehensive_{str(vaccination_time)}_{vaccination_ratio}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{rel_to}.csv')
         gini_df = pd.read_csv(filepath)
         gini_df.rename(columns={'Unnamed: 0':'Dimension','Unnamed: 1':'Metric'},inplace=True)
         gini_df_dict[this_msa] = gini_df

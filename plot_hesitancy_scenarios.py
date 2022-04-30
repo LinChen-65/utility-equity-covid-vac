@@ -34,12 +34,17 @@ parser.add_argument('--rel_to', default='Baseline',
 args = parser.parse_args()  
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname in ['fib-dl3','rl3','rl2']): 
     root = '/data/chenlin/utility-equity-covid-vac/results'
 elif(hostname=='rl4'):
     root = '/home/chenlin/utility-equity-covid-vac/results'
+'''
+root = os.getcwd()
+resultroot = os.path.join(root, 'results')
+
 # subroot
 subroot = 'figures'
 if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
@@ -108,7 +113,7 @@ occupation_util_dict = dict()
 minority_util_dict = dict()
 for notation_string in notation_string_list:
     # load gini table to construct gini_df_dict
-    gini_df_dict = get_gini_dict(args.vaccination_time, args.vaccination_ratio, notation_string, args.rel_to, msa_name_list, root)
+    gini_df_dict = get_gini_dict(args.vaccination_time, args.vaccination_ratio, notation_string, args.rel_to, msa_name_list, resultroot)
     age_util_list,income_util_list,occupation_util_list,minority_util_list = get_results(gini_df_dict)
     age_util_dict[notation_string] = np.array(age_util_list).squeeze()
     income_util_dict[notation_string] = np.array(income_util_list).squeeze()

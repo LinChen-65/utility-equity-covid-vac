@@ -1,11 +1,10 @@
-# python standard_seir.py MSA_NAME
-# Ref: https://github.com/silpara/simulators/blob/master/compartmental_models/SEIR%20Simulator%20in%20Python.ipynb
+# python standard_seir.py --msa_name Atlanta
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
 
 import socket
-import sys
+import argparse
 import os
 import datetime
 import numpy as np
@@ -23,8 +22,17 @@ from bayes_opt import BayesianOptimization
 #from lmfit import minimize, Parameters, Parameter, report_fit
 from hyperopt import hp, tpe, Trials, fmin
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--msa_name', 
+                    help='MSA name.')
+parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+parser.add_argument('--save_result', default=False, action='store_true',
+                    help='If true, save results.')
+args = parser.parse_args()
 
 # root
+'''
 hostname = socket.gethostname()
 print('hostname: ', hostname)
 if(hostname in ['fib-dl3','rl3','rl2']):
@@ -37,6 +45,12 @@ elif(hostname=='rl4'):
 subroot = 'seir'
 if(not os.path.exists(os.path.join(saveroot, subroot))): # if folder does not exist, create one.
     os.makedirs(os.path.join(saveroot, subroot))
+'''
+
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
+
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
@@ -50,7 +64,7 @@ BETA_AND_PSI_PLAUSIBLE_RANGE = {"min_home_beta": 0.0011982272027079982,
 ###############################################################################
 # Main variables
 
-MSA_NAME = sys.argv[1]; print('MSA_NAME: ',MSA_NAME)
+MSA_NAME = args.msa_name; print('MSA_NAME: ',MSA_NAME)
 if(MSA_NAME == 'all'):
     msa_name_list = constants.MSA_NAME_LIST
 else:
@@ -61,9 +75,6 @@ else:
 # Functions
 
 def ode_model(z, t, beta, sigma, gamma):
-    """
-    Reference https://www.idmod.org/docs/hiv/model-seir.html
-    """
     S, E, I, R, D = z
     N = S + E + I + R
     dSdt = -beta*S*I/N
@@ -118,13 +129,13 @@ def target_function(beta):
 # Load Data
 
 # Load ACS Data for MSA-county matching
-acs_data = pd.read_csv(os.path.join(root,'list1.csv'),header=2)
+acs_data = pd.read_csv(os.path.join(dataroot,'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
 # Load SafeGraph data to obtain CBG sizes (i.e., populations)
-filepath = os.path.join(root,"safegraph_open_census_data/data/cbg_b01.csv")
+filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b01.csv")
 cbg_agesex = pd.read_csv(filepath)
 # Load ground truth: NYT Data
-nyt_data = pd.read_csv(os.path.join(root, 'us-counties.csv'))
+nyt_data = pd.read_csv(os.path.join(dataroot, 'us-counties.csv'))
 
 for this_msa in msa_name_list:
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[this_msa]
@@ -136,7 +147,7 @@ for this_msa in msa_name_list:
     #print('County included: ',good_list)
 
     # Load CBG ids for the MSA
-    cbg_ids_msa = pd.read_csv(os.path.join(root,this_msa,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
+    cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
     cbg_ids_msa.rename(columns={"cbg_id":"census_block_group"}, inplace=True)
     M = len(cbg_ids_msa)
 
@@ -197,7 +208,7 @@ for this_msa in msa_name_list:
     print('Data loaded.')
 
     ###############################################################################
-    # Fixed parameters for SEIR
+    # Parameters 
 
     # ref: https://www.medrxiv.org/content/10.1101/2020.04.01.20049825v1.full.pdf
     initN = cbg_sizes.sum() #1380000000
@@ -289,8 +300,8 @@ for this_msa in msa_name_list:
     print('beta_opt: ', beta_opt)
     print('result_opt: ', result_opt)
 
-    filepath = os.path.join(saveroot, subroot, f'seir_daily_deaths_{this_msa}') #20220315
-    predicted_deaths_daily.tofile(filepath)
-    print(f'{this_msa}, file saved at: {filepath}')
+    if(args.save_result):
+        filepath = os.path.join(saveroot, f'seir_daily_deaths_{this_msa}') #20220315
+        predicted_deaths_daily.tofile(filepath)
+        print(f'{this_msa}, file saved at: {filepath}')
 
-pdb.set_trace()
