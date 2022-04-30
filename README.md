@@ -33,41 +33,54 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 ## Running the code
 Note: Parameters inside square brackets should be specified to generate corrsponding results. Example values are provided in the python files.
 
-1. **Fit epidemic curves (Fig.1)**
+1. **Fit epidemic curves (Fig.1, Supplementary Fig.1, Supplementary Fig.18)**
 ```
-python grid_search_parameters.py [MSA_NAME] [quick_test] [p_sick_at_t0]
-python adjust_scaling_factors.py [MSA_NAM] [quick_test]
-# Plot range within 150% of the best RMSE
-python get_upper_lower_bound_of_models_wider.py [MSA_NAME] [quick_test] [direction] [tolerance]
+python grid_search_parameters.py --msa_name Atlanta --quick_test
+python adjust_scaling_factors.py --msa_name Atlanta --quick_test
+# Simulate with standard SEIR models, used in Fig. 1(b)(c)(d)
+python standard_seir.py --msa_name Atlanta
+# Fig. 1(b)(c), Supplementary Fig.1
+python plot_curves.py
+# Fig. 1(d)
+python plot_groupwise_death_rate.py
+# Fig. 1(e)
+python plot_corr_with_mobility.py
 ```
 
-2. **Correlation analysis of demographic features (Fig.1)**
+2. **Correlation analysis of demographic features (Supplementary Fig.2)**
 ```
-python correlation_demo_feats_new.py [NUM_GROUPS] [colormap]
+python plot_correlation_demo_feats.py
 ```
 3. **Simulate vaccine distribution strategies (Fig.2)**
 ```
-python vaccination_adaptive_singledemo_svi_hesitancy_test.py [MSA_NAME] [VACCINATION_TIME] [VACCINATION_RATIO] [consider_hesitancy] [ACCEPTANCE_SCENARIO] [quick_test]
-# Hypothesis test for the significance of changes
-python hypothesis_test_fig2.py [MSA_NAME]
+python vaccination_singledemo.py --msa_name Atlanta
+# Fig. 2(a)
+python plot_singledemo_outcome.py
+# Fig. 2(b)
+python plot_singledemo_outcome.py
+# Fig. 2(c)
+python hypothesis_test.py --msa_name Atlanta
+# Simulate middle policies (Supplementary Table 1)
+python vaccination_singledemo_middle_policies.py --msa_name Atlanta
 ```
-4. **Calculate community risk and societal harm (Fig.3)**
+4. **Calculate community risk and societal harm (Fig.3(d))**
 ```
 # Calculate the susceptible-infectious ratio
-python get_s_i_ratio_at_vaccination_moment.py [quick_test]
-# Estimate the infection risk for people in the same CBG/in other CBGs 
-python generate_infect_same_diff.py [MSA_NAME]
-# Correlation between community risk and societal harm
-python correlation_cm_sh.py [NUM_GROUPS] [colormap]
+python get_s_i_ratio_at_vaccination_moment.py
+# Estimate the infection risk for people in the same CBG/in other CBGs
+python generate_infect_same_diff.py --msa_name Atlanta
+# Calculate the correlation between community risk and societal risk, Fig. 3(d)
+python correlation_cr_sr.py
 ```
 5. **Regression analysis with/without community risk and societal harm (Fig.3)**
 ```
 # Generate random bags of vaccination results
-python vaccination_randombag_newdamage_gini.py [MSA_NAME] [RANDOM_SEED] [quick_test]
-# Regression
-python regression_randombag_sample.py [MSA_NAME] [LEN_SEEDS] [NUM_SAMPLE] [SAMPLE_FRAC]
+python vaccination_randombag.py --msa_name Atlanta --random_seed 66
+# Regression, Fig. 3(b)(c)
+python plot_regression_randombag_sample_average.py --msa_name all
 ```
 6. **Auto-search all-round vaccination strategies (Fig.4)**
 ```
-python vaccination_adaptive_hybrid_autosearch_conform.py [MSA_NAME] [VACCINATION_TIME] [VACCINATION_RATIO] [consider_hesitancy] [ACCEPTANCE_SCENARIO] [w1] [w2] [w3] [w4] [w5] [quick_test] 
+python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
+python plot_comprehensive_utility_equity.py --with_supplementary
 ```
