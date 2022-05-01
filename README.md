@@ -88,6 +88,8 @@ python plot_singledemo_outcome.py
 
 Generated figures:
 
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_singledemo_outcome%5D_result.png' height=150>
+
 ```
 # Fig. 2(b)
 python hesitancy_scenarios.py
