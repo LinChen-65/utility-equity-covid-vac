@@ -23,7 +23,7 @@ conda create -n covid python==3.7
 pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scikit-learn
 ```
 
-## Data and Intermediate Results to test the code
+## Data and Intermediate Results to Test the Code
 - Since the data files and intermediate results needed to test the code are too large, we put it in zenodo (https://sandbox.zenodo.org/record/1056829). Please download them from this link and replace the 'data' and 'results' folder with these downloaded folders.
 - Safegraph demographic data can be freely downloaded (https://docs.safegraph.com/docs/open-census-data), so we do not include it in the repository. When you download the data, remember to change the parameter '--safegraph_root' in the code.
 
