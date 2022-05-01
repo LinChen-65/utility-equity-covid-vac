@@ -54,7 +54,10 @@ Generated figures:
 # Fig. 1(d)
 python plot_groupwise_death_rate.py
 ```
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_groupwise_death_rate%5D_result.png' height=380>
+
+Generated figures:
+
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_groupwise_death_rate%5D_result.png' height=300>
 
 ```
 # Fig. 1(e)
