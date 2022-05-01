@@ -66,6 +66,7 @@ python plot_corr_with_mobility.py
 
 Generated figures:
 
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_with_mobility%5D_result.png' height=150>
 
 2. **Correlation analysis of demographic features (Supplementary Fig.2)**
 ```
