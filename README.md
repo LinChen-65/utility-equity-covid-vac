@@ -42,13 +42,16 @@ python adjust_scaling_factors.py --msa_name Atlanta --quick_test
 python standard_seir.py --msa_name Atlanta
 # Fig. 1(b)(c), Supplementary Fig.1
 python plot_curves.py
+```
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_1.png' width=500>
+```
 # Fig. 1(d)
 python plot_groupwise_death_rate.py
+```
+```
 # Fig. 1(e)
 python plot_corr_with_mobility.py
 ```
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_1.png' width=500>
-
 2. **Correlation analysis of demographic features (Supplementary Fig.2)**
 ```
 python plot_correlation_demo_feats.py
