@@ -25,10 +25,11 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 
 ## Data and Intermediate Results to test the code
 - Since the data files and intermediate results needed to test the code are too large, we put it in zenodo (https://sandbox.zenodo.org/record/1056829). Please download them from this link and replace the 'data' and 'results' folder with these downloaded folders.
+- Safegraph demographic data can be freely downloaded (https://docs.safegraph.com/docs/open-census-data), so we do not include it in the repository. When you download the data, remember to change the parameter '--safegraph_root' in the code.
 
 ## Raw Datasets
 - COVID-19 daily death data are available at the New York Times (https://github.com/nytimes/covid-19-data). 
-- Mobile phone mobility data and demographic data for census block groups are available at SafeGraph (https://www.safegraph.com/academics). Safegraph demographic data can be freely downloaded (https://docs.safegraph.com/docs/open-census-data), so we do not include it in the repository. When you download the data, remember to change the parameter '--safegraph_root' in the code.
+- Mobile phone mobility data and demographic data for census block groups are available at SafeGraph (https://www.safegraph.com/academics). 
 - Estimated mobility networks (ending with '*.pkl') should be retrieved from http://covid-mobility.stanford.edu, so we do not include it in the repository.
 - Social vulnerability indices for communities are available at the website of U.S. Agency for Toxic Substances and Disease Registry (https://www.atsdr.cdc.gov/placeandhealth/svi/data_documentation_download.html).
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
