@@ -68,7 +68,7 @@ Generated figures:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_with_mobility%5D_result.png' height=150>
 
-2. **Correlation analysis of demographic features (Supplementary Fig.2)**
+#### 2. Correlation analysis of demographic features (Supplementary Fig.2)
 ```
 python plot_correlation_demo_feats.py
 ```
@@ -78,7 +78,7 @@ Generated figures:
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_correlation_demo_feats%5D_result.png' height=250>
 
 
-3. **Simulate vaccine distribution strategies (Fig.2)**
+#### 3. Simulate vaccine distribution strategies (Fig.2)
 ```
 python vaccination_singledemo.py --msa_name Atlanta
 python make_gini_table.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1 --rel_to Baseline
@@ -107,7 +107,7 @@ Generated figures:
 python vaccination_singledemo_middle_policies.py --msa_name Atlanta
 ```
 
-4. **Calculate community risk and societal harm (Fig.3(d))**
+#### 4. Calculate community risk and societal harm (Fig.3(d))
 ```
 # Calculate the susceptible-infectious ratio
 python get_s_i_ratio_at_vaccination_moment.py
@@ -119,7 +119,7 @@ python correlation_cr_sr.py
 
 Generated figures:
 
-5. **Regression analysis with/without community risk and societal harm (Fig.3)**
+#### 5. Regression analysis with/without community risk and societal harm (Fig.3)
 ```
 # Generate random bags of vaccination results
 python vaccination_randombag.py --msa_name Atlanta --random_seed 66
@@ -129,7 +129,7 @@ python plot_regression_randombag_sample_average.py --msa_name all
 
 Generated figures:
 
-6. **Auto-search all-round vaccination strategies (Fig.4)**
+#### 6. Auto-search all-round vaccination strategies (Fig.4)
 ```
 python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
 python plot_comprehensive_utility_equity.py --with_supplementary
