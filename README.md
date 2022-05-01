@@ -100,7 +100,7 @@ Generated figures:
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_hesitancy_scenarios%5D_result.png' height=150>
 
 ```
-# Fig. 2(c)
+# Perform double-sided t tests
 python hypothesis_test.py --msa_name Atlanta
 # Simulate middle policies (Supplementary Table 1)
 python vaccination_singledemo_middle_policies.py --msa_name Atlanta
@@ -113,10 +113,12 @@ python get_s_i_ratio_at_vaccination_moment.py
 # Estimate the infection risk for people in the same CBG/in other CBGs
 python generate_infect_same_diff.py --msa_name Atlanta
 # Calculate the correlation between community risk and societal risk, Fig. 3(d)
-python correlation_cr_sr.py
+python plot_corr_cr_sr.py
 ```
 
 Generated figures:
+
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_cr_sr%5D_result.png' height=150>
 
 #### 5. Regression analysis with/without community risk and societal harm (Fig.3)
 ```
