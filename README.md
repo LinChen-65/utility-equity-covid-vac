@@ -44,7 +44,7 @@ python standard_seir.py --msa_name Atlanta
 python plot_curves.py
 ```
 
-Generated figures:
+Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_1.png' height=480>
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_2.png' height=450>
@@ -55,7 +55,7 @@ Generated figures:
 python plot_groupwise_death_rate.py
 ```
 
-Generated figures:
+Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_groupwise_death_rate%5D_result_horizontal.png' height=150>
 
@@ -64,7 +64,7 @@ Generated figures:
 python plot_corr_with_mobility.py
 ```
 
-Generated figures:
+Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_with_mobility%5D_result.png' height=150>
 
@@ -73,7 +73,7 @@ Generated figures:
 python plot_correlation_demo_feats.py
 ```
 
-Generated figures:
+Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_correlation_demo_feats%5D_result.png' height=300>
 
@@ -86,7 +86,7 @@ python make_gini_table.py --msa_name Atlanta --vaccination_time 31 --vaccination
 python plot_singledemo_outcome.py
 ```
 
-Generated figures:
+Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_singledemo_outcome%5D_result.png' height=150>
 
@@ -95,7 +95,7 @@ Generated figures:
 python plot_hesitancy_scenarios.py
 ```
 
-Generated figures:
+Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_hesitancy_scenarios%5D_result.png' height=150>
 
@@ -116,7 +116,7 @@ python generate_infect_same_diff.py --msa_name Atlanta
 python plot_corr_cr_sr.py
 ```
 
-Generated figures:
+Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_cr_sr%5D_result.png' height=150>
 
@@ -128,7 +128,9 @@ python vaccination_randombag.py --msa_name Atlanta --random_seed 66
 python plot_regression_randombag_sample_average.py --msa_name all
 ```
 
-Generated figures:
+Expected outcomes:
+
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_regression_randombag_sample_average%5D_result.png' height=150>
 
 #### 6. Auto-search all-round vaccination strategies (Fig.4)
 ```
@@ -136,4 +138,6 @@ python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_
 python plot_comprehensive_utility_equity.py --with_supplementary
 ```
 
-Generated figures (example):
+Expected outcomes (example):
+
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_cr_sr%5D_result.png' height=150>
