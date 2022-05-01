@@ -34,7 +34,7 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 ## Running the code
 Note: Parameters should be specified to generate corrsponding results. Example values are provided in the python files.
 
-#### 1. **Fit epidemic curves (Fig.1, Supplementary Fig.1, Supplementary Fig.18)**
+#### 1. Fit epidemic curves (Fig.1, Supplementary Fig.1, Supplementary Fig.18)
 ```
 python grid_search_parameters.py --msa_name Atlanta --quick_test
 python adjust_scaling_factors.py --msa_name Atlanta --quick_test
