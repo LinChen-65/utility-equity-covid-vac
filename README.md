@@ -57,29 +57,53 @@ python plot_groupwise_death_rate.py
 
 Generated figures:
 
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_groupwise_death_rate%5D_result.png' height=300>
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_groupwise_death_rate%5D_result.png' height=280>
 
 ```
 # Fig. 1(e)
 python plot_corr_with_mobility.py
 ```
+
+Generated figures:
+
+
 2. **Correlation analysis of demographic features (Supplementary Fig.2)**
 ```
 python plot_correlation_demo_feats.py
 ```
+
+Generated figures:
+
+
 3. **Simulate vaccine distribution strategies (Fig.2)**
 ```
 python vaccination_singledemo.py --msa_name Atlanta
 python make_gini_table.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1 --rel_to Baseline
 # Fig. 2(a)
 python plot_singledemo_outcome.py
+```
+
+Generated figures:
+
+```
 # Fig. 2(b)
 python hesitancy_scenarios.py
+```
+
+Generated figures:
+
+```
 # Fig. 2(c)
 python hypothesis_test.py --msa_name Atlanta
+```
+
+Generated figures:
+
+```
 # Simulate middle policies (Supplementary Table 1)
 python vaccination_singledemo_middle_policies.py --msa_name Atlanta
 ```
+
 4. **Calculate community risk and societal harm (Fig.3(d))**
 ```
 # Calculate the susceptible-infectious ratio
@@ -89,6 +113,9 @@ python generate_infect_same_diff.py --msa_name Atlanta
 # Calculate the correlation between community risk and societal risk, Fig. 3(d)
 python correlation_cr_sr.py
 ```
+
+Generated figures:
+
 5. **Regression analysis with/without community risk and societal harm (Fig.3)**
 ```
 # Generate random bags of vaccination results
@@ -96,8 +123,13 @@ python vaccination_randombag.py --msa_name Atlanta --random_seed 66
 # Regression, Fig. 3(b)(c)
 python plot_regression_randombag_sample_average.py --msa_name all
 ```
+
+Generated figures:
+
 6. **Auto-search all-round vaccination strategies (Fig.4)**
 ```
 python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
 python plot_comprehensive_utility_equity.py --with_supplementary
 ```
+
+Generated figures (example):
