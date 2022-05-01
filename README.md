@@ -23,11 +23,11 @@ conda create -n covid python==3.7
 pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scikit-learn
 ```
 
-## Data and Intermediate Results to Test the Code
+## Dataset
 Since the data files and intermediate results needed to test the code are too large, we put it in zenodo (https://sandbox.zenodo.org/record/1056829). 
 **Please download them from this link and replace the 'data' and 'results' folder with these downloaded folders.**
 
-Raw Datasets:
+Sources of raw data:
 - COVID-19 daily death data are available at the New York Times (https://github.com/nytimes/covid-19-data). 
 - Mobile phone mobility data and demographic data for census block groups are available at SafeGraph (https://www.safegraph.com/academics). Specifically, Safegraph demographic data can be freely downloaded (https://docs.safegraph.com/docs/open-census-data). When you download the data, remember to change the parameter '--safegraph_root' in the code.
 - Estimated mobility networks (ending with '*.pkl') should be retrieved from http://covid-mobility.stanford.edu, so we do not include it in the repository.
