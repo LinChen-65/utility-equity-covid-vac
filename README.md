@@ -44,10 +44,12 @@ python standard_seir.py --msa_name Atlanta
 python plot_curves.py
 ```
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_1.png' width=500>
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_2.png' width=500>
 ```
 # Fig. 1(d)
 python plot_groupwise_death_rate.py
 ```
+
 ```
 # Fig. 1(e)
 python plot_corr_with_mobility.py
