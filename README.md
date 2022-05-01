@@ -45,6 +45,7 @@ python plot_curves.py
 ```
 
 Generated figures:
+
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_1.png' width=450>
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_2.png' width=430>
 
