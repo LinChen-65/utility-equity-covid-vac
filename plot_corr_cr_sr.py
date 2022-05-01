@@ -17,17 +17,6 @@ import functions
 
 import pdb
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--num_groups', type=int, default=50,
-                    help='Number of groups for quantization.')
-parser.add_argument('--color_map', default='hot',
-                    help='Color map for scatter plot.')                 
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.') 
-args = parser.parse_args()
-print('args.num_groups: ',args.num_groups)
-print('Color map:', args.color_map)
-
 # root
 '''
 hostname = socket.gethostname()
@@ -43,6 +32,20 @@ root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
 fig_save_root = os.path.join(root, 'figures')
+
+# parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--num_groups', type=int, default=50,
+                    help='Number of groups for quantization.')
+parser.add_argument('--color_map', default='hot',
+                    help='Color map for scatter plot.')                 
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+args = parser.parse_args()
+print('args.num_groups: ',args.num_groups)
+print('Color map:', args.color_map)
+
+
 
 ############################################################
 # Functions

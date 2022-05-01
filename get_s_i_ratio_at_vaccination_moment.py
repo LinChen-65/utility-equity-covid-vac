@@ -17,20 +17,21 @@ import disease_model_returnSEIR as disease_model
 import time
 import pdb
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce num_seeds to 2.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.') 
-parser.add_argument('--save_result', default=False, action='store_true',
-                    help='If true, save simulation results.')
-args = parser.parse_args()
-
 # root
 #root = '/data/chenlin/COVID-19/Data'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
+
+# parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--quick_test', default=False, action='store_true',
+                    help='If true, reduce num_seeds to 2.')
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+parser.add_argument('--save_result', default=False, action='store_true',
+                    help='If true, save simulation results.')
+args = parser.parse_args()
 
 ###############################################################################
 # Constants

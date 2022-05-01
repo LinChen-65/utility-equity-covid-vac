@@ -24,22 +24,6 @@ import functions
 
 import pdb
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--msa_name', 
-                    help='MSA name. If \'all\', then iterate over all MSAs.')
-parser.add_argument('--len_seeds',  type=int, default=3,
-                    help='Number of random seeds.')         
-parser.add_argument('--num_samples',  type=int, default=20,
-                    help='Number of samples.')
-parser.add_argument('--sample_frac',  type=float, default=0.2,
-                    help='Fraction each sample contains.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.') 
-parser.add_argument('--stop_to_observe', default=False, action='store_true',
-                    help='If true, stop after regression.')
-args = parser.parse_args()
-print('\nargs.msa_name: ',args.msa_name)
-
 # root
 '''
 hostname = socket.gethostname()
@@ -55,6 +39,25 @@ root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 resultroot = os.path.join(root, 'results')
 fig_save_root = os.path.join(root, 'figures')
+
+# parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--msa_name', 
+                    help='MSA name. If \'all\', then iterate over all MSAs.')
+parser.add_argument('--len_seeds',  type=int, default=3,
+                    help='Number of random seeds.')         
+parser.add_argument('--num_samples',  type=int, default=20,
+                    help='Number of samples.')
+parser.add_argument('--sample_frac',  type=float, default=0.2,
+                    help='Fraction each sample contains.')
+parser.add_argument('--safegraph_root', default=dataroot, '/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+parser.add_argument('--stop_to_observe', default=False, action='store_true',
+                    help='If true, stop after regression.')
+args = parser.parse_args()
+print('\nargs.msa_name: ',args.msa_name)
+
+
 
 
 # Derived variables

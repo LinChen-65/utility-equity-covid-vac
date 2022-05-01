@@ -16,20 +16,19 @@ import functions
 import time
 import pdb
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--msa_name', 
-                    help='MSA name.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.') 
-args = parser.parse_args()                    
-
-###############################################################################
-# Constants
-
+# root
 #root = '/data/chenlin/COVID-19/Data'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--msa_name', 
+                    help='MSA name.')
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+args = parser.parse_args()                    
+
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)

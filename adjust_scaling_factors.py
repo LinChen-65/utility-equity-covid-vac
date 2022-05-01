@@ -21,12 +21,18 @@ from sklearn.metrics import mean_squared_error
 
 import time
 
+#root = '/data/chenlin/COVID-19/Data'
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+print(root)
+
+
 # Parameters
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
                     help='Safegraph data root.')
 parser.add_argument('--quick_test', default=False, action='store_true',
                     help='If true, reduce number of simulations to test quickly.')
@@ -35,9 +41,7 @@ parser.add_argument('--save_result', default=False, action='store_true',
 args = parser.parse_args()
 
 
-#root = '/data/chenlin/COVID-19/Data'
-root = os.getcwd()
-print(root)
+
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)

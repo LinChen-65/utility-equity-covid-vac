@@ -15,6 +15,13 @@ import functions
 
 import pdb
 
+# root
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+result_root = os.path.join(root, 'results')
+fig_save_root = os.path.join(root, 'figures')
+
+# parameters
 parser = argparse.ArgumentParser()
 #parser.add_argument('--root', default='/data/chenlin/COVID-19/Data',
 #                    help='Root to retrieve data. data for dl3, home for rl4.')  
@@ -24,14 +31,10 @@ parser.add_argument('--num_groups', type=int, default=50,
                     help='Num of groups to divide CBGs into (for quantization).')   
 parser.add_argument('--colormap', default='hot',
                     help='Color map for graph.')                      
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
                     help='Safegraph data root.')
 args = parser.parse_args()
 
-# root
-root = os.getcwd()
-result_root = os.path.join(root, 'results')
-fig_save_root = os.path.join(root, 'figures')
 
 ############################################################
 # Functions

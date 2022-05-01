@@ -20,6 +20,23 @@ import constants
 import functions
 import disease_model_test as disease_model
 
+
+# root
+'''
+hostname = socket.gethostname()
+print('hostname: ', hostname)
+if(hostname=='fib-dl3'):
+    root = '/data/chenlin/COVID-19/Data' #dl3
+    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
+elif(hostname=='rl4'):
+    root = '/home/chenlin/COVID-19/Data' #rl4
+    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
+'''
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
+
+# parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name. ')
@@ -57,7 +74,7 @@ parser.add_argument('--w6', type=float, default=1,
                     help='Initial weight 6.')       
 parser.add_argument('--store_history', default=False, action='store_true',
                     help='If true, save history_D2 instead of final_deaths.')                                      
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
                     help='Safegraph data root.') 
 args = parser.parse_args()
 
@@ -69,20 +86,7 @@ if(args.consider_hesitancy):
     print(f'Consider vaccine hesitancy. Vaccine acceptance scenario: {args.acceptance_scenario}.')
 print(f'Quick testing? {args.quick_test}')
 
-# root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname=='fib-dl3'):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-'''
-root = os.getcwd()
-dataroot = os.path.join(root, 'data')
-saveroot = os.path.join(root, 'results')
+
 
 # Policies to compare
 demo_policy_to_compare = ['Age', 'Income', 'Occupation', 'Minority'] #20220305

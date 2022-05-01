@@ -18,16 +18,6 @@ import disease_model_test as disease_model
 import time
 import pdb
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--msa_name', 
-                    help='MSA name.')
-parser.add_argument('--random_seed', type=int, default=42, 
-                    help='Random seed.')
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce num_seeds to 2.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.') 
-args = parser.parse_args()
 
 # root
 '''
@@ -46,6 +36,20 @@ resultroot = os.path.join(root, 'results')
 saveroot = os.path.join(root, 'results', 'vac_randombag_results')
 if not os.path.exists(saveroot): # if folder does not exist, create one. #20220302
     os.makedirs(saveroot)
+
+# parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--msa_name', 
+                    help='MSA name.')
+parser.add_argument('--random_seed', type=int, default=42, 
+                    help='Random seed.')
+parser.add_argument('--quick_test', default=False, action='store_true',
+                    help='If true, reduce num_seeds to 2.')
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+args = parser.parse_args()
+
+
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)

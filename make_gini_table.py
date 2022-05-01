@@ -16,6 +16,22 @@ import functions
 
 import pdb
 
+# root
+'''
+hostname = socket.gethostname()
+print('hostname: ', hostname)
+if(hostname=='fib-dl3'):
+    root = '/data/chenlin/COVID-19/Data' #dl3
+    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
+elif(hostname=='rl4'):
+    root = '/home/chenlin/COVID-19/Data' #rl4
+    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
+'''
+root = os.getcwd()
+dataroot = os.path.join(root, 'data')
+saveroot = os.path.join(root, 'results')
+
+# parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name. If \'all\', then iterate over all MSAs.')
@@ -33,7 +49,7 @@ parser.add_argument('--recheck_interval', type=float, default = 0.01,
                     help='Recheck interval (After distributing some portion of vaccines, recheck the most vulnerable demographic group).')                             
 parser.add_argument('--rel_to', 
                     help='Relative to which strategy (either No_Vaccination or Baseline).')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
                     help='Safegraph data root.') 
 args = parser.parse_args()
 print('args.msa_name:',args.msa_name)
@@ -43,20 +59,7 @@ print('Number of groups: ',args.num_groups)
 #print('Vaccine acceptance scenario: ', args.acceptance_scenario)
 print('Relative to: ', args.rel_to)
 
-# root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname=='fib-dl3'):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-'''
-root = os.getcwd()
-dataroot = os.path.join(root, 'data')
-saveroot = os.path.join(root, 'results')
+
 
 # Derived variables
 if(args.msa_name=='all'):

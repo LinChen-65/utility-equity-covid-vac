@@ -12,20 +12,22 @@ import functions
 
 import pdb
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.') 
-args = parser.parse_args()
-
-policy_list = ['Age_Agnostic','No_Vaccination']
-demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
-NUM_GROUPS = 10
 #root = '/data/chenlin/COVID-19/Data'
 #saveroot = '/data/chenlin/utility-equity-covid-vac/results/figures'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 resultroot = os.path.join(root, 'results')
 fig_save_root = os.path.join(root, 'figures')
+
+# parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.') 
+args = parser.parse_args()
+
+policy_list = ['Age_Agnostic','No_Vaccination']
+demo_feat_list = ['Age', 'Income', 'Occupation', 'Race']
+NUM_GROUPS = 10
 
 # Drawing settings
 alpha=1

@@ -23,13 +23,14 @@ import pdb
 # root
 #root = '/data/chenlin/COVID-19/Data'
 root = os.getcwd()
+dataroot = os.path.join(root, 'data')
 print(root)
 
 # Parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
                     help='Safegraph data root.')
 parser.add_argument('--quick_test', default=False, action='store_true',
                     help='If true, reduce number of simulations to test quickly.')   

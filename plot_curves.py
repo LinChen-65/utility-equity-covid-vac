@@ -16,15 +16,6 @@ import constants
 
 import pdb
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--vaccination_time', type=int, default=31,
-                    help='Time to distribute vaccines.')
-parser.add_argument('--vaccination_ratio' , type=float, default=0.1,
-                    help='Vaccination ratio relative to MSA population.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.')                    
-args = parser.parse_args()
-
 '''
 # root (absolute)
 hostname = socket.gethostname()
@@ -44,8 +35,21 @@ if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, 
 
 # root
 root = os.getcwd()
+dataroot = os.path.join(root, 'data')
 result_root = os.path.join(root, 'results')
 fig_save_root = os.path.join(root, 'figures')
+
+# parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--vaccination_time', type=int, default=31,
+                    help='Time to distribute vaccines.')
+parser.add_argument('--vaccination_ratio' , type=float, default=0.1,
+                    help='Vaccination ratio relative to MSA population.')
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+                    help='Safegraph data root.')                    
+args = parser.parse_args()
+
+
 
 msa_name_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami', 'Philadelphia', 'SanFrancisco', 'WashingtonDC']
 anno_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'Los Angeles', 'Miami', 'Philadelphia', 'San Francisco', 'Washington D.C.']
