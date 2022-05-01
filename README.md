@@ -102,11 +102,6 @@ Generated figures:
 ```
 # Fig. 2(c)
 python hypothesis_test.py --msa_name Atlanta
-```
-
-Generated figures:
-
-```
 # Simulate middle policies (Supplementary Table 1)
 python vaccination_singledemo_middle_policies.py --msa_name Atlanta
 ```
