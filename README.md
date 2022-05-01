@@ -75,7 +75,7 @@ python plot_correlation_demo_feats.py
 
 Generated figures:
 
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_correlation_demo_feats%5D_result.png' height=250>
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_correlation_demo_feats%5D_result.png' height=300>
 
 
 #### 3. Simulate vaccine distribution strategies (Fig.2)
