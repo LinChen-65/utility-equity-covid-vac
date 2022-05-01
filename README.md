@@ -92,10 +92,12 @@ Generated figures:
 
 ```
 # Fig. 2(b)
-python hesitancy_scenarios.py
+python plot_hesitancy_scenarios.py
 ```
 
 Generated figures:
+
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_hesitancy_scenarios%5D_result.png' height=150>
 
 ```
 # Fig. 2(c)
