@@ -317,15 +317,15 @@ for this_msa in msa_name_list:
             if policy in ['minority', 'minority_reverse']:
                 history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
             elif(policy=='no_vaccination'):
-                history_D2_result_path = os.path.join(saveroot,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
+                history_D2_result_path = os.path.join(saveroot,'vaccination_results_adaptive_31d_0.1_0.01',rf'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
             #elif(policy=='baseline'):
             #    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
             else:
                 #history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
                 if('reverse' not in policy):
-                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
                 else:
-                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
             exec(f'history_D2_{policy} = np.fromfile(\'{history_D2_result_path}\')')
             exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,args.num_seeds,M))')   
             exec(f'final_deaths_{policy} = np.array(history_D2_{policy}[-1,:,:])')

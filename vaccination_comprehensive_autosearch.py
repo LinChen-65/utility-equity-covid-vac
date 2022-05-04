@@ -413,7 +413,7 @@ for policy in policy_to_compare_rel_to_no_vaccination:
                 exact_name = f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}_30seeds_{args.msa_name}'
                 history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.vaccination_ratio/10}', exact_name)
         elif(policy=='no_vaccination'):
-            history_D2_result_path = os.path.join(root,args.msa_name,'vaccination_results_adaptive_31d_0.1_0.01',f'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{args.msa_name}')
+            history_D2_result_path = os.path.join(root,args.msa_name,'vaccination_results_adaptive_31d_0.1_0.01',rf'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{args.msa_name}')
         #elif(policy=='baseline'):
         #    history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}') #20220304
         else:
@@ -421,19 +421,19 @@ for policy in policy_to_compare_rel_to_no_vaccination:
             if('reverse' not in policy):
                 if(args.vaccination_time==31):
                     if(args.vaccination_ratio in [0.05,0.1,0.15,0.2]):
-                        exact_name = f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}'
+                        exact_name = rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}'
                     elif(args.vaccination_ratio in [0.03,0.08,0.13,0.18]):
                         exact_name = f'history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220304
                     elif(args.vaccination_ratio in [0.4,0.56]):
                         exact_name = f'test_history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220304
                 else:
                     if(args.vaccination_time in [26,36,41]):
-                        exact_name = f'20210206_history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220306
+                        exact_name = rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220306
                     elif(args.vaccination_time in [24,29,34,39]):
                         exact_name = f'history_D2_{file_name_dict[policy]}_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}_30seeds_{args.msa_name}' #20220306
                 history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', exact_name) #20220307
             else:
-                history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', f'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}') #20220304
+                history_D2_result_path = os.path.join(root,args.msa_name,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{recheck_interval_others}', rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{args.msa_name}') #20220304
             
         exec(f'history_D2_{policy} = np.fromfile(\'{history_D2_result_path}\')')
         exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,NUM_SEEDS,M))')   

@@ -364,7 +364,7 @@ else:
         EXECUTION_RATIO = 1
 
         history_D2_no_vaccination = np.fromfile(os.path.join(resultroot,'vaccination_results_adaptive_31d_%s_0.01'% VACCINATION_RATIO,
-                                                            '20210206_history_D2_no_vaccination_adaptive_%s_0.01_%sseeds_%s'% (VACCINATION_RATIO,NUM_SEEDS,this_msa))) 
+                                                            r'20210206_history_D2_no_vaccination_adaptive_%s_0.01_%sseeds_%s'% (VACCINATION_RATIO,NUM_SEEDS,this_msa))) 
         history_D2_no_vaccination = np.array(np.reshape(history_D2_no_vaccination,(63,NUM_SEEDS,M)))
 
         avg_history_D2_no_vaccination = np.mean(history_D2_no_vaccination,axis=1)

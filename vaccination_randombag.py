@@ -400,7 +400,7 @@ vaccine_acceptance = np.ones(len(cbg_sizes)) #20220308
 ###############################################################################
 # Load non-vaccination results for comparison
 
-history_D2_no_vaccination = np.fromfile(os.path.join(resultroot,'vaccination_results_adaptive_31d_0.1_0.01','20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%(MSA_NAME)))
+history_D2_no_vaccination = np.fromfile(os.path.join(resultroot,'vaccination_results_adaptive_31d_0.1_0.01',r'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_%s'%(MSA_NAME)))
 # Average across random seeds
 history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,30,M))
 avg_final_deaths_no_vaccination = np.mean(history_D2_no_vaccination,axis=1)[-1,:]
