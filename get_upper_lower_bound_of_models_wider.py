@@ -39,7 +39,7 @@ args = parser.parse_args()
 ##############################################################################
 # Constants
 
-datestring = '20220505'#'20210206'
+datestring = 20210206 #'20220505'#'20210206'
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
