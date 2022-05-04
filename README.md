@@ -63,6 +63,7 @@ Expected outcomes:
 ```
 # Fig. 1(e)
 python plot_corr_with_mobility.py
+# Note: To generate this figure, you need to first run the code file named 'generate_infect_same_diff.py', which is illustrated in Part 4.
 ```
 
 Expected outcomes:
