@@ -206,8 +206,8 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     cbg_age_msa['Age_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
     # No_Vaccination & Age_Agnostic, accumulated results
-    deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-    deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+    deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+    deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
 
     # Add simulation results to grouping table
     cbg_age_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
@@ -266,8 +266,8 @@ if('Income' in demo_feat_list):
         cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
         # No_Vaccination & Age_Agnostic, accumulated results
-        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
 
         # Add simulation results to grouping table
         cbg_income_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
@@ -346,8 +346,8 @@ if('Occupation' in demo_feat_list):
         #print(len(cbg_occupation_msa),len(cbg_occupation_msa[cbg_occupation_msa['Essential_Worker_Quantile']==NUM_GROUPS]))
         
         # No_Vaccination & Age_Agnostic, accumulated results
-        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
         # Add simulation results to grouping table
         cbg_occupation_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
         cbg_occupation_msa['Final_Deaths_Age_Agnostic'] = deaths_cbg_age_agnostic[-1,:]
@@ -456,8 +456,8 @@ if('Race' in demo_feat_list):
         ##################### above are tests #####################
 
         # No_Vaccination & Age_Agnostic, accumulated results
-        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
-        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
+        deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
+        deaths_cbg_age_agnostic = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME))
 
         # Add simulation results to grouping table
         cbg_race_msa['Final_Deaths_No_Vaccination'] = deaths_cbg_no_vaccination[-1,:]
