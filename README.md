@@ -42,7 +42,7 @@ Note: Parameters should be specified to generate corrsponding results. Example v
 python grid_search_parameters.py --msa_name Atlanta --quick_test
 python adjust_scaling_factors.py --msa_name Atlanta --quick_test
 # Simulate with standard SEIR models, used in Fig. 1(b)(c)(d)
-python standard_seir.py --msa_name Atlanta
+python standard_seir.py --msa_name Atlanta --save_result
 # Fig. 1(b)(c), Supplementary Fig.1
 python plot_curves.py
 ```
