@@ -191,19 +191,30 @@ for msa_idx in range(len(msa_name_list)):
     this_msa = msa_name_list[msa_idx]
 
     # No_Vaccination, accumulated results
+    '''
     #deaths_total_no_vaccination = np.load(os.path.join(root,this_msa,f'20210206_deaths_total_no_vaccination_{this_msa}.npy'))
     deaths_total_no_vaccination = np.load(os.path.join(result_root, f'20210206_deaths_total_no_vaccination_{this_msa}.npy'))
-    
     deaths_daily_total_no_vaccination = [0]
     for i in range(1,len(deaths_total_no_vaccination)):
         deaths_daily_total_no_vaccination.append(deaths_total_no_vaccination[i]-deaths_total_no_vaccination[i-1])
-    
+    '''
+    history_D2_no_vac = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
+    history_D2_no_vac = np.reshape(history_D2_no_vac,(63, 30, -1))
+    mean_no_vac,max_no_vac,min_no_vac = get_mean_max_min(history_D2_no_vac)
+    deaths_daily_total_no_vaccination = mean_no_vac
+
     # Age_Agnostic, accumulated results
+    '''
     deaths_total_age_agnostic = np.load(os.path.join(result_root, f'20210206_deaths_total_age_agnostic_{this_msa}.npy'))
     # Transform into daily results
     deaths_daily_total_age_agnostic = [0]
     for i in range(1,len(deaths_total_age_agnostic)):
         deaths_daily_total_age_agnostic.append(deaths_total_age_agnostic[i]-deaths_total_age_agnostic[i-1])
+    '''
+    history_D2_age_agnostic = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_age_agnostic_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
+    history_D2_age_agnostic = np.reshape(history_D2_age_agnostic,(63, 30, -1))
+    mean_age_agnostic,max_age_agnostic,min_age_agnostic = get_mean_max_min(history_D2_age_agnostic)
+    deaths_daily_total_age_agnostic = mean_age_agnostic
 
     # No_Vaccination, upper & lower bound, accumulated results
     upperbound = np.load(os.path.join(result_root,'age_aware_1.5_upperbound_%s_%s.npy'%(constants.upper_lower_death_scales[1.5][this_msa][1],this_msa)))
