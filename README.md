@@ -41,6 +41,11 @@ Note: Parameters should be specified to generate corrsponding results. Example v
 ```
 python grid_search_parameters.py --msa_name Atlanta --quick_test
 python adjust_scaling_factors.py --msa_name Atlanta --quick_test
+# Obtain simulation results on BD model and meta-population model
+python simulation_on_disease_model.py --msa_name Atlanta --quick_test
+# Determine upper and lower bounds
+python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta --direction lower --tolerance 1.5
+python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta --direction upper --tolerance 1.5
 # Simulate with standard SEIR models, used in Fig. 1(b)(c)(d)
 python standard_seir.py --msa_name Atlanta --save_result
 # Fig. 1(b)(c), Supplementary Fig.1
