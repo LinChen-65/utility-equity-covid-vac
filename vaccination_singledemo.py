@@ -75,8 +75,10 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[args.msa_name]
 #policy_list = ['Minority', 'Minority_Reverse']
 #policy_list = ['Baseline', 'Age', 'Income', 'Occupation', 'Minority']
 #policy_list = ['SVI_new']
+
 policy_list = ['Baseline', 'Age', 'Income', 'Occupation', 'Minority', 'SVI_new', 
                'Age_Reverse', 'Income_Reverse', 'Occpuation_Reverse', 'Minority_Reverse']
+            
 print('Policy list: ', policy_list)
 
 # Vaccine acceptance scenario
