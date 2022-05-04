@@ -35,7 +35,7 @@ Sources of raw data:
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
 
 ## Running the code
-Note: Parameters should be specified to generate corrsponding results. Example values are provided in the python files.
+Note: Parameters should be specified to generate corrsponding results. Example values are provided in the python files. The following code uses Atlanta as an example. If you would like to test other MSAs, you can change specify the name via the '--msa_name' argument.
 
 #### 1. Fit epidemic curves (Fig.1, Supplementary Fig.1, Supplementary Fig.18)
 ```
