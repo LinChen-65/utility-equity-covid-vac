@@ -1,4 +1,4 @@
-# python vaccination_on_age_aware_disease_model.py --msa_name Atlanta --quick_test
+# python simulation_on_disease_model.py --msa_name Atlanta --quick_test
 
 import setproctitle
 setproctitle.setproctitle("covid-19-vac@chenlin")
