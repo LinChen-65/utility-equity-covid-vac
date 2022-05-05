@@ -236,12 +236,12 @@ if(len(deaths_daily_smooth)<len(deaths_total_no_vaccination)):
     deaths_daily_smooth = [0]*(len(deaths_total_no_vaccination)-len(deaths_daily_smooth)) + list(deaths_daily_smooth)
 
 # Save results
-np.save(os.path.join(resultroot,'20210206_deaths_total_no_vaccination_%s.npy'%MSA_NAME), deaths_total_no_vaccination)
-np.save(os.path.join(resultroot,'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME), deaths_cbg_no_vaccination)
-np.save(os.path.join(resultroot,'20210206_deaths_total_age_agnostic_%s.npy'%MSA_NAME), deaths_total_age_agnostic)
-np.save(os.path.join(resultroot,'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME), deaths_cbg_age_agnostic)
-np.save(os.path.join(resultroot,'20210206_deaths_daily_nyt_%s.npy'%MSA_NAME),deaths_daily)
-np.save(os.path.join(resultroot,'20210206_deaths_daily_smooth_nyt_%s.npy'%MSA_NAME),deaths_daily_smooth)
+np.save(os.path.join(resultroot,r'20210206_deaths_total_no_vaccination_%s.npy'%MSA_NAME), deaths_total_no_vaccination)
+np.save(os.path.join(resultroot,r'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME), deaths_cbg_no_vaccination)
+np.save(os.path.join(resultroot,r'20210206_deaths_total_age_agnostic_%s.npy'%MSA_NAME), deaths_total_age_agnostic)
+np.save(os.path.join(resultroot,r'20210206_deaths_cbg_age_agnostic_%s.npy'%MSA_NAME), deaths_cbg_age_agnostic)
+np.save(os.path.join(resultroot,r'20210206_deaths_daily_nyt_%s.npy'%MSA_NAME),deaths_daily)
+np.save(os.path.join(resultroot,r'20210206_deaths_daily_smooth_nyt_%s.npy'%MSA_NAME),deaths_daily_smooth)
 
 
 # From cumulative to daily
