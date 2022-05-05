@@ -218,9 +218,16 @@ if ('No_Vaccination' in policy_list):
 # Save results
 
 print('Policy list: ', policy_list)
+'''
 for policy in policy_list:
     policy = policy.lower()
     exec('np.array(history_D2_%s).tofile(os.path.join(resultroot,\'vaccination_results_adaptive_31d_0.1_0.01\', \'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s\'))' % (policy,policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
-    
+'''
+
+policy = 'Age_Agnostic'
+np.array(history_D2_age_agnostic).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
+policy = 'No_Vaccination'
+np.array(history_D2_no_vaccination).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
+
 print('Results saved.')
 pdb.set_trace()
