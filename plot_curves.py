@@ -1,4 +1,4 @@
-# python plot_curves.py
+# python plot_curves.py --with_vac
 
 # pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name, consider-using-enumerate
 
@@ -47,6 +47,8 @@ parser.add_argument('--vaccination_ratio' , type=float, default=0.1,
                     help='Vaccination ratio relative to MSA population.')
 parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
                     help='Safegraph data root.')                    
+parser.add_argument('--with_vac', default=False, action='store_true',
+                    help='If true, plot with comprehensive vaccination results.')
 args = parser.parse_args()
 
 
@@ -278,93 +280,94 @@ print(f'Supplementary legend, saved at {savepath}')
 ####################################################################################################
 # Fig.S18
 
-color_list = ['k','#FE2E2E','blue']
+if(args.with_vac):
+    color_list = ['k','#FE2E2E','blue']
 
-for msa_idx in range(len(msa_name_list)):
-    this_msa = msa_name_list[msa_idx]
+    for msa_idx in range(len(msa_name_list)):
+        this_msa = msa_name_list[msa_idx]
 
-    # No_Vaccination, accumulated results
-    #deaths_total_no_vac = np.load(os.path.join(root,this_msa,f'20210206_deaths_total_no_vaccination_{this_msa}.npy'))
-    #history_D2_no_vac = np.fromfile(os.path.join(root, this_msa, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
-    history_D2_no_vac = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
-    history_D2_no_vac = np.reshape(history_D2_no_vac,(63, 30, -1))
-    mean_no_vac,max_no_vac,min_no_vac = get_mean_max_min(history_D2_no_vac)
-    '''
-    deaths_total_mean_no_vac = np.mean(np.sum(history_D2_no_vac, axis=2), axis=1) 
-    deaths_total_max_no_vac = np.max(np.sum(history_D2_no_vac, axis=2), axis=1) 
-    deaths_total_min_no_vac = np.min(np.sum(history_D2_no_vac, axis=2), axis=1) 
-    # Transform into daily results
-    mean_no_vac = [0]
-    max_no_vac = [0]
-    min_no_vac = [0]
-    for i in range(1,len(deaths_total_mean_no_vac)):
-        mean_no_vac.append(deaths_total_mean_no_vac[i]-deaths_total_mean_no_vac[i-1])
-        max_no_vac.append(deaths_total_max_no_vac[i]-deaths_total_max_no_vac[i-1])
-        min_no_vac.append(deaths_total_min_no_vac[i]-deaths_total_min_no_vac[i-1])
-    '''
+        # No_Vaccination, accumulated results
+        #deaths_total_no_vac = np.load(os.path.join(root,this_msa,f'20210206_deaths_total_no_vaccination_{this_msa}.npy'))
+        #history_D2_no_vac = np.fromfile(os.path.join(root, this_msa, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
+        history_D2_no_vac = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
+        history_D2_no_vac = np.reshape(history_D2_no_vac,(63, 30, -1))
+        mean_no_vac,max_no_vac,min_no_vac = get_mean_max_min(history_D2_no_vac)
+        '''
+        deaths_total_mean_no_vac = np.mean(np.sum(history_D2_no_vac, axis=2), axis=1) 
+        deaths_total_max_no_vac = np.max(np.sum(history_D2_no_vac, axis=2), axis=1) 
+        deaths_total_min_no_vac = np.min(np.sum(history_D2_no_vac, axis=2), axis=1) 
+        # Transform into daily results
+        mean_no_vac = [0]
+        max_no_vac = [0]
+        min_no_vac = [0]
+        for i in range(1,len(deaths_total_mean_no_vac)):
+            mean_no_vac.append(deaths_total_mean_no_vac[i]-deaths_total_mean_no_vac[i-1])
+            max_no_vac.append(deaths_total_max_no_vac[i]-deaths_total_max_no_vac[i-1])
+            min_no_vac.append(deaths_total_min_no_vac[i]-deaths_total_min_no_vac[i-1])
+        '''
 
-    # Baseline, accumulated results
-    history_D2_baseline = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'test_history_D2_baseline_adaptive_31d_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
-    history_D2_baseline = np.reshape(history_D2_baseline,(63, 30, -1))
-    mean_baseline,max_baseline,min_baseline = get_mean_max_min(history_D2_baseline)
+        # Baseline, accumulated results
+        history_D2_baseline = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'test_history_D2_baseline_adaptive_31d_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
+        history_D2_baseline = np.reshape(history_D2_baseline,(63, 30, -1))
+        mean_baseline,max_baseline,min_baseline = get_mean_max_min(history_D2_baseline)
 
-    # Comprehensive, accumulated results
-    policy = 'hybrid'
-    list_glob = glob.glob(os.path.join(result_root, f'comprehensive/vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}_*_30seeds_{this_msa}'))
-    result_path = list_glob[0]
-    history_D2_hybrid = np.fromfile(result_path)
-    history_D2_hybrid = np.reshape(history_D2_hybrid ,(63, 30, -1)) #(63,30,3130)
-    mean_hybrid,max_hybrid,min_hybrid = get_mean_max_min(history_D2_hybrid)
-    
-    plt.figure(figsize=(6,5.5))
-    plt.title(anno_list[msa_idx],fontsize=30)
-    t = np.arange(63)
-    markersize=6
-    alpha = 0.1
+        # Comprehensive, accumulated results
+        policy = 'hybrid'
+        list_glob = glob.glob(os.path.join(result_root, f'comprehensive/vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}_*_30seeds_{this_msa}'))
+        result_path = list_glob[0]
+        history_D2_hybrid = np.fromfile(result_path)
+        history_D2_hybrid = np.reshape(history_D2_hybrid ,(63, 30, -1)) #(63,30,3130)
+        mean_hybrid,max_hybrid,min_hybrid = get_mean_max_min(history_D2_hybrid)
+        
+        plt.figure(figsize=(6,5.5))
+        plt.title(anno_list[msa_idx],fontsize=30)
+        t = np.arange(63)
+        markersize=6
+        alpha = 0.1
 
-    plt.plot(mean_no_vac,label='No Vaccination',marker='o',markersize=markersize,color=color_list[0]) 
-    plt.plot(max_no_vac,marker='o',markersize=markersize,color=color_list[0],alpha=alpha) 
-    plt.plot(min_no_vac,marker='o',markersize=markersize,color=color_list[0],alpha=alpha) 
-    plt.fill_between(t,max_no_vac,min_no_vac,color=color_list[0],alpha=alpha)
+        plt.plot(mean_no_vac,label='No Vaccination',marker='o',markersize=markersize,color=color_list[0]) 
+        plt.plot(max_no_vac,marker='o',markersize=markersize,color=color_list[0],alpha=alpha) 
+        plt.plot(min_no_vac,marker='o',markersize=markersize,color=color_list[0],alpha=alpha) 
+        plt.fill_between(t,max_no_vac,min_no_vac,color=color_list[0],alpha=alpha)
 
-    plt.plot(mean_baseline,label='Baseline',marker='o',markersize=markersize,color=color_list[2]) 
-    plt.plot(max_baseline,marker='o',markersize=markersize,color=color_list[2],alpha=alpha) 
-    plt.plot(min_baseline,marker='o',markersize=markersize,color=color_list[2],alpha=alpha) 
-    plt.fill_between(t,max_baseline,min_baseline,color=color_list[2],alpha=alpha)
+        plt.plot(mean_baseline,label='Baseline',marker='o',markersize=markersize,color=color_list[2]) 
+        plt.plot(max_baseline,marker='o',markersize=markersize,color=color_list[2],alpha=alpha) 
+        plt.plot(min_baseline,marker='o',markersize=markersize,color=color_list[2],alpha=alpha) 
+        plt.fill_between(t,max_baseline,min_baseline,color=color_list[2],alpha=alpha)
 
-    plt.plot(mean_hybrid,label='Comprehensive',marker='o',markersize=markersize,color=color_list[1]) 
-    plt.plot(max_hybrid,marker='o',markersize=markersize,color=color_list[1],alpha=alpha)
-    plt.plot(min_hybrid,marker='o',markersize=markersize,color=color_list[1],alpha=alpha)
-    plt.fill_between(t,max_hybrid,min_hybrid,color=color_list[1],alpha=alpha)
+        plt.plot(mean_hybrid,label='Comprehensive',marker='o',markersize=markersize,color=color_list[1]) 
+        plt.plot(max_hybrid,marker='o',markersize=markersize,color=color_list[1],alpha=alpha)
+        plt.plot(min_hybrid,marker='o',markersize=markersize,color=color_list[1],alpha=alpha)
+        plt.fill_between(t,max_hybrid,min_hybrid,color=color_list[1],alpha=alpha)
 
-    y_max = np.max(np.array([np.max(mean_no_vac),np.max(max_no_vac),np.max(min_no_vac), 
-                             np.max(mean_baseline),np.max(max_baseline),np.max(min_baseline),
-                             np.max(mean_hybrid),np.max(max_hybrid),np.max(min_hybrid)])) #20220316
-    plt.vlines(31, 0, y_max, colors='black',linestyles ="dashed") #20220316
+        y_max = np.max(np.array([np.max(mean_no_vac),np.max(max_no_vac),np.max(min_no_vac), 
+                                np.max(mean_baseline),np.max(max_baseline),np.max(min_baseline),
+                                np.max(mean_hybrid),np.max(max_hybrid),np.max(min_hybrid)])) #20220316
+        plt.vlines(31, 0, y_max, colors='black',linestyles ="dashed") #20220316
 
-    #plt.ylim(0,11)
-    #plt.yticks(np.arange(6)*2,fontsize=14) 
-    plt.yticks(fontsize=14) 
-    plt.ylabel('Daily deaths', fontsize=25)
+        #plt.ylim(0,11)
+        #plt.yticks(np.arange(6)*2,fontsize=14) 
+        plt.yticks(fontsize=14) 
+        plt.ylabel('Daily deaths', fontsize=25)
 
-    plt.xlim(-1,63)
-    plt.xticks(np.arange(13)*5+1,fontsize=12)
-    plt.xlabel('Days',fontsize=25)
-    #plt.legend(loc='upper left',fontsize=17.5)
+        plt.xlim(-1,63)
+        plt.xticks(np.arange(13)*5+1,fontsize=12)
+        plt.xlabel('Days',fontsize=25)
+        #plt.legend(loc='upper left',fontsize=17.5)
 
-    # Save the figure
-    savepath = os.path.join(fig_save_root, 'sup', f'sup_withvac_curve_{this_msa}.pdf')
+        # Save the figure
+        savepath = os.path.join(fig_save_root, 'sup', f'sup_withvac_curve_{this_msa}.pdf')
+        plt.savefig(savepath,bbox_inches = 'tight')
+        print(f'sup_curve_{this_msa}, figure saved at: {savepath}.')
+
+    # legend
+    plt.figure()
+    label_list = ['No Vaccination', 'Comprehensive', 'Homogeneous']
+    color_list = color_list
+    patches = [plt.scatter([],[],marker='o',s=500,color=color_list[i], label="{:s}".format(label_list[i])) for i in range(len(label_list))]
+    plt.legend(handles=patches,ncol=3,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
+    # Save figure
+    savepath = os.path.join(fig_save_root, 'sup', f'sup_withvac_curve_legend.pdf')
     plt.savefig(savepath,bbox_inches = 'tight')
-    print(f'sup_curve_{this_msa}, figure saved at: {savepath}.')
-
-# legend
-plt.figure()
-label_list = ['No Vaccination', 'Comprehensive', 'Homogeneous']
-color_list = color_list
-patches = [plt.scatter([],[],marker='o',s=500,color=color_list[i], label="{:s}".format(label_list[i])) for i in range(len(label_list))]
-plt.legend(handles=patches,ncol=3,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
-# Save figure
-savepath = os.path.join(fig_save_root, 'sup', f'sup_withvac_curve_legend.pdf')
-plt.savefig(savepath,bbox_inches = 'tight')
-print(f'Supplementary legend, saved at {savepath}')
+    print(f'Supplementary legend, saved at {savepath}')
 
