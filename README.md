@@ -37,7 +37,7 @@ Sources of raw data:
 ## Running the code
 Note: Parameters should be specified to generate corrsponding results. Example values are provided in the python files. The following code uses Atlanta as an example. If you would like to test other MSAs, you can change specify the name via the '--msa_name' argument.
 
-#### 1. Fit epidemic curves (Fig.1, Supplementary Fig.1, Supplementary Fig.18)
+#### 1. Fit epidemic curves (Fig.1, Supplementary Fig.1)
 ```
 python grid_search_parameters.py --msa_name Atlanta --quick_test
 python adjust_scaling_factors.py --msa_name Atlanta --quick_test
@@ -139,7 +139,7 @@ Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_regression_randombag_sample_average%5D_result.png' height=150>
 
-#### 6. Auto-search all-round vaccination strategies (Fig.4)
+#### 6. Auto-search all-round vaccination strategies (Fig.4, Supplementary Fig.18)
 ```
 python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
 python plot_comprehensive_utility_equity.py --with_supplementary
@@ -148,3 +148,11 @@ python plot_comprehensive_utility_equity.py --with_supplementary
 Expected outcomes (example):
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_comprehensive_utility_equity%5D_result.png' height=300>
+
+```
+# Supplementary Fig.18
+python plot_curves.py --with_vac
+```
+
+Expected outcomes: 
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_2.png' height=300>
