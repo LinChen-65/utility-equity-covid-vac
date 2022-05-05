@@ -58,6 +58,7 @@ Expected outcomes:
 
 ```
 # Fig. 1(d)
+# Note: To generate this figure, you need to first run the code file named 'get_upper_lower_bound_of_models_wider.py', as mentioned above.
 python plot_groupwise_death_rate.py
 ```
 
