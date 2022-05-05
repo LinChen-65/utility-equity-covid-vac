@@ -54,7 +54,7 @@ python plot_curves.py
 
 Expected outcomes:
 
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_all_newnew.png' height=480>
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_13.png' height=480>
 
 ```
 # Fig. 1(d)
@@ -155,4 +155,5 @@ python plot_curves.py --with_vac
 ```
 
 Expected outcomes: 
+
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_2.png' height=300>
