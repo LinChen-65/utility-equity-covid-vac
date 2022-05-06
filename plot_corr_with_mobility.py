@@ -126,6 +126,8 @@ corr_income_death_list= []
 corr_occupation_death_list= [] 
 corr_minority_death_list= [] 
 
+
+#for msa_idx in [0]:
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]

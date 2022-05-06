@@ -79,6 +79,8 @@ def get_avg_upper_lower(result_dict, num_groups): #20220227
     for group_idx in range(num_groups):
         #print('group_idx:',group_idx)
         count=0
+        
+        #for msa_idx in [0]:
         for msa_idx in range(len(constants.MSA_NAME_LIST)):
             if(constants.MSA_NAME_LIST[msa_idx]=='NewYorkCity'):continue
             MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
@@ -170,6 +172,7 @@ filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg
 cbg_agesex = pd.read_csv(filepath)
 
 count=0
+#for msa_idx in [0]:
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     if(constants.MSA_NAME_LIST[msa_idx]=='NewYorkCity'):continue
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]

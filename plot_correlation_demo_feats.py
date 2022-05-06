@@ -112,7 +112,7 @@ cbg_agesex = pd.read_csv(filepath)
 filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
 cbg_occupation = pd.read_csv(filepath)
 # Load ACS 5-year (2013-2017) Data: Mean Household Income
-filepath = os.path.join(dataroot,"ACS_5years_Income_Filtered_Summary.csv")
+filepath = os.path.join(args.safegraph_root,"ACS_5years_Income_Filtered_Summary.csv")
 cbg_income = pd.read_csv(filepath)
 # Drop duplicate column 'Unnamed:0'
 cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
@@ -128,6 +128,7 @@ cbg_ethnic = pd.read_csv(filepath)
 data = pd.DataFrame()
 msa_count = 0
 vd_corr_list = []
+#for msa_idx in [0]:
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
