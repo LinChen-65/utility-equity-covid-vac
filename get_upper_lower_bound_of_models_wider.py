@@ -26,7 +26,7 @@ resultroot = os.path.join(root, 'results')
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data', #dataroot
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data', #dataroot
                     help='Safegraph data root.')                     
 parser.add_argument('--quick_test', default=False, action='store_true', 
                     help='If true, test quickly.')   
