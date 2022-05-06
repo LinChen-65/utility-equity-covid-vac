@@ -140,9 +140,8 @@ Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_regression_randombag_sample_average%5D_result.png' height=150>
 
-#### 6. Auto-search all-round vaccination strategies (Fig.4, Supplementary Fig.18)
+#### 6. All-round vaccination strategies (Fig.4, Supplementary Fig.18)
 ```
-python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
 python plot_comprehensive_utility_equity.py --with_supplementary
 ```
 
