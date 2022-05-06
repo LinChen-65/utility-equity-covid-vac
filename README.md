@@ -114,7 +114,7 @@ python hypothesis_test.py --msa_name Atlanta
 python vaccination_singledemo_middle_policies.py --msa_name Atlanta
 ```
 
-#### 4. Calculate community risk and societal harm (Fig.3(d))
+#### 4. Calculate community risk and societal risk (Fig.3(d))
 ```
 # Calculate the susceptible-infectious ratio
 python get_s_i_ratio_at_vaccination_moment.py
@@ -128,7 +128,7 @@ Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_cr_sr%5D_result.png' height=150>
 
-#### 5. Regression analysis with/without community risk and societal harm (Fig.3)
+#### 5. Regression analysis with/without community risk and societal risk (Fig.3)
 ```
 # Generate random bags of vaccination results
 python vaccination_randombag.py --msa_name Atlanta --random_seed 66
