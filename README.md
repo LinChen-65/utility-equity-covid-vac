@@ -20,7 +20,7 @@ Activate the environment: `conda activate covid-utility-equity`
 #### Method 2: Create an environment yourself
 ```
 conda create -n covid python==3.7
-pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scikit-learn
+pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scikit-learn hyperopt bayesian-optimization adjustText
 ```
 
 ## Dataset
@@ -39,10 +39,10 @@ Note: Parameters should be specified to generate corrsponding results. Example v
 
 #### 1. Fit epidemic curves (Fig.1, Supplementary Fig.1)
 ```
-python grid_search_parameters.py --msa_name Atlanta --quick_test
-python adjust_scaling_factors.py --msa_name Atlanta --quick_test
+python grid_search_parameters.py --msa_name Atlanta
+python adjust_scaling_factors.py --msa_name Atlanta
 # Obtain simulation results on BD model and meta-population model
-python simulation_on_disease_model.py --msa_name Atlanta --quick_test
+python simulation_on_disease_model.py --msa_name Atlanta
 # Determine upper and lower bounds
 python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta --direction lower --tolerance 1.5
 python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta --direction upper --tolerance 1.5
