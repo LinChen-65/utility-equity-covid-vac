@@ -1,8 +1,5 @@
 # python vaccination_randombag.py --msa_name Atlanta --random_seed 66 
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import argparse
 import socket
 import os
@@ -16,20 +13,9 @@ import functions
 import disease_model_test as disease_model
 
 import time
-import pdb
 
 
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results/vac_randombag_results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results/vac_randombag_results'
-'''
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 resultroot = os.path.join(root, 'results')
@@ -45,7 +31,7 @@ parser.add_argument('--random_seed', type=int, default=42,
                     help='Random seed.')
 parser.add_argument('--quick_test', default=False, action='store_true',
                     help='If true, reduce num_seeds to 2.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()
 
@@ -70,8 +56,6 @@ print('VACCINATION_TIME: ', VACCINATION_TIME)
 
 NUM_GROUPS_FOR_GINI = 5
 NUM_GROUPS_FOR_RANDOMBAG = 3
-#NUM_DIM = 3 # Age, Income, EW
-#NUM_DIM = 5 # Age, Income, EW, Vulner, Damage
 NUM_DIM = 6 # Age, Income, EW, Minority, Vulner, Damage #20220308
 
 ###############################################################################
@@ -94,7 +78,6 @@ print('NUM_SEEDS: ', NUM_SEEDS)
 STARTING_SEED = range(NUM_SEEDS)
 
 
-# 在每个非0的hybrid_group里采样num_groupwise个样本。
 NUM_GROUPWISE = 5 #4 #5 
 print('NUM_GROUPWISE: ',NUM_GROUPWISE)
 
@@ -220,7 +203,7 @@ def make_gini_table(policy_list, demo_feat_list, rel_to, num_groups, save_result
 
     gini_df.set_index(['Policy'],inplace=True)
     # Transpose
-    gini_df_trans = pd.DataFrame(gini_df.values.T, index=gini_df.columns, columns=gini_df.index)#转置
+    gini_df_trans = pd.DataFrame(gini_df.values.T, index=gini_df.columns, columns=gini_df.index)
     # Save .csv
     if(save_result==True):
         gini_df_trans.to_csv(save_path)
@@ -238,8 +221,8 @@ f.close()
 # Load precomputed parameters to adjust(clip) POI dwell times
 d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values
+poi_dwell_times = d['median'].values
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 
@@ -334,7 +317,7 @@ del cbg_ethnic
 cbg_minority_msa = cbg_ethnic_msa
 
 ###############################################################################
-# Grouping: 按NUM_GROUPS_FOR_GINI分位数，将全体CBG分为NUM_GROUPS_FOR_GINI个组，将分割点存储在separators中
+# Grouping:
 
 separators = functions.get_separators(cbg_age_msa, NUM_GROUPS_FOR_GINI, 'Elder_Ratio','Sum', normalized=True)
 cbg_age_msa['Elder_Ratio_Quantile_FOR_GINI'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
@@ -369,12 +352,10 @@ if(os.path.exists(os.path.join(resultroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAM
     cbg_avg_infect_diff = np.load(os.path.join(resultroot, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
 else:
     print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
-    pdb.set_trace()
     
 SEIR_at_30d = np.load(os.path.join(resultroot, 'SEIR_at_30d.npy'),allow_pickle=True).item()
 S_ratio = SEIR_at_30d[MSA_NAME]['S'] / (cbg_sizes.sum())
 I_ratio = SEIR_at_30d[MSA_NAME]['I'] / (cbg_sizes.sum())
-#print('S_ratio:',S_ratio,'I_ratio:',I_ratio)
 
 # Compute the average death rate for the whole MSA: perform another weighted average over all CBGs
 avg_death_rates_scaled = np.matmul(cbg_sizes.T, cbg_death_rates_scaled) / np.sum(cbg_sizes)
@@ -404,7 +385,7 @@ history_D2_no_vaccination = np.fromfile(os.path.join(resultroot,'vaccination_res
 # Average across random seeds
 history_D2_no_vaccination = np.reshape(history_D2_no_vaccination,(63,30,M))
 avg_final_deaths_no_vaccination = np.mean(history_D2_no_vaccination,axis=1)[-1,:]
-#avg_final_deaths_no_vaccination = np.mean(np.array(history_D2_no_vaccination),axis=1)[-1,:]
+
 cbg_age_msa['Final_Deaths_No_Vaccination'] = avg_final_deaths_no_vaccination
 cbg_income_msa['Final_Deaths_No_Vaccination'] = avg_final_deaths_no_vaccination
 cbg_occupation_msa['Final_Deaths_No_Vaccination'] = avg_final_deaths_no_vaccination
@@ -425,12 +406,8 @@ data['Vulnerability'] = cbg_age_msa['Vulnerability'].copy()
 data['Damage'] = cbg_age_msa['Damage'].copy()
 
 ###############################################################################
-# Construct randombags in a semi-random way (分组——采样)
-# (1) Grouping
-# (2) 检查每组人数，若小于target_num，则与邻组合并。
-# (3) 在每个非0的hybrid_group里采样num_groupwise个样本。
+# Construct randombags in a semi-random way 
 
-# Grouping: 按NUM_GROUPS_FOR_RANDOMBAG分位数，将全体CBG分为NUM_GROUPS_FOR_RANDOMBAG个组，将分割点存储在separators中
 separators = functions.get_separators(data, NUM_GROUPS_FOR_RANDOMBAG, 'Elder_Ratio','Sum', normalized=True)
 data['Elder_Ratio_Quantile_FOR_RANDOMBAG'] =  data['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
@@ -452,15 +429,11 @@ data['Damage_Quantile_FOR_RANDOMBAG'] =  data['Damage'].apply(lambda x : functio
 
 # Hybrid Grouping
 def assign_hybrid_group(data):
-    #return (data['Elder_Ratio_Quantile_FOR_RANDOMBAG']*81 + data['Income_Quantile_FOR_RANDOMBAG']*27 + data['EW_Quantile_FOR_RANDOMBAG']*9 + data['Vulner_Quantile_FOR_RANDOMBAG']*3 + data['Damage_Quantile_FOR_RANDOMBAG'])
     return (data['Elder_Ratio_Quantile_FOR_RANDOMBAG']*pow(3,5) + data['Income_Quantile_FOR_RANDOMBAG']*pow(3,4) + data['EW_Quantile_FOR_RANDOMBAG']*pow(3,3)+ data['Minority_Ratio_Quantile_FOR_RANDOMBAG']*pow(3,2) + data['Vulner_Quantile_FOR_RANDOMBAG']*pow(3,1) + data['Damage_Quantile_FOR_RANDOMBAG'])
     
 data['Hybrid_Group'] = data.apply(lambda x : assign_hybrid_group(x), axis=1)
 
 
-# 分层——采样：
-# 首先检查每组人数，若小于target_num，则与邻组合并。#(若是第一组，则与后一组合并，否则与前一组合并。)
-#(若是最后一组，则与前一组合并，否则与后一组合并。)
 target_pop = data['Sum'].sum() * VACCINATION_RATIO 
 target_cbg_num = 5 # at least contains 5 CBGs
 count = 0
@@ -471,10 +444,8 @@ for i in range(max_group_idx):
         count += 1
     if((data[data['Hybrid_Group']==i]['Sum'].sum()<target_pop) or (len(data[data['Hybrid_Group']==i])<target_cbg_num)):
         if(i==max_group_idx-1): 
-            #data[data['Hybrid_Group']==i]['Hybrid_Group'] = 1
             data['Hybrid_Group'] = data['Hybrid_Group'].apply(lambda x : max_group_idx-2 if x==i else x)
         else:
-            #data[data['Hybrid_Group']==i]['Hybrid_Group'] = i-1
             data['Hybrid_Group'] = data['Hybrid_Group'].apply(lambda x : i+1 if x==i else x)
 print('Num of groups: ', count)
 
@@ -487,8 +458,6 @@ for i in range(max_group_idx):
         count += 1
 print('Num of groups: ', count)
 
-        
-# 在每个非0的hybrid_group里采样num_groupwise个样本。
 print('NUM_GROUPWISE: ',NUM_GROUPWISE)
 np.random.seed(RANDOM_SEED)
 
@@ -501,7 +470,7 @@ result_df = pd.DataFrame(columns=['Vaccinated_Idxs',
 start = time.time()
 
 for group_idx in range(max_group_idx):
-    if(len(data[data['Hybrid_Group']==group_idx])==0): # 跳过0组
+    if(len(data[data['Hybrid_Group']==group_idx])==0):
         continue
     
     for i in range(NUM_GROUPWISE):

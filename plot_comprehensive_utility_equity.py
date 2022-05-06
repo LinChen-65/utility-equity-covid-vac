@@ -2,8 +2,6 @@
 
 # pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name, consider-using-enumerate
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
 
 import socket
 import os
@@ -15,8 +13,6 @@ import matplotlib.patches as mpatches
 
 import constants
 import functions
-
-import pdb
 
 
 parser = argparse.ArgumentParser()
@@ -40,14 +36,6 @@ args = parser.parse_args()
 
 
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']): 
-    root = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/utility-equity-covid-vac/results'
-'''
 root = os.getcwd()
 resultroot = os.path.join(root, 'results')
 # subroot
@@ -252,7 +240,6 @@ def draw_hybrid_policy(vac_ratio, vac_time, savepath, overall=True, show_axis_la
                                 [avg_svi_util,avg_svi_equi_age,avg_svi_equi_income,avg_svi_equi_occupation,avg_svi_equi_minority],
                                 ],
                                 columns=list(['Utility','Equity-by-age','Equity-by-income','Equity-by-occupation','Equity-by-minority']))
-        #pdb.set_trace()
         draw_radar(radar_df, savepath, show_axis_label, show_legend)
 
     else: # Draw figures for each MSA
@@ -273,9 +260,8 @@ def draw_hybrid_policy(vac_ratio, vac_time, savepath, overall=True, show_axis_la
 
 
 def draw_radar(radar_df, savepath, show_axis_label=False, show_legend=False, title=None): #20220309
-    # Normalization: 按hybrid policy的值做归一化
+    # Normalization:
     for column in radar_df.columns:
-        #pdb.set_trace()
         radar_df[column] /= radar_df[column].iloc[0]#this is original
         #radar_df[column] /= radar_df[column].iloc[1]
 
@@ -521,7 +507,6 @@ for strategy_idx in range(1,num_strategies): #0 is Baseline, we don't plot it
              color=color_list[strategy_idx],label=anno_list[strategy_idx],marker='^',markersize=14,zorder=1+strategy_idx)
     
 if('0.56, 31' in results_dict.keys()):
-    #pdb.set_trace()
     plt.scatter(x_positions[-1],results_dict['0.56, 31'][num_strategies],
                 label='Real-world',color=color_list[num_strategies],marker='*',s=220,zorder=50)
         

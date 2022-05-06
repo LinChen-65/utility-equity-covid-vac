@@ -2,9 +2,6 @@
 
 # pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name, consider-using-enumerate
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import socket
 import os
 import argparse
@@ -16,19 +13,7 @@ from scipy import stats
 import functions
 import constants
 
-import pdb
-
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results/'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results/'
-'''
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
@@ -48,7 +33,7 @@ parser.add_argument('--recheck_interval', type=float, default = 0.01,
                     help='Recheck interval (After distributing some portion of vaccines, recheck the most vulnerable demographic group).')                             
 parser.add_argument('--rel_to', default='Baseline',
                     help='Relative to which strategy (either No_Vaccination or Baseline).')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()  
 
@@ -257,7 +242,7 @@ for this_msa in msa_name_list:
 
 
     ###############################################################################
-    # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
+    # Grouping:
 
     separators = functions.get_separators(cbg_age_msa, args.num_groups, 'Elder_Ratio','Sum', normalized=True)
     cbg_age_msa['Elder_Ratio_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
@@ -294,8 +279,7 @@ for this_msa in msa_name_list:
                 this_recheck_interval = 0.056
             else:
                 this_recheck_interval = 0.01
-            #print(os.path.join(saveroot, f'comprehensive/vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{recheck_interval_others}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}_*_30seeds_{this_msa}'))
-            
+
             list_glob = glob.glob(os.path.join(saveroot, f'comprehensive/vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}', f'final_deaths_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{this_recheck_interval}_*_30seeds_{this_msa}'))
             final_deaths_result_path = list_glob[0]
             
@@ -308,7 +292,6 @@ for this_msa in msa_name_list:
             exec(f'final_deaths_{policy} = np.reshape(final_deaths_{policy},(args.num_seeds,M))')   
         else:
             print('File not found. Please check, or go back to make_gini_table.')
-            pdb.set_trace()
 
         
         # Compute gini index under certain demo_feat
@@ -325,8 +308,6 @@ for this_msa in msa_name_list:
                 for group_idx in range(args.num_groups):
                     exec(f'group_death_rate[group_idx] = cbg_table_list[i][cbg_table_list[i][\'{demo_feat}_Quantile\']==group_idx][\'Final_Deaths_{policy_original}\'].sum()')
                     exec(f'group_death_rate[group_idx] /= cbg_table_list[i][cbg_table_list[i][\'{demo_feat}_Quantile\']==group_idx][\'Sum\'].sum()')
-                #group_death_rate[group_idx] = cbg_age_msa[cbg_age_msa['Age_Quantile']==group_idx]['Final_Deaths_Most_Vulner'].sum()
-                #group_death_rate[group_idx] /= cbg_age_msa[cbg_age_msa['Age_Quantile']==group_idx]['Sum'].sum()
         
                 gini_death_rate = functions.gini(group_death_rate)
                 exec(f'{demo_feat}_gini_{policy}[seed_idx] = gini_death_rate')
@@ -340,25 +321,10 @@ for policy in demo_policy_list:
     print(f'\npolicy: {policy}')
     policy = policy.lower()
     for demo_feat in demo_feat_list:
-        #exec(f'print(demo_feat, stats.ttest_rel(gini_dict_{policy}[\'{demo_feat}\'], gini_dict_baseline[\'{demo_feat}\']))')
         exec(f'pvalue = stats.ttest_rel(gini_dict_{policy}[\'{demo_feat}\'], gini_dict_baseline[\'{demo_feat}\']).pvalue')
         if(pvalue<0.01):
             print(demo_feat, '**')
         elif(pvalue<0.05):
             print(demo_feat, '*')
-        #pdb.set_trace()
-'''
-print('Age-Prioritized, Age Equity:', stats.ttest_rel(gini_dict_age['Age'],gini_dict_baseline['Age'])) 
-print('Age-Prioritized, Income Equity:', stats.ttest_rel(gini_dict_age['Income'],gini_dict_baseline['Income'])) #,alternative='two-sided'
-print('Age-Prioritized, Occupation Equity:', stats.ttest_rel(gini_dict_age['Occupation'],gini_dict_baseline['Occupation']))
-
-print('Income-Prioritized, Age Equity:', stats.ttest_rel(gini_dict_income['Age'],gini_dict_baseline['Age']))
-print('Income-Prioritized, Income Equity:', stats.ttest_rel(gini_dict_income['Income'],gini_dict_baseline['Income'])) 
-print('Income-Prioritized, Occupation Equity:', stats.ttest_rel(gini_dict_income['Occupation'],gini_dict_baseline['Occupation']))
-
-print('Occupation-Prioritized, Age Equity:', stats.ttest_rel(gini_dict_occupation['Age'],gini_dict_baseline['Age']))
-print('Occupation-Prioritized, Income Equity:', stats.ttest_rel(gini_dict_occupation['Income'],gini_dict_baseline['Income']))
-print('Occupation-Prioritized, Occupation Equity:', stats.ttest_rel(gini_dict_occupation['Occupation'],gini_dict_baseline['Occupation'])) 
-'''
 
                 

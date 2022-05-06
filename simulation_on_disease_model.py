@@ -1,7 +1,4 @@
-# python simulation_on_disease_model.py --msa_name Atlanta --quick_test
-
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
+# python simulation_on_disease_model.py --msa_name Atlanta
 
 import argparse
 import os
@@ -15,7 +12,6 @@ import functions
 import disease_model_only_modify_attack_rates as disease_model
 
 import time
-import pdb
 
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
@@ -24,10 +20,8 @@ resultroot = os.path.join(root, 'results')
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data', #dataroot
-                    help='Safegraph data root.') 
-parser.add_argument('--quick_test', default=False, action='store_true', 
-                    help='If true, test quickly.')                    
+parser.add_argument('--safegraph_root', default=dataroot,
+                    help='Safegraph data root.')               
 args = parser.parse_args()
 
 
@@ -41,12 +35,8 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
 policy_list = ['No_Vaccination', 'Age_Agnostic']   
 print('Policy list: ', policy_list)
 
-# Quick Test: prototyping
-print('Quick testing?', args.quick_test)
-if(args.quick_test):
-    NUM_SEEDS = 2
-else:
-    NUM_SEEDS = 30
+
+NUM_SEEDS = 30
 print('NUM_SEEDS: ', NUM_SEEDS)
 STARTING_SEED = range(NUM_SEEDS)
 
@@ -103,8 +93,8 @@ f.close()
 # Load precomputed parameters to adjust(clip) POI dwell times
 d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values    #Area
+poi_dwell_times = d['median'].values    #Average Dwell Time
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 
@@ -218,18 +208,12 @@ if ('No_Vaccination' in policy_list):
 # Save results
 
 print('Policy list: ', policy_list)
-'''
-for policy in policy_list:
-    policy = policy.lower()
-    exec('np.array(history_D2_%s).tofile(os.path.join(resultroot,\'vaccination_results_adaptive_31d_0.1_0.01\', \'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s\'))' % (policy,policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
-'''
 
 policy = 'Age_Agnostic'
 policy = policy.lower()
 np.array(history_D2_age_agnostic).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
 policy = 'No_Vaccination'
 policy = policy.lower()
-np.array(history_D2_no_vaccination).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
+np.array(history_D2_no_vaccination).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
 
 print('Results saved.')
-pdb.set_trace()

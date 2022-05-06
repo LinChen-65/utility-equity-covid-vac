@@ -1,8 +1,5 @@
 # python get_s_i_ratio_at_vaccination_moment.py 
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import argparse
 import os
 import datetime
@@ -15,10 +12,8 @@ import functions
 import disease_model_returnSEIR as disease_model
 
 import time
-import pdb
 
 # root
-#root = '/data/chenlin/COVID-19/Data'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
@@ -27,7 +22,7 @@ saveroot = os.path.join(root, 'results')
 parser = argparse.ArgumentParser()
 parser.add_argument('--quick_test', default=False, action='store_true',
                     help='If true, reduce num_seeds to 2.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 parser.add_argument('--save_result', default=False, action='store_true',
                     help='If true, save simulation results.')
@@ -109,7 +104,7 @@ for MSA_NAME in MSA_NAME_LIST:
 
     # Load Data
     all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-    print('len(all_hours):',len(all_hours))#;pdb.set_trace()
+    print('len(all_hours):',len(all_hours))
 
     # Load POI-CBG visiting matrices
     f = open(os.path.join(dataroot, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
@@ -124,8 +119,8 @@ for MSA_NAME in MSA_NAME_LIST:
 
     # Load precomputed parameters to adjust(clip) POI dwell times
     d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
-    poi_areas = d['feet'].values#面积
-    poi_dwell_times = d['median'].values#平均逗留时间
+    poi_areas = d['feet'].values
+    poi_dwell_times = d['median'].values
     poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
     del d
     poi_trans_rate = constants.parameters_dict[MSA_NAME][2] / poi_areas * poi_dwell_time_correction_factors
@@ -189,8 +184,6 @@ for MSA_NAME in MSA_NAME_LIST:
             
     idxs_msa_all = list(x.values())
     idxs_msa_nyt = y
-    #print('Number of CBGs in this metro area:', len(idxs_msa_all))
-    #print('Number of CBGs in to compare with NYT data:', len(idxs_msa_nyt))
 
     nyt_included = np.zeros(len(idxs_msa_all))
     for i in range(len(nyt_included)):

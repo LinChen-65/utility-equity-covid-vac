@@ -1,9 +1,6 @@
-# python plot_curves.py --with_vac
+# python plot_curves.py (for Fig. 1(b)(c), Supplementary Fig.1)
+# python plot_curves.py --with_vac (for Supplementary Fig.18)
 
-# pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name, consider-using-enumerate
-
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
 
 import socket
 import os
@@ -11,27 +8,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
-
 import constants
-
-import pdb
-
-'''
-# root (absolute)
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname=='fib-dl3'): 
-    root = '/data/chenlin/COVID-19/Data'
-    saveroot = '/data/chenlin/utility-equity-covid-vac'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data'
-    saveroot = '/home/chenlin/utility-equity-covid-vac'
-
-# subroot
-subroot = 'results/figures'
-if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
-    os.makedirs(os.path.join(root, subroot))
-'''
 
 # root
 root = os.getcwd()
@@ -45,7 +22,7 @@ parser.add_argument('--vaccination_time', type=int, default=31,
                     help='Time to distribute vaccines.')
 parser.add_argument('--vaccination_ratio' , type=float, default=0.1,
                     help='Vaccination ratio relative to MSA population.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, 
                     help='Safegraph data root.')                    
 parser.add_argument('--with_vac', default=False, action='store_true',
                     help='If true, plot with comprehensive vaccination results.')
@@ -155,17 +132,7 @@ bar_standardSEIR_reorder = bar_standardSEIR[ref[::-1]]
 
 anno_list = ['Atlanta','Chicago','Dallas','Houston', 'L.A.','Miami','Phila.','S.F.','D.C.']
 
-'''
-# Vertical bars
-fig,ax = plt.subplots(figsize=(12,3.5))
-ax.bar(np.arange(9)*3.2,bar_standardSEIR_reorder,label='SEIR model',color='grey',alpha=0.6)
-ax.bar(np.arange(9)*3.2+0.8,bar_agnostic_reorder,label='Meta-population model',yerr=error_agnostic_reorder)#'Age-Agnostic'
-ax.bar(np.arange(9)*3.2+2*0.8,bar_aware_reorder,label='BD model',yerr=error_aware_reorder,alpha=1)#'Heterogeneous'#'Age-Aware'
-ax.legend(loc='upper center',fontsize=14.8, ncol=3)
-anno_list_reorder = np.array(anno_list)[ref[::-1]]
-plt.xticks(np.arange(9)*3.2+0.4, anno_list_reorder,fontsize=15)#,rotation=20
-plt.ylabel('NRMSE of daily deaths',fontsize=19)
-'''
+
 # Horizontal bars
 height = 1
 distance = height*4
@@ -174,7 +141,7 @@ ax.barh(np.arange(9)*distance+height*1.1,bar_standardSEIR_reorder,label='SEIR mo
 ax.barh(np.arange(9)*distance,bar_agnostic_reorder,label='Meta-population model',xerr=error_agnostic_reorder,height=height)
 ax.barh(np.arange(9)*distance-height*1.1,bar_aware_reorder,label='BD model',xerr=error_aware_reorder,alpha=1,height=height)
 ax.legend(fontsize=14.8, ncol=1,loc='upper center',bbox_to_anchor=(0.5,1.22))
-#ax.legend(fontsize=14.8, ncol=1,loc='lower center',bbox_to_anchor=(0.5,-0.32))
+
 anno_list_reorder = np.array(anno_list)[ref[::-1]]
 plt.yticks(np.arange(9)*distance, anno_list_reorder,fontsize=18)#,rotation=20
 plt.xlabel('NRMSE of daily deaths',fontsize=19)
@@ -193,26 +160,12 @@ for msa_idx in range(len(msa_name_list)):
     this_msa = msa_name_list[msa_idx]
 
     # No_Vaccination, accumulated results
-    '''
-    #deaths_total_no_vaccination = np.load(os.path.join(root,this_msa,f'20210206_deaths_total_no_vaccination_{this_msa}.npy'))
-    deaths_total_no_vaccination = np.load(os.path.join(result_root, f'20210206_deaths_total_no_vaccination_{this_msa}.npy'))
-    deaths_daily_total_no_vaccination = [0]
-    for i in range(1,len(deaths_total_no_vaccination)):
-        deaths_daily_total_no_vaccination.append(deaths_total_no_vaccination[i]-deaths_total_no_vaccination[i-1])
-    '''
     history_D2_no_vac = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
     history_D2_no_vac = np.reshape(history_D2_no_vac,(63, 30, -1))
     mean_no_vac,max_no_vac,min_no_vac = get_mean_max_min(history_D2_no_vac)
     deaths_daily_total_no_vaccination = mean_no_vac
 
     # Age_Agnostic, accumulated results
-    '''
-    deaths_total_age_agnostic = np.load(os.path.join(result_root, f'20210206_deaths_total_age_agnostic_{this_msa}.npy'))
-    # Transform into daily results
-    deaths_daily_total_age_agnostic = [0]
-    for i in range(1,len(deaths_total_age_agnostic)):
-        deaths_daily_total_age_agnostic.append(deaths_total_age_agnostic[i]-deaths_total_age_agnostic[i-1])
-    '''
     history_D2_age_agnostic = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_age_agnostic_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
     history_D2_age_agnostic = np.reshape(history_D2_age_agnostic,(63, 30, -1))
     mean_age_agnostic,max_age_agnostic,min_age_agnostic = get_mean_max_min(history_D2_age_agnostic)
@@ -287,24 +240,9 @@ if(args.with_vac):
         this_msa = msa_name_list[msa_idx]
 
         # No_Vaccination, accumulated results
-        #deaths_total_no_vac = np.load(os.path.join(root,this_msa,f'20210206_deaths_total_no_vaccination_{this_msa}.npy'))
-        #history_D2_no_vac = np.fromfile(os.path.join(root, this_msa, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
         history_D2_no_vac = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'20210206_history_D2_no_vaccination_adaptive_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
         history_D2_no_vac = np.reshape(history_D2_no_vac,(63, 30, -1))
         mean_no_vac,max_no_vac,min_no_vac = get_mean_max_min(history_D2_no_vac)
-        '''
-        deaths_total_mean_no_vac = np.mean(np.sum(history_D2_no_vac, axis=2), axis=1) 
-        deaths_total_max_no_vac = np.max(np.sum(history_D2_no_vac, axis=2), axis=1) 
-        deaths_total_min_no_vac = np.min(np.sum(history_D2_no_vac, axis=2), axis=1) 
-        # Transform into daily results
-        mean_no_vac = [0]
-        max_no_vac = [0]
-        min_no_vac = [0]
-        for i in range(1,len(deaths_total_mean_no_vac)):
-            mean_no_vac.append(deaths_total_mean_no_vac[i]-deaths_total_mean_no_vac[i-1])
-            max_no_vac.append(deaths_total_max_no_vac[i]-deaths_total_max_no_vac[i-1])
-            min_no_vac.append(deaths_total_min_no_vac[i]-deaths_total_min_no_vac[i-1])
-        '''
 
         # Baseline, accumulated results
         history_D2_baseline = np.fromfile(os.path.join(result_root, 'vaccination_results_adaptive_31d_0.1_0.01', f'test_history_D2_baseline_adaptive_31d_{args.vaccination_ratio}_{this_recheck_interval}_30seeds_{this_msa}')) 
@@ -345,15 +283,12 @@ if(args.with_vac):
                                 np.max(mean_hybrid),np.max(max_hybrid),np.max(min_hybrid)])) #20220316
         plt.vlines(31, 0, y_max, colors='black',linestyles ="dashed") #20220316
 
-        #plt.ylim(0,11)
-        #plt.yticks(np.arange(6)*2,fontsize=14) 
         plt.yticks(fontsize=14) 
         plt.ylabel('Daily deaths', fontsize=25)
 
         plt.xlim(-1,63)
         plt.xticks(np.arange(13)*5+1,fontsize=12)
         plt.xlabel('Days',fontsize=25)
-        #plt.legend(loc='upper left',fontsize=17.5)
 
         # Save the figure
         savepath = os.path.join(fig_save_root, 'sup', f'sup_withvac_curve_{this_msa}.pdf')

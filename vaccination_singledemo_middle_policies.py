@@ -1,8 +1,5 @@
 # python vaccination_singledemo_middle_policies.py --msa_name Atlanta 
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import socket
 import os
 import datetime
@@ -16,19 +13,8 @@ import functions
 import disease_model_test as disease_model
 
 import time
-import pdb
 
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-'''
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
@@ -57,7 +43,7 @@ parser.add_argument('--recheck_interval', type=float, default = 0.01,
                     help='Recheck interval (After distributing some portion of vaccines, recheck the most vulnerable demographic group).')                             
 parser.add_argument('--protection_rate', type=float, default=1, 
                     help='Vaccination protection rate')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()
 
@@ -93,7 +79,6 @@ print('NUM_SEEDS_CHECKING: ', NUM_SEEDS_CHECKING)
 STARTING_SEED = range(NUM_SEEDS)
 STARTING_SEED_CHECKING = range(NUM_SEEDS)
 
-# 分几次把疫苗分配完
 distribution_time = args.vaccination_ratio / args.recheck_interval 
 
 ###############################################################################
@@ -128,7 +113,6 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, vaccine_accepta
 
     m.init_endogenous_variables()
 
-    #T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
     #return history_C2, history_D2
     final_cases, final_deaths = m.simulate_disease_spread(no_print=True, store_history=False) #20220304
     return final_deaths #20220304
@@ -163,7 +147,7 @@ def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False
             most_vulnerable_group = np.argmin(final_deaths_rate_current)
         else:    
             most_vulnerable_group = np.argmax(final_deaths_rate_current)'''
-        sorted_idx = np.argsort(final_deaths_rate_current) # np.argsort是从小到大排序
+        sorted_idx = np.argsort(final_deaths_rate_current)
         most_vulnerable_group = sorted_idx[target_idx] 
         # Annotate the most vulnerable group
         cbg_table['Most_Vulnerable'] = cbg_table.apply(lambda x : 1 if x[demo_feat+'_Quantile']==most_vulnerable_group else 0, axis=1)
@@ -180,7 +164,6 @@ def distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=False
         leftover_prev = leftover
         current_vector_prev = current_vector.copy() # 20210225
         current_vector += new_vector # 20210224
-        #print((cbg_sizes-current_vector)[current_vector.nonzero()][np.where((cbg_sizes-current_vector)[current_vector.nonzero()]!=0)])
         current_vector = np.clip(current_vector, None, cbg_sizes) # 20210224
         leftover = np.sum(cbg_sizes) * args.recheck_interval + leftover_prev - (np.sum(current_vector)-np.sum(current_vector_prev))
         assert((current_vector<=cbg_sizes).all())
@@ -199,8 +182,8 @@ d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % args.msa_name))
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values
+poi_dwell_times = d['median'].values
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 
@@ -287,7 +270,6 @@ if(('Income' in policy_list) or ('Income_Reverse' in policy_list) or args.consid
     cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
 
-#if(('Occupation' in policy_list) or ('Occupation_Reverse' in policy_list)):
 if(True):
     filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
     cbg_occupation = pd.read_csv(filepath)
@@ -299,8 +281,6 @@ if(True):
     cbg_occupation_msa['EW_Ratio_Quantile'] = cbg_occupation_msa['EW_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
 
-
-#if(args.consider_accessibility=='True'):
 if(True):
     # accessibility by race/ethnic
     # cbg_b03.csv: HISPANIC OR LATINO ORIGIN BY RACE
@@ -343,7 +323,6 @@ if(True):
                                      +cbg_ethnic_msa['NH_Asian']*vac_rate_nh_asian + cbg_ethnic_msa['NH_Hawaiian']*vac_rate_nh_hawaiian
                                      +cbg_ethnic_msa['NH_Others']*vac_rate_nh_others + cbg_ethnic_msa['Hispanic']*vac_rate_hispanic)
     cbg_ethnic_msa['Vac_Rate_Race'] /= cbg_ethnic_msa['Sum']
-    #print('cbg_ethnic_msa[\'Vac_Rate_Race\'].max(): ', cbg_ethnic_msa['Vac_Rate_Race'].max(),'\ncbg_ethnic_msa[\'Vac_Rate_Race\'].min(): ', cbg_ethnic_msa['Vac_Rate_Race'].min())
 
     # accessibility by age
     #20211016, https://covid.cdc.gov/covid-data-tracker/#vaccination-demographic
@@ -378,12 +357,10 @@ if(True):
           '\ncbg_age_msa[\'Vac_Rate_Age_Race\'].min(): ', np.round(cbg_age_msa['Vac_Rate_Age_Race'].min(),3))
     '''
     # Division by vaccine acceptance to get the final accessibility
-    #cbg_age_msa['Accessibility_Age_Race'] = cbg_age_msa['Vac_Rate_Age_Race'] / 
 
 
 
 if(('Minority' in policy_list) or ('Minority_Reverse' in policy_list)): #20220302
-    #cbg_ethnic_msa['Minority_Absolute'] = cbg_ethnic_msa['NH_White'].copy()
     cbg_ethnic_msa['Minority_Absolute'] = cbg_ethnic_msa['Sum'] - cbg_ethnic_msa['NH_White'] 
     cbg_ethnic_msa['Minority_Ratio'] = cbg_ethnic_msa['Minority_Absolute'] / cbg_ethnic_msa['Sum']
     # Deal with NaN values
@@ -391,8 +368,7 @@ if(('Minority' in policy_list) or ('Minority_Reverse' in policy_list)): #2022030
     # Check whether there is NaN in cbg_tables
     if(cbg_ethnic_msa.isnull().any().any()):
         print('NaN exists in cbg_ethnic_msa. Please check.')
-        pdb.set_trace()
-    # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
+    # Grouping:
     separators = functions.get_separators(cbg_ethnic_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=False)
     cbg_ethnic_msa['Minority_Ratio_Quantile'] =  cbg_ethnic_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
@@ -421,7 +397,7 @@ if((args.consider_hesitancy) & (args.acceptance_scenario=='new1')): #20220309
 ##############################################################################
 # Load and scale age-aware CBG-specific attack/death rates (original)
 
-cbg_death_rates_original = np.loadtxt(os.path.join(root, args.msa_name, 'cbg_death_rates_original_'+args.msa_name))
+cbg_death_rates_original = np.loadtxt(os.path.join(dataroot, 'cbg_death_rates_original_'+args.msa_name))
 cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape)
 
 # The scaling factors are set according to a grid search
@@ -458,7 +434,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                   '\nwith Black_Ratio: ', np.round(np.corrcoef(vaccine_acceptance, cbg_race_msa['Black_Ratio'])[0][1], 3),
                   '\nwith Minority_Ratio: ', np.round(np.corrcoef(vaccine_acceptance, cbg_ethnic_msa['Minority_Ratio'])[0][1], 3)
                   )
-            #pdb.set_trace()
     else:
         vaccine_acceptance = np.ones(len(cbg_sizes)) # fully accepted scenario
 
@@ -473,11 +448,9 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
         vaccine_accessibility = np.array(cbg_age_msa['Accessibility_Age_Race']) #20220225
         print('vaccine_accessibility: ', vaccine_accessibility)
         print('vaccine_acceptance: ', vaccine_acceptance)
-        #print('accessibility always smaller than acceptance?', (vaccine_accessibility<=vaccine_acceptance).all())
         if(cbg_age_msa.isnull().any().any()):
             print('NaN exists in cbg_ethnic_msa. Please check.')
-            pdb.set_trace()
-        vaccine_acceptance = np.array(cbg_age_msa['Accessibility_Age_Race']) #以此代替原来的acceptance参数传入函数
+        vaccine_acceptance = np.array(cbg_age_msa['Accessibility_Age_Race'])
 
         print('cbg_age_msa[\'Accessibility_Age_Race\'].max(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].max(),3),
              '\ncbg_age_msa[\'Accessibility_Age_Race\'].min(): ', np.round(cbg_age_msa['Accessibility_Age_Race'].min(),3))
@@ -515,7 +488,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                           vaccine_acceptance = vaccine_acceptance, #20211007
                                           protection_rate = args.protection_rate)                                   
             print('Time: ', time.time() - this_start)
-            pdb.set_trace()
 
         ###############################################################################
         # Baseline: Flooding on Random Permutation
@@ -558,7 +530,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
         if(policy == 'Age'):
             print('\nPolicy: Age.')
-            #filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
             for target_idx in [1,2,3]:
                 print('target_idx: ', target_idx)
                 filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_target{target_idx}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
@@ -585,7 +556,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
         if(policy == 'Income'):
             print('\nPolicy: Income.')
-            #filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
             for target_idx in [1,2,3]:
                 print('target_idx: ', target_idx)
                 filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_target{target_idx}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
@@ -611,7 +581,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
         if(policy == 'Occupation'):
             print('\nPolicy: Occupation.')
-            #filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
             for target_idx in [1,2,3]:
                 print('target_idx: ', target_idx)
                 filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_target{target_idx}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304
@@ -768,7 +737,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
 
     if(policy == 'Minority_Reverse'):
         print('\nPolicy: Minority_Reverse.')    
-        #filename = os.path.join(saveroot, subroot, f'history_D2_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}')          
         filename = os.path.join(saveroot, subroot, f'final_deaths_{policy.lower()}_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}_{NUM_SEEDS}seeds_{notation_string}{args.msa_name}') #20220304         
         if(os.path.exists(filename)):
             print('Results for Minority_Reverse already exist. No need to simulate again.')         
@@ -777,7 +745,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
             demo_feat = 'Minority_Ratio'
             vaccination_vector_minority_reverse = distribute_and_check(cbg_table, demo_feat, vaccine_acceptance, reverse=True) #20220302
             # Run simulations
-            #_, history_D2_minority_reverse = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, 
             final_deaths = run_simulation(starting_seed=STARTING_SEED, num_seeds=NUM_SEEDS, #20220304
                                           vaccination_vector=vaccination_vector_minority_reverse,
                                           vaccine_acceptance = vaccine_acceptance, #20211007
@@ -787,7 +754,6 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
             else:
                 policy = policy.lower()
                 print(f'Save {policy} results at:\n{filename}.')            
-                #np.array(history_D2_minority_reverse).tofile(filename)
                 final_deaths.tofile(filename) #20220304
 
      

@@ -10,10 +10,6 @@ import copy
 import constants
 import functions
 
-import pdb
-
-#root = '/data/chenlin/COVID-19/Data'
-#saveroot = '/data/chenlin/utility-equity-covid-vac/results/figures'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 resultroot = os.path.join(root, 'results')
@@ -21,7 +17,7 @@ fig_save_root = os.path.join(root, 'figures')
 
 # parameters
 parser = argparse.ArgumentParser()
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()
 
@@ -77,10 +73,8 @@ def get_avg_upper_lower(result_dict, num_groups): #20220227
     upper_aware = np.zeros(num_groups); lower_aware = np.zeros(num_groups)
 
     for group_idx in range(num_groups):
-        #print('group_idx:',group_idx)
         count=0
         
-        #for msa_idx in [0]:
         for msa_idx in range(len(constants.MSA_NAME_LIST)):
             if(constants.MSA_NAME_LIST[msa_idx]=='NewYorkCity'):continue
             MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
@@ -114,7 +108,6 @@ def plot_groupwise_death_rate(demo_feat, num_groups, alpha, markersize, save_fig
     demo_feat_label_dict['Hispanic_Ratio'] = 'Hispanic resident ratio'
     demo_feat_label_dict['Minority_Ratio'] = 'Minority ratio' #20220302
     
-    #plt.figure(figsize=((9,4)))
     plt.figure(figsize=((8,4))) #20220309
     plt.plot(np.arange(NUM_GROUPS),np.ones(NUM_GROUPS),
             label='SEIR model',marker='o',markersize=markersize,
@@ -147,7 +140,6 @@ def plot_groupwise_death_rate(demo_feat, num_groups, alpha, markersize, save_fig
     if(NUM_GROUPS==5):
         plt.xlabel(f'Quintile of {demo_feat_label_dict[demo_feat]}',fontsize=25)
     elif(NUM_GROUPS==10):
-        #plt.xlabel(f'Decile of {demo_feat_label_dict[demo_feat]}',fontsize=25)
         plt.xlabel(f'{demo_feat_label_dict[demo_feat]} (decile)',fontsize=25)
     plt.ylabel('Relative risks', fontsize=25)
 
@@ -172,7 +164,6 @@ filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg
 cbg_agesex = pd.read_csv(filepath)
 
 count=0
-#for msa_idx in [0]:
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     if(constants.MSA_NAME_LIST[msa_idx]=='NewYorkCity'):continue
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
@@ -204,7 +195,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     # Deal with NaN values
     cbg_age_msa.fillna(0,inplace=True)
 
-    # Grouping: 按NUM_GROUPS分位数，将全体CBG分为NUM_GROUPS个组，将分割点存储在separators中
+    # Grouping: 
     separators = functions.get_separators(cbg_age_msa, NUM_GROUPS, 'Elder_Ratio','Sum', normalized=True)
     cbg_age_msa['Age_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
@@ -218,7 +209,6 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     # Check whether there is NaN in cbg_tables
     if(cbg_age_msa.isnull().any().any()):
         print('NaN exists in cbg_age_msa. Please check.')
-        pdb.set_trace()
     
     results = get_msa_result(cbg_table=cbg_age_msa, demo_feat='Age', num_groups=NUM_GROUPS) #20220227
     count += 1
@@ -264,7 +254,7 @@ if('Income' in demo_feat_list):
         cbg_income_msa.rename(columns = {'total_households':'Total_Households',
                                         'mean_household_income':'Mean_Household_Income'},inplace=True)
 
-        # Grouping: 按NUM_GROUPS分位数，将全体CBG分为NUM_GROUPS个组，将分割点存储在separators中
+        # Grouping:
         separators = functions.get_separators(cbg_income_msa, NUM_GROUPS, 'Mean_Household_Income','Sum', normalized=False)
         cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
@@ -280,7 +270,6 @@ if('Income' in demo_feat_list):
         # Check whether there is NaN in cbg_tables
         if(cbg_income_msa.isnull().any().any()):
             print('NaN exists in cbg_income_msa. Please check.')
-            pdb.set_trace()
         
         results = get_msa_result(cbg_table=cbg_income_msa, demo_feat='Mean_Household_Income', num_groups=NUM_GROUPS) #20220227
         count += 1
@@ -334,19 +323,14 @@ if('Occupation' in demo_feat_list):
         # Deal with NaN values
         cbg_occupation_msa.fillna(0,inplace=True)
 
-        # 先filter再分组
-        #cbg_occupation_msa['Valid'] = cbg_occupation_msa.apply(lambda x : 1 if (x['Essential_Worker_Ratio']>0.2) else 0, axis=1)
-        cbg_occupation_msa['Valid'] = cbg_occupation_msa.apply(lambda x : 1 if (True) else 0, axis=1) #20220227, 先不filter
+        cbg_occupation_msa['Valid'] = cbg_occupation_msa.apply(lambda x : 1 if (True) else 0, axis=1) 
         
-        # Grouping: 按NUM_GROUPS分位数，将全体CBG分为NUM_GROUPS个组，将分割点存储在separators中
+        # Grouping: 
         separators = functions.get_separators(cbg_occupation_msa[cbg_occupation_msa['Valid']==1], NUM_GROUPS, 
                                             'Essential_Worker_Ratio','Sum', normalized=True)
         cbg_occupation_msa['Essential_Worker_Quantile'] =  cbg_occupation_msa['Essential_Worker_Ratio'].apply(lambda x : functions.assign_group(x, separators))
         cbg_occupation_msa['Essential_Worker_Quantile'] =  cbg_occupation_msa.apply(lambda x : x['Essential_Worker_Quantile'] if x['Valid'] 
                                                                                     else NUM_GROUPS, axis=1)
-        
-        #print(cbg_occupation_msa['Essential_Worker_Ratio'].mean(), cbg_occupation_msa['Essential_Worker_Ratio'].max())
-        #print(len(cbg_occupation_msa),len(cbg_occupation_msa[cbg_occupation_msa['Essential_Worker_Quantile']==NUM_GROUPS]))
         
         # No_Vaccination & Age_Agnostic, accumulated results
         deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
@@ -360,19 +344,15 @@ if('Occupation' in demo_feat_list):
         # Check whether there is NaN in cbg_tables
         if(cbg_occupation_msa.isnull().any().any()):
             print('NaN exists in cbg_occupation_msa. Please check.')
-            pdb.set_trace()
         data_all = data_all.append(cbg_occupation_msa)
-        #print('len(data_all):', len(data_all))
-        
+
         results = get_msa_result(cbg_table=cbg_occupation_msa, demo_feat='Essential_Worker', num_groups=NUM_GROUPS) #20220227
         count += 1
         result_dict[MSA_NAME] = copy.deepcopy(results)
         cbg_num += len(cbg_occupation_msa[cbg_occupation_msa['Valid']==1])
-        #print(cbg_num)
 
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
-    #savepath = os.path.join(saveroot, 'groupwise_death_rate_occupation.png')
     savepath = os.path.join(fig_save_root, 'fig1d_occupation.pdf')
     plot_groupwise_death_rate(demo_feat='Essential_Worker_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 
@@ -421,42 +401,11 @@ if('Race' in demo_feat_list):
         cbg_race_msa['Minority_Absolute'] = cbg_race_msa['Sum'] - (cbg_race_msa['White_Absolute'] - cbg_ethnic_msa['Hispanic_White_Absolute'])
         cbg_race_msa['Minority_Ratio'] = cbg_race_msa['Minority_Absolute'] / cbg_race_msa['Sum']
 
-        # Grouping: 按NUM_GROUPS分位数，将全体CBG分为NUM_GROUPS个组，将分割点存储在separators中
+        # Grouping: 
         separators = functions.get_separators(cbg_race_msa, NUM_GROUPS, 'Minority_Ratio','Sum', normalized=False)
         cbg_race_msa['Minority_Ratio_Quantile'] =  cbg_race_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
         print(cbg_race_msa[cbg_race_msa['Minority_Ratio']==0]['Sum'].sum())
         
-        ##################### below are tests #####################
-        # Examine the average elder_ratio in each ethnic decile
-        '''
-        # Extract CBGs belonging to the MSA
-        cbg_age_msa = pd.merge(cbg_ids_msa, cbg_agesex, on='census_block_group', how='left')
-        # Add up males and females of the same age, according to the detailed age list (DETAILED_AGE_LIST)
-        # which is defined in Constants.py
-        for i in range(3,25+1): # 'B01001e3'~'B01001e25'
-            male_column = 'B01001e'+str(i)
-            female_column = 'B01001e'+str(i+24)
-            cbg_age_msa[constants.DETAILED_AGE_LIST[i-3]] = cbg_age_msa.apply(lambda x : x[male_column]+x[female_column],axis=1)
-        # Rename
-        cbg_age_msa.rename(columns={'B01001e1':'Sum'},inplace=True)
-        # Extract columns of interest
-        columns_of_interest = ['census_block_group','Sum'] + constants.DETAILED_AGE_LIST
-        cbg_age_msa = cbg_age_msa[columns_of_interest].copy()
-        # Deal with CBGs with 0 populations
-        cbg_age_msa['Sum'] = cbg_age_msa['Sum'].apply(lambda x : x if x!=0 else 1)
-        # Calculate elder ratios
-        cbg_age_msa['Elder_Absolute'] = cbg_age_msa.apply(lambda x : x['70 To 74 Years']+x['75 To 79 Years']+x['80 To 84 Years']+x['85 Years And Over'],axis=1)
-        cbg_age_msa['Elder_Ratio'] = cbg_age_msa['Elder_Absolute'] / cbg_age_msa['Sum']
-        # Deal with NaN values
-        cbg_age_msa.fillna(0,inplace=True)
-
-        cbg_race_msa['Elder_Ratio'] = cbg_age_msa['Elder_Ratio'].copy()
-
-        for i in range(NUM_GROUPS):
-            print(np.round(cbg_race_msa[cbg_race_msa['Minority_Ratio_Quantile']==i]['Elder_Ratio'].mean(), 4)) 
-        pdb.set_trace()
-        '''
-        ##################### above are tests #####################
 
         # No_Vaccination & Age_Agnostic, accumulated results
         deaths_cbg_no_vaccination = np.load(os.path.join(resultroot,r'20210206_deaths_cbg_no_vaccination_%s.npy'%MSA_NAME))
@@ -470,7 +419,6 @@ if('Race' in demo_feat_list):
         # Check whether there is NaN in cbg_tables
         if(cbg_race_msa.isnull().any().any()):
             print('NaN exists in cbg_race_msa. Please check.')
-            pdb.set_trace()
         
         results = get_msa_result(cbg_table=cbg_race_msa, demo_feat='Minority_Ratio', num_groups=NUM_GROUPS) #20220227
         count += 1
@@ -478,7 +426,6 @@ if('Race' in demo_feat_list):
 
     return_values = get_avg_upper_lower(result_dict, num_groups=NUM_GROUPS) #20220227
     avg_agnostic, avg_aware, upper_agnostic, upper_aware, lower_agnostic, lower_aware, error_agnostic, error_aware = return_values #20220227
-    #savepath = os.path.join(saveroot, 'groupwise_death_rate_minority.png')
     savepath = os.path.join(fig_save_root, 'fig1d_minority.pdf')
     plot_groupwise_death_rate(demo_feat='Minority_Ratio', num_groups=NUM_GROUPS, alpha=alpha, markersize=markersize, save_figure=True, savepath=savepath, show_legend=False)
 

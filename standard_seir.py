@@ -1,8 +1,5 @@
 # python standard_seir.py --msa_name Atlanta
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import socket
 import argparse
 import os
@@ -13,31 +10,11 @@ import constants
 import functions
 from sklearn.metrics import mean_squared_error
 from math import sqrt
-import pdb
 import constants
 
-#import SEIR
 from scipy.integrate import odeint
-#from bayes_opt import BayesianOptimization
-#from lmfit import minimize, Parameters, Parameter, report_fit
 from hyperopt import hp, tpe, Trials, fmin
 
-
-# root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results/'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results/'
-# subroot
-subroot = 'seir'
-if(not os.path.exists(os.path.join(saveroot, subroot))): # if folder does not exist, create one.
-    os.makedirs(os.path.join(saveroot, subroot))
-'''
 
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
@@ -47,7 +24,7 @@ saveroot = os.path.join(root, 'results')
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 parser.add_argument('--save_result', default=False, action='store_true',
                     help='If true, save results.')
@@ -101,33 +78,22 @@ def Standard_SEIR(initE, initI, initR, initN, initD, beta, sigma, gamma, days):
     tspan = np.arange(0, days, 1)
     sol = ode_solver(tspan, initial_conditions, params)
     S, E, I, R, D = sol[:, 0], sol[:, 1], sol[:, 2], sol[:, 3], sol[:, 4]
-    '''
-    print('S: ', S)
-    print('E: ', E)
-    print('I: ', I)
-    print('R: ', R)
-    '''
+
     return S, E, I, R, D
     
 
 def target_function(beta):
     beta = np.round(beta, 4)
-    """
-    Function with unknown internals we wish to maximize.
-    This is just serving as an example, for all intents and purposes think of the internals of this function, 
-    i.e.: the process which generates its output values, as unknown.
-    """
+
     S, E, I, R, D = Standard_SEIR(initE, initI, initR, initN, initD, beta, sigma, gamma, days)
     predicted_cases_accumulated = I + R
     predicted_cases_daily = [0]
     for i in range(1,NUM_DAYS):
         predicted_cases_daily.append(predicted_cases_accumulated[i]-predicted_cases_accumulated[i-1])
-    #print('predicted_cases_daily: ', predicted_cases_daily)
-    
-    #return -sqrt(mean_squared_error(cases_daily_smooth, predicted_cases_daily)) # 取负号，这样就变成max的目标函数
+
     loss = sqrt(mean_squared_error(cases_daily_smooth, predicted_cases_daily))
-    #print('loss: ', loss)
-    return loss # 取负号，这样就变成max的目标函数
+
+    return loss 
     
 ###############################################################################
 # Load Data
@@ -148,7 +114,6 @@ for this_msa in msa_name_list:
     msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
     msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
     good_list = list(msa_data['FIPS Code'].values)
-    #print('County included: ',good_list)
 
     # Load CBG ids for the MSA
     cbg_ids_msa = pd.read_csv(os.path.join(dataroot,'%s_cbg_ids.csv'%MSA_NAME_FULL)) 
@@ -214,11 +179,8 @@ for this_msa in msa_name_list:
     ###############################################################################
     # Parameters 
 
-    # ref: https://www.medrxiv.org/content/10.1101/2020.04.01.20049825v1.full.pdf
     initN = cbg_sizes.sum() #1380000000
-    # S0 = 966000000
     initE = 0 #initN * (1 - 1e-4) #1
-    #initI = initN * 1e-5 #1
     initR = 0
     initD = 0
     sigma = 1/4 #1/5.2
@@ -230,15 +192,12 @@ for this_msa in msa_name_list:
       
     # Bayesian optimization with lib: Hyperopt
     p_sicks_list = [1e-2, 5e-3, 2e-3, 1e-3, 5e-4, 2e-4, 1e-4, 5e-5, 2e-5, 1e-5]
-    #p_sicks_list.append(constants.parameters_dict[MSA_NAME][0]) #20220315
     for i in range(len(p_sicks_list)):
         p_sicks = p_sicks_list[i]
         print('p_sicks: ', p_sicks)
-        #initI = initN * p_sicks
         initI = 0
         initE = initN * p_sicks
         # Create the domain space
-        #space = hp.uniform('beta', 0, 1)
         space = hp.quniform('beta', 0, 1, 0.001)
         # Create the algorithm
         tpe_algo = tpe.suggest
@@ -247,7 +206,6 @@ for this_msa in msa_name_list:
         # Run 2000 evals with the tpe algorithm
         tpe_best = fmin(fn=target_function, space=space, 
                         algo=tpe_algo, trials=tpe_trials, 
-                        #max_evals=10)
                         max_evals=300)
 
         print(tpe_best)
@@ -257,8 +215,6 @@ for this_msa in msa_name_list:
         for j in range(1,NUM_DAYS):
             predicted_cases_daily.append(predicted_cases_accumulated[j]-predicted_cases_accumulated[j-1])
         this_opt = sqrt(mean_squared_error(cases_daily_smooth, predicted_cases_daily))
-        #print('this_opt: ', this_opt)
-        
         
         if(i==0):
             beta_opt = tpe_best['beta']
@@ -272,9 +228,7 @@ for this_msa in msa_name_list:
     print('p_sicks_opt: ', p_sicks_opt)
     print('beta_opt: ', beta_opt)
     print('result_opt: ', result_opt)
-
-
-    #initI = initN * p_sicks_opt
+    
     initI = 0
     initE = initN * p_sicks_opt
     S, E, I, R, D = Standard_SEIR(initE, initI, initR, initN, initD, beta_opt, sigma, gamma, days)
@@ -290,16 +244,7 @@ for this_msa in msa_name_list:
     normalizer = deaths_daily_smooth.mean()
     RMSE_norm = RMSE / normalizer
     print('RMSE: ', RMSE, 'RMSE_norm: ', RMSE_norm)
-
-    '''
-    predicted_cases_accumulated = I + R
-    #predicted_cases_accumulated = I
-    predicted_cases_daily = [0]
-    for i in range(1,NUM_DAYS):
-        predicted_cases_daily.append(predicted_cases_accumulated[i]-predicted_cases_accumulated[i-1])
-    print('predicted_cases_daily: ', predicted_cases_daily)
-    print(sqrt(mean_squared_error(cases_daily_smooth, predicted_cases_daily)))
-    '''
+    
     print('p_sicks_opt: ', p_sicks_opt)
     print('beta_opt: ', beta_opt)
     print('result_opt: ', result_opt)

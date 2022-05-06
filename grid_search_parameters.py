@@ -1,7 +1,4 @@
-# python grid_search_parameters.py --msa_name Atlanta --quick_test
-
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
+# python grid_search_parameters.py --msa_name Atlanta
 
 import argparse
 import os
@@ -18,10 +15,7 @@ import disease_model_original as disease_model
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 
-import pdb
-
 # root
-#root = '/data/chenlin/COVID-19/Data'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 print(root)
@@ -30,10 +24,8 @@ print(root)
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
-                    help='Safegraph data root.')
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce number of simulations to test quickly.')   
+parser.add_argument('--safegraph_root', default=dataroot, 
+                    help='Safegraph data root.')  
 parser.add_argument('--save_result', default=False, action='store_true',
                     help='If true, save simulation results.')  
 args = parser.parse_args()
@@ -53,17 +45,10 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Fra
 how_to_select_best_grid_search_models = 'cases'
 
 # Parameters to experiment
-if(args.quick_test):
-    NUM_SEEDS = 2
-    p_sick_at_t0_list = [1e-2, 5e-3]
-    home_beta_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_home_beta'],constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_home_beta'], 2)
-    poi_psi_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_poi_psi'], constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_poi_psi'], 2)
-else:
-    NUM_SEEDS = 30
-    p_sick_at_t0_list = [1e-2, 5e-3, 2e-3, 1e-3, 5e-4, 2e-4, 1e-4, 5e-5, 2e-5, 1e-5]
-    #p_sick_at_t0_list = [float(p_sick_at_t0)]
-    home_beta_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_home_beta'],constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_home_beta'], 10)
-    poi_psi_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_poi_psi'], constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_poi_psi'], 15)
+NUM_SEEDS = 30
+p_sick_at_t0_list = [1e-2, 5e-3, 2e-3, 1e-3, 5e-4, 2e-4, 1e-4, 5e-5, 2e-5, 1e-5]
+home_beta_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_home_beta'],constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_home_beta'], 10)
+poi_psi_list = np.linspace(constants.BETA_AND_PSI_PLAUSIBLE_RANGE['min_poi_psi'], constants.BETA_AND_PSI_PLAUSIBLE_RANGE['max_poi_psi'], 15)
 
 STARTING_SEED = range(NUM_SEEDS)
 
@@ -151,8 +136,8 @@ f.close()
 # Load precomputed parameters to adjust(clip) POI dwell times
 d = pd.read_csv(os.path.join(root,'data', 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(min_datetime, max_datetime)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values    #Area
+poi_dwell_times = d['median'].values    #Average Dwell Time
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 
 # Load ACS Data for MSA-county matching
@@ -242,21 +227,13 @@ for i in range(1,len(nyt_data_cumulative)):
     cases_daily.append(nyt_data_cumulative['cases'].values[i]-nyt_data_cumulative['cases'].values[i-1])
 # Smoothed ground truth
 cases_daily_smooth = apply_smoothing(cases_daily, agg_func=np.mean, before=3, after=3)
-'''
-if(len(cases_daily_smooth)<len(cases_total_no_vaccination)):
-    cases_daily_smooth = [0]*(len(cases_total_no_vaccination)-len(cases_daily_smooth)) + list(cases_daily_smooth)
-'''
+
 # Deaths
 deaths_daily = [0]
 for i in range(1,len(nyt_data_cumulative)):
     deaths_daily.append(nyt_data_cumulative['deaths'].values[i]-nyt_data_cumulative['deaths'].values[i-1])
 # Smoothed ground truth
 deaths_daily_smooth = apply_smoothing(deaths_daily, agg_func=np.mean, before=3, after=3)
-'''
-if(len(deaths_daily_smooth)<len(deaths_total_no_vaccination)):
-    deaths_daily_smooth = [0]*(len(deaths_total_no_vaccination)-len(deaths_daily_smooth)) + list(deaths_daily_smooth)
-'''
-
 
 # Initialization: only need to be performed once    
 m = disease_model.Model(starting_seed=STARTING_SEED,
@@ -324,26 +301,11 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
             for i in range(1,len(deaths_total_age_agnostic)):
                 deaths_daily_total_age_agnostic.append(deaths_total_age_agnostic[i]-deaths_total_age_agnostic[i-1])
                 
-
             cases = nyt_data_cumulative['cases'].values
             cases_smooth = apply_smoothing(cases, agg_func=np.mean, before=3, after=3)
             
-            '''
-            if(len(cases_smooth)<len(cases_total_no_vaccination)):
-                cases_smooth = [0]*(len(cases_total_no_vaccination)-len(cases_smooth)) + list(cases_smooth)
-            if(len(cases)<len(cases_total_no_vaccination)):
-                cases = [0]*(len(cases_total_no_vaccination)-len(cases)) + list(cases)
-            '''
-
             deaths = nyt_data_cumulative['deaths'].values
             deaths_smooth = apply_smoothing(deaths, agg_func=np.mean, before=3, after=3)
-            '''
-            if(len(deaths_smooth)<len(deaths_total_no_vaccination)):
-                deaths_smooth = [0]*(len(deaths_total_no_vaccination)-len(deaths_smooth)) + list(deaths_smooth)
-                print(len(deaths_smooth))
-            if(len(deaths)<len(deaths_total_no_vaccination)):
-                deaths = [0]*(len(deaths_total_no_vaccination)-len(deaths)) + list(deaths)
-            '''
             
             # RMSE across random seeds
             rmse_dict_cases_agnostic['%s,%s,%s'%(p_sick_at_t0, home_beta, poi_psi)] = sqrt(mean_squared_error(cases,cases_total_age_agnostic))
@@ -351,7 +313,6 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
             rmse_dict_deaths_agnostic['%s,%s,%s'%(p_sick_at_t0, home_beta, poi_psi)] = sqrt(mean_squared_error(deaths,deaths_total_age_agnostic))
             rmse_dict_deaths_smooth_agnostic['%s,%s,%s'%(p_sick_at_t0, home_beta, poi_psi)] = sqrt(mean_squared_error(deaths_smooth,deaths_total_age_agnostic))
             
-
             if(how_to_select_best_grid_search_models == 'cases'):
                 if(isfirst==True):
                     best_rmse = sqrt(mean_squared_error(cases,cases_total_age_agnostic))
@@ -381,7 +342,6 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
                 best_results['rmse'] = best_rmse
                 best_results['parameters'] = best_parameters
                 np.save(os.path.join(root,'results', '20210127_best_results_%s_%s_%s'%(how_to_select_best_grid_search_models,MSA_NAME,p_sick_at_t0)),best_results)
-            
 
 end = time.time()
 print('Total Time:',(end-start))

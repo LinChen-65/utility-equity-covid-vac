@@ -2,8 +2,6 @@
 
 # pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long,multiple-statements, unnecessary-semicolon, redefined-outer-name, consider-using-enumerate
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
 
 import socket
 import os
@@ -15,8 +13,6 @@ import matplotlib.patches as mpatches
 
 import constants
 import functions
-
-import pdb
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--vaccination_time', type=int, default=31,
@@ -34,20 +30,12 @@ parser.add_argument('--rel_to', default='Baseline',
 args = parser.parse_args()  
 
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']): 
-    root = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/utility-equity-covid-vac/results'
-'''
 root = os.getcwd()
 resultroot = os.path.join(root, 'results')
 
 # subroot
 subroot = 'figures'
-if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
+if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one.
     os.makedirs(os.path.join(root, subroot))
 
 
@@ -63,7 +51,7 @@ num_msas = len(msa_name_list)
 color_list = ['#e63946', '#fa7921', '#f4a261', '#348aa7', '#2a9d8f', '#4ecdc4']
 
 
-def get_gini_dict(vaccination_time, vaccination_ratio,notation_string,rel_to,msa_list,root): #20220308
+def get_gini_dict(vaccination_time, vaccination_ratio,notation_string,rel_to,msa_list,root):
     '''Load gini tables to construct gini_df_dict'''
     gini_df_dict = dict()
     for this_msa in msa_list:
@@ -74,7 +62,7 @@ def get_gini_dict(vaccination_time, vaccination_ratio,notation_string,rel_to,msa
     return gini_df_dict
 
 
-def get_results(gini_df_dict): #20220309
+def get_results(gini_df_dict):
     age_util_list = [];age_equi_list = []
     income_util_list = [];income_equi_list = []
     occupation_util_list = [];occupation_equi_list = []
@@ -122,16 +110,14 @@ for notation_string in notation_string_list:
 
 
 # Draw figure
-#figsize = (7.5, 4.2)
 figsize = (7.5, 3.8)
 
-def draw_boxplot(results,medians,figsize,policy,boxplot=True,show_legend=True): #20220309
+def draw_boxplot(results,medians,figsize,policy,boxplot=True,show_legend=True):
     policy = policy.lower()
     plt.figure(figsize=figsize) #(7,6)
     plt.axhline(0,color='k',linestyle='--')
     num_scenarios = len(results)
-    if(boxplot):
-        #plt.boxplot(results,widths=0.3) # showfliers=False      
+    if(boxplot):     
         bp = plt.boxplot(results, widths=0.3, patch_artist=True) #labels=anno_list,
         
         [bp['boxes'][i].set(facecolor=color_list[i], alpha=0.7) for i in range(num_scenarios)]
@@ -144,7 +130,6 @@ def draw_boxplot(results,medians,figsize,policy,boxplot=True,show_legend=True): 
         plt.xticks(np.arange(num_scenarios)+1,anno_list,fontsize=16,rotation=-20,ha='left')
     else:
         plt.xticks(np.arange(num_scenarios)+1,['','','','','',''],fontsize=16,rotation=-20,ha='left')
-        #plt.xticks(np.arange(num_scenarios)+1,['','',''],fontsize=16,rotation=-20,ha='left')
     if(policy=='minority'):
         plt.xlabel(f'Prioritize by race/ethnicity',fontsize=22)
     else:

@@ -2,8 +2,6 @@
 
 # pylint: disable=invalid-name,trailing-whitespace,superfluous-parens,line-too-long
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
 
 import socket
 import os
@@ -14,19 +12,7 @@ import argparse
 import constants
 import functions
 
-import pdb
-
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname=='fib-dl3'):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-'''
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
@@ -43,20 +29,17 @@ parser.add_argument('--num_seeds', type=int, default=30,
                     help='Num of seeds. Used to identify which files to load.')
 parser.add_argument('--num_groups', type=int, default=5,
                     help='Num of groups to divide CBGs into.') 
-#parser.add_argument('--acceptance_scenario', 
-#                    help='Scenario of vaccine hesitancy (fully/real/cf18/cf13/cf17/ALL). Only useful when consider_hesitancy is True.')
 parser.add_argument('--recheck_interval', type=float, default = 0.01,
                     help='Recheck interval (After distributing some portion of vaccines, recheck the most vulnerable demographic group).')                             
 parser.add_argument('--rel_to', 
                     help='Relative to which strategy (either No_Vaccination or Baseline).')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, 
                     help='Safegraph data root.') 
 args = parser.parse_args()
 print('args.msa_name:',args.msa_name)
 print('Vaccination Time:',str(args.vaccination_time))
 print('Vaccination ratio: ', args.vaccination_ratio)
 print('Number of groups: ',args.num_groups)
-#print('Vaccine acceptance scenario: ', args.acceptance_scenario)
 print('Relative to: ', args.rel_to)
 
 
@@ -69,7 +52,7 @@ else:
 
 demo_policy_list = ['Age', 'Age_Reverse', 'Income', 'Income_Reverse', 'Occupation', 'Occupation_Reverse','Minority', 'Minority_Reverse'] 
 print('Single_demo_feat based policy list: ', demo_policy_list)
-demo_feat_list = ['Elder_Ratio', 'Mean_Household_Income', 'EW_Ratio', 'Minority_Ratio'] #20220302
+demo_feat_list = ['Elder_Ratio', 'Mean_Household_Income', 'EW_Ratio', 'Minority_Ratio']
 print('Demographic feature list: ', demo_feat_list)
 
 if(args.rel_to=='No_Vaccination'):
@@ -93,13 +76,11 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to):
         cbg_table['Final_Deaths_' + policy] = eval('avg_final_deaths_' + policy.lower())
         exec("%s = np.zeros(num_groups)" % ('final_deaths_rate_'+ policy.lower()))
         deaths_total_abs = eval('final_deaths_rate_%s_total'%(policy.lower()))
-        #deaths_total_abs = np.round(deaths_total_abs,6) #20220305注释
         
         for i in range(num_groups):
             eval('final_deaths_rate_'+ policy.lower())[i] = cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Final_Deaths_' + policy].sum()
             eval('final_deaths_rate_'+ policy.lower())[i] /= cbg_table[cbg_table[demo_feat + '_Quantile']==i]['Sum'].sum()
         deaths_gini_abs = functions.gini(eval('final_deaths_rate_'+ policy.lower()))
-        #deaths_gini_abs = np.round(deaths_gini_abs,6) #20220305注释
        
         if(rel_to=='No_Vaccination'): # compared to No_Vaccination
             if(policy=='No_Vaccination'):
@@ -112,10 +93,8 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to):
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
-                #deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_no_vaccination) / deaths_total_no_vaccination
-                #deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
-                deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_no_vaccination) / deaths_total_no_vaccination #20220305
-                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination #20220305
+                deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_no_vaccination) / deaths_total_no_vaccination
+                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_no_vaccination) / deaths_gini_no_vaccination
                 results[policy] = {'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
@@ -132,11 +111,8 @@ def output_result(cbg_table, demo_feat, policy_list, num_groups, rel_to):
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
                                    'deaths_gini_rel':'%.6f'% deaths_gini_rel}   
             else:
-                #deaths_total_rel = (np.round(eval('final_deaths_rate_%s_total'%(policy.lower())),6) - deaths_total_baseline) / deaths_total_baseline
-                #deaths_gini_rel = (np.round(functions.gini(eval('final_deaths_rate_'+ policy.lower())),6) - deaths_gini_baseline) / deaths_gini_baseline
-                deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_baseline) / deaths_total_baseline #20220305
-                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline #20220305
-                #pdb.set_trace()
+                deaths_total_rel = (eval('final_deaths_rate_%s_total'%(policy.lower())) - deaths_total_baseline) / deaths_total_baseline
+                deaths_gini_rel = (functions.gini(eval('final_deaths_rate_'+ policy.lower())) - deaths_gini_baseline) / deaths_gini_baseline
                 results[policy] = {'deaths_total_abs':'%.6f'% deaths_total_abs,
                                    'deaths_total_rel':'%.6f'% deaths_total_rel,
                                    'deaths_gini_abs':'%.6f'% deaths_gini_abs,
@@ -149,7 +125,7 @@ def make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=No
     cbg_table_name_dict['Elder_Ratio'] = cbg_age_msa
     cbg_table_name_dict['Mean_Household_Income'] = cbg_income_msa
     cbg_table_name_dict['EW_Ratio'] = cbg_occupation_msa
-    cbg_table_name_dict['Minority_Ratio'] = cbg_ethnic_msa #20220302
+    cbg_table_name_dict['Minority_Ratio'] = cbg_ethnic_msa
     
     print('Policy list: ', policy_list)
     print('Demographic feature list: ', demo_feat_list)
@@ -171,7 +147,7 @@ def make_gini_table(policy_list, demo_feat_list, save_result=False, save_path=No
 
     gini_df.set_index(['Policy'],inplace=True)
     # Transpose
-    gini_df_trans = pd.DataFrame(gini_df.values.T, index=gini_df.columns, columns=gini_df.index)#转置
+    gini_df_trans = pd.DataFrame(gini_df.values.T, index=gini_df.columns, columns=gini_df.index)
     # Save .csv
     if(save_result==True):
         gini_df_trans.to_csv(save_path)
@@ -196,7 +172,7 @@ cbg_income.drop(['Unnamed: 0'],axis=1, inplace=True)
 # cbg_c24.csv: Occupation
 filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_c24.csv")
 cbg_occupation = pd.read_csv(filepath)
-# cbg_b03.csv: Ethnic #20220225
+# cbg_b03.csv: Ethnic
 filepath = os.path.join(args.safegraph_root,"safegraph_open_census_data/data/cbg_b03.csv")
 cbg_ethnic = pd.read_csv(filepath)
 
@@ -279,7 +255,7 @@ for this_msa in msa_name_list:
 
 
     ###############################################################################
-    # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
+    # Grouping: 
 
     separators = functions.get_separators(cbg_age_msa, args.num_groups, 'Elder_Ratio','Sum', normalized=True)
     cbg_age_msa['Elder_Ratio_Quantile'] =  cbg_age_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
@@ -290,7 +266,7 @@ for this_msa in msa_name_list:
     separators = functions.get_separators(cbg_income_msa, args.num_groups, 'Mean_Household_Income','Sum', normalized=False)
     cbg_income_msa['Mean_Household_Income_Quantile'] =  cbg_income_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
-    separators = functions.get_separators(cbg_ethnic_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=True) #20220225
+    separators = functions.get_separators(cbg_ethnic_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=True)
     cbg_ethnic_msa['Minority_Ratio_Quantile'] =  cbg_ethnic_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
     ###############################################################################
@@ -318,14 +294,11 @@ for this_msa in msa_name_list:
                 history_D2_result_path = os.path.join(saveroot, f'vac_results_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}', f'history_D2_{policy}_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
             elif(policy=='no_vaccination'):
                 history_D2_result_path = os.path.join(saveroot,'vaccination_results_adaptive_31d_0.1_0.01',rf'20210206_history_D2_no_vaccination_adaptive_0.1_0.01_30seeds_{this_msa}')
-            #elif(policy=='baseline'):
-            #    history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
             else:
-                #history_D2_result_path = os.path.join(root,this_msa,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', f'test_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_time}d_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
                 if('reverse' not in policy):
-                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
                 else:
-                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}') #20220304
+                    history_D2_result_path = os.path.join(saveroot,f'vaccination_results_adaptive_reverse_{str(args.vaccination_time)}d_{args.vaccination_ratio}_{args.recheck_interval}', rf'20210206_history_D2_{file_name_dict[policy]}_adaptive_reverse_{args.vaccination_ratio}_{args.recheck_interval}_30seeds_{this_msa}')
             exec(f'history_D2_{policy} = np.fromfile(\'{history_D2_result_path}\')')
             exec(f'history_D2_{policy} = np.reshape(history_D2_{policy},(63,args.num_seeds,M))')   
             exec(f'final_deaths_{policy} = np.array(history_D2_{policy}[-1,:,:])')
@@ -340,13 +313,13 @@ for this_msa in msa_name_list:
         exec("cbg_age_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
         exec("cbg_income_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
         exec("cbg_occupation_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
-        exec("cbg_ethnic_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower())) #20220225
+        exec("cbg_ethnic_msa['Final_Deaths_%s'] = avg_final_deaths_%s" % (policy,policy.lower()))
 
     # Check whether there is NaN in cbg_tables
     print('Any NaN in cbg_age_msa?', cbg_age_msa.isnull().any().any())
     print('Any NaN in cbg_income_msa?', cbg_income_msa.isnull().any().any())
     print('Any NaN in cbg_occupation_msa?', cbg_occupation_msa.isnull().any().any())
-    print('Any NaN in cbg_ethnic_msa?', cbg_ethnic_msa.isnull().any().any()) #20220225
+    print('Any NaN in cbg_ethnic_msa?', cbg_ethnic_msa.isnull().any().any())
 
     save_path = os.path.join(saveroot, f'gini_table/gini_table_{str(args.vaccination_time)}_{args.recheck_interval}_{args.num_groups}_{this_msa}_rel2{args.rel_to}.csv')
     print('save_path: ',save_path)

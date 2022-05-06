@@ -1,7 +1,4 @@
-# python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta  --direction lower --tolerance 1.5 --quick_test
-
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
+# python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta  --direction lower --tolerance 1.5
 
 import argparse
 import os
@@ -17,7 +14,6 @@ import disease_model_only_modify_attack_rates as disease_model
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 import time
-import pdb
 
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
@@ -26,10 +22,8 @@ resultroot = os.path.join(root, 'results')
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data', #dataroot
-                    help='Safegraph data root.')                     
-parser.add_argument('--quick_test', default=False, action='store_true', 
-                    help='If true, test quickly.')   
+parser.add_argument('--safegraph_root', default=dataroot,
+                    help='Safegraph data root.')                      
 parser.add_argument('--direction', 
                     help='Either upper or lower.')
 parser.add_argument('--tolerance', type=float,
@@ -61,11 +55,8 @@ PROTECTION_RATE = 1
 # Policy execution ratio
 EXECUTION_RATIO = 1
 
-if(args.quick_test):
-    print('Quick testing.')
-    NUM_SEEDS = 2
-else:
-    NUM_SEEDS = 30
+
+NUM_SEEDS = 30
 
 STARTING_SEED = range(NUM_SEEDS)
 print('NUM_SEEDS: ', NUM_SEEDS)
@@ -121,8 +112,8 @@ f.close()
 # Load precomputed parameters to adjust(clip) POI dwell times
 d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(min_datetime, max_datetime)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values    #Area
+poi_dwell_times = d['median'].values    #Average Dwell Time
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 
@@ -215,7 +206,7 @@ nyt_data = pd.read_csv(os.path.join(dataroot, 'us-counties.csv'))
 
 nyt_data['in_msa'] = nyt_data.apply(lambda x : x['fips'] in good_list , axis=1)
 nyt_data_msa = nyt_data[nyt_data['in_msa']==True].copy()
-# 只取出模拟期间的真实值
+
 # 0310-0509 -> 0308-0509
 nyt_data_msa['in_simu_period'] = nyt_data_msa['date'].apply(lambda x : True if (x<'2020-05-10') & (x>'2020-03-07') else False)
 nyt_data_msa_in_simu_period = nyt_data_msa[nyt_data_msa['in_simu_period']==True].copy() 
@@ -254,38 +245,6 @@ print('best_rmse:',best_rmse)
 
 
 ###############################################################################
-# Best model
-'''
-cbg_death_rates_original_scaled = cbg_death_rates_original * death_scale
-
-# Construct the vaccination vector
-vaccination_vector_no_vaccination = np.zeros(len(cbg_sizes))
-# Run simulations
-history_C2_no_vaccination, history_D2_no_vaccination = run_simulation(starting_seed=STARTING_SEED, 
-                                                                      num_seeds=NUM_SEEDS, 
-                                                                      vaccination_vector=vaccination_vector_no_vaccination,
-                                                                      protection_rate = PROTECTION_RATE)
-
-# Average history records across random seeds
-policy = 'No_Vaccination'
-_, deaths_cbg_no_vaccination, _, deaths_total_no_vaccination = functions.average_across_random_seeds(
-                                                                                                     history_C2_no_vaccination, 
-                                                                                                     history_D2_no_vaccination, 
-                                                                                                     M, idxs_msa_nyt, 
-                                                                                                     print_results=False,
-                                                                                                     draw_results=False)
-
-# From cumulative to daily
-deaths_daily_no_vaccination = [0]
-for i in range(1,len(deaths_total_no_vaccination)):
-    deaths_daily_no_vaccination.append(deaths_total_no_vaccination[i]-deaths_total_no_vaccination[i-1])
-
-# Best RMSE
-deaths_daily_rmse_no_vaccination = sqrt(mean_squared_error(deaths_daily_smooth,deaths_daily_no_vaccination))
-
-'''
-
-###############################################################################
 
 # The scales dict are constructed along the way of searching the upper and lower bounds. 
 # From the very beginning, set both the upper and lower bound of each MSA equal to the optimal value specified in constants.death_scale_dict
@@ -318,7 +277,7 @@ scales[1.5] = {
                 'WashingtonDC':[1.14,1.63]
 }
 
-if(args.tolerance in scales.keys()): # 结果已经跑出来，这次只需要得到30次simulation的具体结果(划掉，还是取平均比较顺滑)
+if(args.tolerance in scales.keys()):
     start = time.time()
     
     # No_Vaccination: Construct the vaccination vector
@@ -333,17 +292,7 @@ if(args.tolerance in scales.keys()): # 结果已经跑出来，这次只需要�
                                                       num_seeds=NUM_SEEDS, 
                                                       vaccination_vector=vaccination_vector_no_vaccination,
                                                       protection_rate = PROTECTION_RATE)
-        '''
-        history_D2_no_vaccination_all = np.array(history_D2_no_vaccination_all)
-        # Extract lines corresponding to CBGs in the metro area/county # retrieved from 'make_dict...py'
-        history_D2_no_vaccination= np.zeros((NUM_DAYS,NUM_SEEDS))
-        for i in range(NUM_SEEDS):
-            for j in range(NUM_DAYS):
-                for k in idxs_msa_nyt:
-                    history_D2_no_vaccination[j][i] += history_D2_no_vaccination_all[j][i][k]
-        #print('history_D2_no_vaccination_all.shape:',history_D2_no_vaccination_all.shape)
-        #print('history_D2_no_vaccination.shape:',history_D2_no_vaccination.shape)
-        '''
+
         # Average history records across random seeds
         history_D2_no_vaccination, _ = functions.average_across_random_seeds_only_death(history_D2_no_vaccination_all, 
                                                                                         M, idxs_msa_nyt, 
@@ -421,12 +370,10 @@ else:
         else:
             print('death_scale:',death_scale)
             print('If proceed, results will be saved.')
-            pdb.set_trace()
             break
         
     end = time.time()
     print('Time:', end-start)
 
-    #np.save(os.path.join(root,MSA_NAME,'age_aware_20percent_%sbound_%s_%s.npy'%(direction, death_scale, MSA_NAME)), deaths_total_no_vaccination)
     np.save(os.path.join(resultroot,'age_aware_%s_%sbound_%s_%s.npy'%(args.tolerance, args.direction, death_scale, MSA_NAME)), deaths_total_no_vaccination)
 

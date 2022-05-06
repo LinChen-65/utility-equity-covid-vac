@@ -1,8 +1,5 @@
 # python plot_regression_randombag_sample_average.py --msa_name all 
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import socket
 import os
 import argparse
@@ -22,19 +19,8 @@ import matplotlib.patches as mpatches
 import constants
 import functions
 
-import pdb
 
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results/'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results/'
-'''
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 resultroot = os.path.join(root, 'results')
@@ -50,7 +36,7 @@ parser.add_argument('--num_samples',  type=int, default=20,
                     help='Number of samples.')
 parser.add_argument('--sample_frac',  type=float, default=0.2,
                     help='Fraction each sample contains.')
-parser.add_argument('--safegraph_root', default=dataroot, '/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 parser.add_argument('--stop_to_observe', default=False, action='store_true',
                     help='If true, stop after regression.')
@@ -290,9 +276,6 @@ else:
             cbg_avg_infect_diff = np.load(os.path.join(resultroot, '3cbg_avg_infect_diff_%s.npy'%this_msa))
         else:
             print('cbg_avg_infect_same, cbg_avg_infect_diff: not found, please check.')
-            pdb.set_trace()
-            
-        #print('cbg_avg_infect_same.shape:',cbg_avg_infect_same.shape)
 
         cbg_age_msa['Death_Rate'] =  cbg_death_rates_scaled
 
@@ -310,7 +293,6 @@ else:
 
         # Compute the average death rate for the whole MSA: perform another weighted average over all CBGs
         avg_death_rates_scaled = np.matmul(cbg_sizes.T, cbg_death_rates_scaled) / np.sum(cbg_sizes)
-        #print('avg_death_rates_scaled.shape:',avg_death_rates_scaled.shape) # shape: (), because it is a scalar
 
         # Normalize by cbg population
         cbg_avg_infect_same_norm = cbg_avg_infect_same / cbg_sizes
@@ -392,7 +374,6 @@ else:
         randombag_results = randombag_results.drop_duplicates()
         print('After dropping duplicates: ', len(randombag_results))           
         randombag_results.drop(labels=['Unnamed: 0'],axis=1,inplace=True)
-        # 把str转为list，split flag是', '，然后再把其中每个元素由str转为int(用map函数)
         randombag_results['Vaccinated_Idxs'] = randombag_results['Vaccinated_Idxs'].apply(lambda x : list(map(int, (x.strip('[').strip(']').split(', ')))))
 
         
@@ -402,8 +383,6 @@ else:
         randombag_results['Avg_Minority_Ratio'] = randombag_results.apply(lambda x: get_avg_feat(x['Vaccinated_Idxs'],data,'Minority_Ratio'), axis=1) #20220308
         randombag_results['Avg_Vulnerability'] = randombag_results.apply(lambda x: get_avg_feat(x['Vaccinated_Idxs'],data,'Vulnerability'), axis=1)
         randombag_results['Avg_Damage'] = randombag_results.apply(lambda x: get_avg_feat(x['Vaccinated_Idxs'],data,'Damage'), axis=1)
-        #randombag_results['Avg_Vulnerability'] = randombag_results.apply(lambda x: get_avg_feat(x['Vaccinated_Idxs'],data,'Vulner_Rank'), axis=1)
-        #randombag_results['Avg_Damage'] = randombag_results.apply(lambda x: get_avg_feat(x['Vaccinated_Idxs'],data,'Damage_Rank'), axis=1)
 
         randombag_results['Std_Elder_Ratio'] = randombag_results.apply(lambda x: get_std_feat(x['Vaccinated_Idxs'],data,'Elder_Ratio'), axis=1)
         randombag_results['Std_Mean_Household_Income'] = randombag_results.apply(lambda x: get_std_feat(x['Vaccinated_Idxs'],data,'Mean_Household_Income'), axis=1)
@@ -460,19 +439,6 @@ else:
             sample = randombag_results.sample(frac=args.sample_frac,random_state=sample_idx)
             if(sample_idx==0): print('len(sample):',len(sample))
             
-            '''
-            # Check range
-            print('Avg_Elder_Ratio',randombag_results['Avg_Elder_Ratio'].max(),randombag_results['Avg_Elder_Ratio'].min())
-            print('Avg_Mean_Household_Income',randombag_results['Avg_Mean_Household_Income'].max(),randombag_results['Avg_Mean_Household_Income'].min())
-            print('Avg_EW_Ratio',randombag_results['Avg_EW_Ratio'].max(),randombag_results['Avg_EW_Ratio'].min())
-            print('Avg_Vulnerability',randombag_results['Avg_Vulnerability'].max(),randombag_results['Avg_Vulnerability'].min())
-            print('Avg_Damage',randombag_results['Avg_Damage'].max(),randombag_results['Avg_Damage'].min())
-            #print(randombag_results['Saved_Lives'].max(),randombag_results['Saved_Lives'].min())
-            print('Fatality_Rate_Rel',randombag_results['Fatality_Rate_Rel'].max(),randombag_results['Fatality_Rate_Rel'].min())
-            print('Age_Gini_Rel',randombag_results['Age_Gini_Rel'].max(),randombag_results['Age_Gini_Rel'].min())
-            print('Income_Gini_Rel',randombag_results['Income_Gini_Rel'].max(),randombag_results['Income_Gini_Rel'].min())
-            print('Occupation_Gini_Rel',randombag_results['Occupation_Gini_Rel'].max(),randombag_results['Occupation_Gini_Rel'].min())
-            '''
             ###############################################################################
             # Linear Regression (statsmodels)
 
@@ -496,38 +462,29 @@ else:
                 if(args.stop_to_observe):
                     model = sm.OLS(Y, X).fit()
                     predictions = model.predict(X) 
-                    #print(model.summary())
-                    #print('model.params:',np.round(model.params.values, 3)) 
-                    #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
                     print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
                     params = list(np.round(model.params.values, 3))
                     bse = list(np.round(model.bse.values, 2))
                     for idx in range(len(list(bse))):
                         print(f'{params[idx]} ({bse[idx]})')
-                    pdb.set_trace()
                 else:
                     reg = linear_model.LinearRegression()
                     reg.fit(X,Y)
                     r2 = reg.score(X,Y)
                     adjusted_r2_model1 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-                    #print('adjusted_r2_model1:',adjusted_r2_model1)
-
 
                 # Regression with demo_feats and inner mechanisms: Vulnerability
                 mediator_list = ['Avg_Vulnerability','Std_Vulnerability']
                 X = sample[demo_feat_list+mediator_list]
                 if(args.stop_to_observe):
                     model = sm.OLS(Y, X).fit()
-                    predictions = model.predict(X) 
-                    #print(model.summary())
-                    #print('model.params:',np.round(model.params.values, 3)) 
-                    #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                    predictions = model.predict(X)
+
                     print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
                     params = list(np.round(model.params.values, 3))
                     bse = list(np.round(model.bse.values, 2))
                     for idx in range(len(list(bse))):
                         print(f'{params[idx]} ({bse[idx]})')
-                    pdb.set_trace()
                 else:
                     reg = linear_model.LinearRegression()
                     reg.fit(X,Y)
@@ -540,16 +497,13 @@ else:
                 X = sample[demo_feat_list+mediator_list]
                 if(args.stop_to_observe):
                     model = sm.OLS(Y, X).fit()
-                    predictions = model.predict(X) 
-                    #print(model.summary())
-                    #print('model.params:',np.round(model.params.values, 3)) 
-                    #print('model.bse:',np.round(model.bse.values, 2)) #standard errors of the parameter estimates
+                    predictions = model.predict(X)
+
                     print(f'Adj. r2: {np.round(model.rsquared_adj,3)}')
                     params = list(np.round(model.params.values, 3))
                     bse = list(np.round(model.bse.values, 2))
                     for idx in range(len(list(bse))):
                         print(f'{params[idx]} ({bse[idx]})')
-                    pdb.set_trace()
                 else:
                     reg = linear_model.LinearRegression()
                     reg.fit(X,Y)
@@ -573,31 +527,6 @@ else:
                     minority_adj_r2_model1.append(adjusted_r2_model1)
                     minority_adj_r2_model2.append(adjusted_r2_model2)       
 
-        '''
-        print('Mean and Std: ')
-        print('fatality_adj_r2_model1:',np.mean(np.array(fatality_adj_r2_model1)),np.std(np.array(fatality_adj_r2_model1)))
-        print('fatality_adj_r2_model2:',np.mean(np.array(fatality_adj_r2_model2)),np.std(np.array(fatality_adj_r2_model2)))         
-        print('age_adj_r2_model1:',np.mean(np.array(age_adj_r2_model1)),np.std(np.array(age_adj_r2_model1)))
-        print('age_adj_r2_model2:',np.mean(np.array(age_adj_r2_model2)),np.std(np.array(age_adj_r2_model2)))  
-        print('income_adj_r2_model1:',np.mean(np.array(income_adj_r2_model1)),np.std(np.array(income_adj_r2_model1)))
-        print('income_adj_r2_model2:',np.mean(np.array(income_adj_r2_model2)),np.std(np.array(income_adj_r2_model2))) 
-        print('occupation_adj_r2_model1:',np.mean(np.array(occupation_adj_r2_model1)),np.std(np.array(occupation_adj_r2_model1)))
-        print('occupation_adj_r2_model2:',np.mean(np.array(occupation_adj_r2_model2)),np.std(np.array(occupation_adj_r2_model2)))
-        print('minority_adj_r2_model1:',np.mean(np.array(minority_adj_r2_model1)),np.std(np.array(minority_adj_r2_model1))) #20220308
-        print('minority_adj_r2_model2:',np.mean(np.array(minority_adj_r2_model2)),np.std(np.array(minority_adj_r2_model2))) #20220308
-        ''' 
-        '''       
-        print('Details: ')
-        print('fatality_adj_r2_model1:',fatality_adj_r2_model1)
-        print('fatality_adj_r2_model2:',fatality_adj_r2_model2)            
-        print('age_adj_r2_model1:',age_adj_r2_model1)
-        print('age_adj_r2_model2:',age_adj_r2_model2)  
-        print('income_adj_r2_model1:',income_adj_r2_model1)
-        print('income_adj_r2_model2:',income_adj_r2_model2)  
-        print('occupation_adj_r2_model1:',occupation_adj_r2_model1)
-        print('occupation_adj_r2_model2:',occupation_adj_r2_model2)  
-        ''' 
-
         fatality_adj_r2_model1_mean_array[msa_idx] = np.mean(np.array(fatality_adj_r2_model1))
         fatality_adj_r2_model2_mean_array[msa_idx] = np.mean(np.array(fatality_adj_r2_model2))
         age_adj_r2_model1_mean_array[msa_idx] = np.mean(np.array(age_adj_r2_model1))
@@ -619,65 +548,6 @@ else:
         occupation_adj_r2_model2_std_array[msa_idx] = np.std(np.array(occupation_adj_r2_model2))
         minority_adj_r2_model1_std_array[msa_idx] = np.std(np.array(minority_adj_r2_model1))
         minority_adj_r2_model2_std_array[msa_idx] = np.std(np.array(minority_adj_r2_model2))
-
-        ###############################################################################
-        # Linear Regression (sklearn)
-        '''
-        print('Linear Regression (sklearn), not forced positive:')
-        Forced_Positive = False
-
-        # Start with demo_feats
-        demo_feat_list = ['Avg_Elder_Ratio','Neg_Avg_Mean_Household_Income','Avg_EW_Ratio']
-        # Regression target: fatality rate in each CBG
-        Y = randombag_results['Saved_Lives']
-
-        # Regression only with demo_feats
-        X = randombag_results[demo_feat_list]
-        print('Independent Variables: ',demo_feat_list) # Unlike in statsmodels, here no need to add a constant.
-        reg = linear_model.LinearRegression(positive=Forced_Positive)
-        reg.fit(X,Y)
-        r2 = reg.score(X,Y)
-        adjusted_r2 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-        print('reg.score (R-squared): %.4f' % r2)
-        print('Adj. R-squared: %.4f' % adjusted_r2)
-        print('reg.coef_: ',reg.coef_)
-
-        # Regression with demo_feats and inner mechanisms: Damage
-        mediator_list = ['Avg_Damage']
-        X = randombag_results[demo_feat_list+mediator_list]
-        print('Independent Variables: ',demo_feat_list+mediator_list)
-        reg = linear_model.LinearRegression(positive=Forced_Positive)
-        reg.fit(X,Y)
-        r2 = reg.score(X,Y)
-        adjusted_r2 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-        print('reg.score (R-squared): %.4f' % r2)
-        print('Adj. R-squared: %.4f' % adjusted_r2)
-        print('reg.coef_: ',reg.coef_)
-
-        # Regression with demo_feats and inner mechanisms: Vulnerability
-        mediator_list = ['Avg_Vulnerability']
-        X = randombag_results[demo_feat_list+mediator_list]
-        print('Independent Variables: ',demo_feat_list+mediator_list)
-        reg = linear_model.LinearRegression(positive=Forced_Positive)
-        reg.fit(X,Y)
-        r2 = reg.score(X,Y)
-        adjusted_r2 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-        print('reg.score (R-squared): %.4f' % r2)
-        print('Adj. R-squared: %.4f' % adjusted_r2)
-        print('reg.coef_: ',reg.coef_)
-
-        # Regression with demo_feats and inner mechanisms: Vulnerability, Damage
-        mediator_list = ['Avg_Vulnerability','Avg_Damage']
-        X = randombag_results[demo_feat_list+mediator_list]
-        print('Independent Variables: ',demo_feat_list+mediator_list)
-        reg = linear_model.LinearRegression(positive=Forced_Positive)
-        reg.fit(X,Y)
-        r2 = reg.score(X,Y)
-        adjusted_r2 = (1-(1-r2)*(X.shape[0]-1)/(X.shape[0]-X.shape[1]-1))
-        print('reg.score (R-squared): %.4f' % r2)
-        print('Adj. R-squared: %.4f' % adjusted_r2)
-        print('reg.coef_: ',reg.coef_)
-        '''
 
 
     # Save results
@@ -715,7 +585,7 @@ anno_list=['Atlanta','Chicago','Dallas','Houston','L.A.','Miami','Phila.','S.F.'
 plt.figure(figsize=(14,7))
 plt.bar(np.arange(9)*3,fatality_adj_r2_model1_mean_array,width=1,label='Only demo-feats',color='k',alpha=0.8,yerr=fatality_adj_r2_model1_std_array) #color='dimgrey',
 plt.bar(np.arange(9)*3+1.05,fatality_adj_r2_model2_mean_array,width=1,label='With $\it{societal~risk}$',color='r',alpha=0.65,yerr=fatality_adj_r2_model2_std_array) #color='cornflowerblue'
-#plt.legend(fontsize=18,ncol=2,loc='upper center')
+
 plt.xticks(np.arange(9)*3+0.5,anno_list, fontsize=25,rotation=20)  
 plt.ylim(0,1)
 plt.yticks(fontsize=16) #fontsize=14
@@ -723,7 +593,7 @@ plt.ylabel('Explained variance\nof social uility',fontsize=28)
 ax = plt.gca()
 box = ax.get_position()
 ax.set_position([box.x0, box.y0, box.width , box.height* 0.8]) #https://blog.csdn.net/yywan1314520/article/details/53740001
-#plt.legend(ncol=3,fontsize=18,bbox_to_anchor=(0.8,-0.1)) #,title='Policy',title_fontsize='x-large')
+
 plt.legend(fontsize=24,ncol=2,loc='upper center',bbox_to_anchor=(0.5,1.2))
 # Save figure
 savepath = os.path.join(fig_save_root, 'fig3b.pdf')
@@ -741,21 +611,14 @@ def plot_equity_explained_variance(demo_feat, show_yticks=True):
          height=1,label='Only Demo-Feat',color='k',alpha=0.8) #color='orange',alpha=1
     plt.barh(np.arange(9)[::-1]*step_1-1*step_2,eval(f'{demo_feat}_adj_r2_model2_mean_array'),xerr=eval(f'{demo_feat}_adj_r2_model2_std_array'),
             height=1,label='With Vulnerability',color='green',alpha=0.7)#color='orange'
-    #plt.legend(fontsize=12)
     if(show_yticks):
         plt.yticks(np.arange(9)*step_1-0.5*step_2,anno_list[::-1], fontsize=20)  
     else:
         empty_list = ['','','','','','','','','']
         plt.yticks(np.arange(9)*step_1-0.5*step_2,empty_list, fontsize=20)  
-    #plt.xlim(0,1)
     plt.xticks(fontsize=14) 
     plt.xlabel(f'Explained variance\n',fontsize=18) #20220313
-    '''
-    if(demo_feat=='minority'):
-        plt.xlabel(f'Explained variance\nof equity-by-race-ethnicity',fontsize=18)
-    else:
-        plt.xlabel(f'Explained variance\nof equity-by-{demo_feat}',fontsize=18)
-    '''
+    
     # Save figure
     savepath = os.path.join(fig_save_root, f'fig3c_{demo_feat}.pdf')
     plt.savefig(savepath,bbox_inches = 'tight')

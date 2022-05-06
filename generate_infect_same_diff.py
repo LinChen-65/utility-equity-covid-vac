@@ -1,8 +1,5 @@
 # python generate_infect_same_diff.py --msa_name Atlanta 
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import argparse
 import os
 import datetime
@@ -14,10 +11,8 @@ import constants
 import functions
 
 import time
-import pdb
 
 # root
-#root = '/data/chenlin/COVID-19/Data'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
@@ -25,7 +20,7 @@ saveroot = os.path.join(root, 'results')
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()                    
 
@@ -47,8 +42,8 @@ f.close()
 # Load precomputed parameters to adjust(clip) POI dwell times
 d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values
+poi_dwell_times = d['median'].values
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 poi_trans_rate = constants.parameters_dict[MSA_NAME][2] / poi_areas * poi_dwell_time_correction_factors
@@ -171,10 +166,10 @@ else:
         poi_cbg_visits_array = poi_cbg_visits_list[hour_idx].toarray() # Extract the visit matrix for this hour
         # poi_cbg_visits_array.shape: (num_poi,num_cbg) e.g.(28713, 2943)
         cbg_out_pop = np.sum(poi_cbg_visits_array, axis=0)
-        cbg_out_rate = cbg_out_pop / cbg_sizes # 每个CBG当前外出人数(去往任何POI)占总人数比例
+        cbg_out_rate = cbg_out_pop / cbg_sizes 
         cbg_in_pop = cbg_sizes - cbg_out_pop
-        cbg_in_rate = cbg_in_pop / cbg_sizes # 每个CBG当前留守人数占总人数比例
-        poi_pop = np.sum(poi_cbg_visits_array, axis=1) # 每个POI当前人数(来自所有CBG) 
+        cbg_in_rate = cbg_in_pop / cbg_sizes
+        poi_pop = np.sum(poi_cbg_visits_array, axis=1) 
 
         hourly_N_same = cbg_in_pop * avg_household_size * home_beta
         hourly_N_diff = np.matmul(poi_cbg_visits_array.T, poi_pop * poi_trans_rate)

@@ -1,7 +1,5 @@
 # python correlation_cr_sr.py 
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
 
 import socket
 import os
@@ -15,19 +13,7 @@ import argparse
 import constants
 import functions
 
-import pdb
-
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results/'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results/'
-'''
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
@@ -39,7 +25,7 @@ parser.add_argument('--num_groups', type=int, default=50,
                     help='Number of groups for quantization.')
 parser.add_argument('--color_map', default='hot',
                     help='Color map for scatter plot.')                 
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()
 print('args.num_groups: ',args.num_groups)
@@ -224,13 +210,10 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
 
     # Load cbg_avg_infect_same, cbg_avg_infect_diff
     if(os.path.exists(os.path.join(saveroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))):
-        #print('cbg_avg_infect_same, cbg_avg_infect_diff: Load existing file.')
         cbg_avg_infect_same = np.load(os.path.join(saveroot, '3cbg_avg_infect_same_%s.npy'%MSA_NAME))
         cbg_avg_infect_diff = np.load(os.path.join(saveroot, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
     else:
         print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
-        pdb.set_trace()
-    #print('cbg_avg_infect_same.shape:',cbg_avg_infect_same.shape)
 
     SEIR_at_30d = np.load(os.path.join(saveroot, 'SEIR_at_30d.npy'),allow_pickle=True).item()
     S_ratio = SEIR_at_30d[MSA_NAME]['S'] / (cbg_sizes.sum())

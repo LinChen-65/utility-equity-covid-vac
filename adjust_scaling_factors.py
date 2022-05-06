@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-# python adjust_scaling_factors.py --msa_name Atlanta --quick_test
-
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
+# python adjust_scaling_factors.py --msa_name Atlanta
 
 import os
 import datetime
@@ -12,16 +9,13 @@ import pickle
 
 import constants
 import functions
-#import disease_model_original
 import disease_model_only_modify_attack_rates as disease_model
-#import disease_model_test as disease_model
 
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 
 import time
 
-#root = '/data/chenlin/COVID-19/Data'
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 print(root)
@@ -32,10 +26,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, 
                     help='Safegraph data root.')
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce number of simulations to test quickly.')
 parser.add_argument('--save_result', default=False, action='store_true',
                     help='If true, save simulation results.')  
 args = parser.parse_args()
@@ -56,19 +48,12 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
 #how_to_select_best_grid_search_models = 'deaths'
 how_to_select_best_grid_search_models = 'deaths_daily_smooth'
 
-if(args.quick_test):
-    print('Quick testing.')
-    NUM_SEEDS = 2
-    attack_scale_list = np.arange(15, 16, 0.5)
-    death_scale_list = np.arange(0.5, 0.6, 0.05)
+
+NUM_SEEDS = 60
+if(MSA_NAME=='LosAngeles'):
+    death_scale_list = [1.52]
 else:
-    NUM_SEEDS = 60
-    #attack_scale_list = np.arange(15, 26, 0.1)
-    if(MSA_NAME=='LosAngeles'):
-        death_scale_list = [1.52]
-    else:
-        #death_scale_list = np.arange(0.5, 1.6, 0.01)
-        death_scale_list = np.arange(0.6, 3.0, 0.01)
+    death_scale_list = np.arange(0.6, 3.0, 0.01)
     
 
 STARTING_SEED = range(NUM_SEEDS)
@@ -121,8 +106,8 @@ f.close()
 # Load precomputed parameters to adjust(clip) POI dwell times
 d = pd.read_csv(os.path.join(root,'data', 'parameters_%s.csv' % MSA_NAME)) 
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values    #Area
+poi_dwell_times = d['median'].values    #Average Dwell Time
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 
@@ -245,7 +230,6 @@ deaths_daily_smooth = functions.apply_smoothing(deaths_daily, agg_func=np.mean, 
 ###############################################################################
 # Load age-aware CBG-specific death rates (original)
 
-#cbg_attack_rates_original = np.loadtxt(os.path.join(root, MSA_NAME, 'cbg_attack_rates_original_'+MSA_NAME)) # Nature Medicine, 3 groups, 0.003, 0.044, 0.084
 cbg_death_rates_original = np.loadtxt(os.path.join(root, 'data', 'cbg_death_rates_original_'+MSA_NAME))
 cbg_attack_rates_original = np.ones(cbg_death_rates_original.shape)
 

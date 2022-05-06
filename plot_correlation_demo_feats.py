@@ -1,8 +1,5 @@
 # python plot_correlation_demo_feats.py 
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import socket
 import os
 import pandas as pd
@@ -15,24 +12,6 @@ import argparse
 import constants
 import functions
 
-import pdb
-
-'''
-# root (absolute)
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname in ['fib-dl3','rl3','rl2']):
-    root = '/data/chenlin/COVID-19/Data'
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-
-# subroot
-subroot = 'figures'
-if not os.path.exists(os.path.join(root, subroot)): # if folder does not exist, create one. #2022032
-    os.makedirs(os.path.join(root, subroot))
-'''
 
 # root
 root = os.getcwd()
@@ -46,7 +25,7 @@ parser.add_argument('--num_groups', type=int, default=50,
                     help='Num of groups for quantization.') 
 parser.add_argument('--colormap', default='hot',
                     help='Colormap for figures.') 
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.')
 args = parser.parse_args()
 
@@ -94,7 +73,6 @@ def scatter_kde(df, col_x, col_y, savepath, colormap='Spectral_r'):
     plt.ylabel(label_y.replace("_", " "),fontsize=17)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
-    #plt.text(0.4, 0.9, 'Corr: %s'%(np.round(df[col_x].corr(df[col_y]), 2)), fontsize=18)
     print('Corr: %s'%(np.round(df[col_x].corr(df[col_y]), 2)))
     plt.savefig(savepath,bbox_inches = 'tight')
     print('Figure saved. Path: ', savepath)
@@ -128,7 +106,6 @@ cbg_ethnic = pd.read_csv(filepath)
 data = pd.DataFrame()
 msa_count = 0
 vd_corr_list = []
-#for msa_idx in [0]:
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
@@ -187,7 +164,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
 
     # Obtain cbg sizes (populations)
     cbg_sizes = cbg_age_msa['Sum'].values
-    cbg_sizes = np.array(cbg_sizes,dtype='int32') #;print('Total population: ',np.sum(cbg_sizes))
+    cbg_sizes = np.array(cbg_sizes,dtype='int32') 
 
     # Load other Safegraph demographic data
     # Occupation
@@ -221,7 +198,6 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
     cbg_ethnic_msa['Sum'] = cbg_age_msa['Sum']
     # Rename
-    #cbg_ethnic_msa.rename(columns={'B03002e12':'Hispanic_Absolute'},inplace=True)
     cbg_ethnic_msa.rename(columns={'B03002e13':'Hispanic_White_Absolute'},inplace=True)
     
     cbg_race_msa['Minority_Absolute'] = cbg_race_msa['Sum'] - (cbg_race_msa['White_Absolute'] - cbg_ethnic_msa['Hispanic_White_Absolute'])
@@ -261,7 +237,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     
 
 ###############################################################################
-# Preprocessing: Binning (数据分箱)
+# Preprocessing: Binning
 
 print('Discretization, ', args.num_groups)
 enc = KBinsDiscretizer(n_bins=args.num_groups, encode="ordinal",strategy='uniform') #strategy='kmeans''uniform'

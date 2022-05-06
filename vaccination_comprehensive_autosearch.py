@@ -1,8 +1,5 @@
 # python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import sys
 import socket
 import os
@@ -12,7 +9,6 @@ import numpy as np
 import pickle
 import argparse
 import time
-import pdb
 from skcriteria import Data, MIN
 from skcriteria.madm import closeness
 
@@ -22,16 +18,6 @@ import disease_model_test as disease_model
 
 
 # root
-'''
-hostname = socket.gethostname()
-print('hostname: ', hostname)
-if(hostname=='fib-dl3'):
-    root = '/data/chenlin/COVID-19/Data' #dl3
-    saveroot = '/data/chenlin/utility-equity-covid-vac/results'
-elif(hostname=='rl4'):
-    root = '/home/chenlin/COVID-19/Data' #rl4
-    saveroot = '/home/chenlin/utility-equity-covid-vac/results'
-'''
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
 saveroot = os.path.join(root, 'results')
@@ -50,8 +36,6 @@ parser.add_argument('--acceptance_scenario',
                     help='Scenario of vaccine hesitancy (fully/real/cf18/cf13/cf17/ALL). Only useful when consider_hesitancy is True.')
 parser.add_argument('--consider_accessibility', default=False, action='store_true',
                     help='If true, consider vaccine accessibility.')
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce num_seeds to 2.')
 parser.add_argument('--num_groups', type=int, default=5,
                     help='Num of groups to divide CBGs into.') 
 parser.add_argument('--execution_ratio', type=float, default=1,
@@ -74,7 +58,7 @@ parser.add_argument('--w6', type=float, default=1,
                     help='Initial weight 6.')       
 parser.add_argument('--store_history', default=False, action='store_true',
                     help='If true, save history_D2 instead of final_deaths.')                                      
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()
 
@@ -84,8 +68,6 @@ print(f'vaccination ratio: {args.vaccination_ratio}.')
 print(f'recheck interval: {args.recheck_interval}.')
 if(args.consider_hesitancy):
     print(f'Consider vaccine hesitancy. Vaccine acceptance scenario: {args.acceptance_scenario}.')
-print(f'Quick testing? {args.quick_test}')
-
 
 
 # Policies to compare
@@ -94,11 +76,9 @@ policy_to_compare_rel_to_no_vaccination = ['No_Vaccination','Baseline'] + demo_p
 policy_to_compare_rel_to_baseline = ['Baseline','No_Vaccination'] + demo_policy_to_compare
 
 # Demo feat list
-#demo_feat_list = ['Age', 'Mean_Household_Income', 'Essential_Worker']
 demo_feat_list = ['Elder_Ratio', 'Mean_Household_Income', 'EW_Ratio', 'Minority_Ratio'] #20220306
 
 # Derived variables
-#policy_savename = 'adaptive_%sd_hybrid'%str(args.vaccination_time)
 policy_savename = f'{str(args.vaccination_time)}d_hybrid' #20220305
 print('policy_savename:',policy_savename)
 
@@ -107,20 +87,16 @@ weights = [args.w1, args.w2, args.w3, args.w4, args.w5, args.w6]
 w1,w2,w3,w4,w5,w6 = weights
 print('Weights:', weights)
 
-# Quick Test: prototyping
-if(args.quick_test):
-    NUM_SEEDS = 2
-    NUM_SEEDS_CHECKING = 2
-else:
-    NUM_SEEDS = 30
-    NUM_SEEDS_CHECKING = 30
+
+NUM_SEEDS = 30
+NUM_SEEDS_CHECKING = 30
 print('NUM_SEEDS: ', NUM_SEEDS)
 print('NUM_SEEDS_CHECKING: ', NUM_SEEDS_CHECKING)
 STARTING_SEED = range(NUM_SEEDS)
 STARTING_SEED_CHECKING = range(NUM_SEEDS_CHECKING)
 
 # Distribute vaccines in how many rounds
-distribution_time = args.vaccination_ratio / args.recheck_interval # 分几次把疫苗分配完
+distribution_time = args.vaccination_ratio / args.recheck_interval
 
 # Recheck interval for other strategies #20220306
 recheck_interval_others = 0.01
@@ -276,8 +252,8 @@ d = pd.read_csv(os.path.join(dataroot, 'parameters_%s.csv' % args.msa_name))
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
 all_hours = functions.list_hours_in_range(MIN_DATETIME, MAX_DATETIME)
-poi_areas = d['feet'].values#面积
-poi_dwell_times = d['median'].values#平均逗留时间
+poi_areas = d['feet'].values
+poi_dwell_times = d['median'].values
 poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 2
 del d
 
@@ -366,7 +342,7 @@ if('Minority' in demo_policy_to_compare): #20220305
     cbg_ethnic = pd.read_csv(filepath)
     cbg_ethnic_msa = functions.load_cbg_ethnic_msa(cbg_ethnic, cbg_ids_msa, cbg_sizes)
     del cbg_ethnic
-    # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
+    # Grouping: 
     separators = functions.get_separators(cbg_ethnic_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=False)
     cbg_ethnic_msa['Minority_Ratio_Quantile'] =  cbg_ethnic_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
     cbg_minority_msa = cbg_ethnic_msa
@@ -454,7 +430,6 @@ for policy in policy_to_compare_rel_to_no_vaccination:
 # Check whether there is NaN in cbg_tables
 if((cbg_age_msa.isnull().any().any()) or (cbg_income_msa.isnull().any().any()) or (cbg_occupation_msa.isnull().any().any()) or (cbg_minority_msa.isnull().any().any())):
     print('There are nan values in cbg_tables. Please check.')
-    pdb.set_trace()
 
 # Obtain utility and equity of policies
 gini_table_no_vac = make_gini_table(policy_list=policy_to_compare_rel_to_no_vaccination, demo_feat_list=demo_feat_list, num_groups=args.num_groups, 
@@ -465,24 +440,13 @@ gini_table_baseline = make_gini_table(policy_list=policy_to_compare_rel_to_basel
 print('Gini table of all the other policies (relative to baseline): \n', gini_table_baseline)
 
 
-# Best results from other polices  
-'''
-lowest_death_rate = float(gini_table_no_vac.iloc[0].min())
-lowest_age_gini = float(gini_table_no_vac.iloc[2].min())
-lowest_income_gini = float(gini_table_no_vac.iloc[4].min())
-lowest_occupation_gini = float(gini_table_no_vac.iloc[6].min())
-lowest_minority_gini = float(gini_table_no_vac.iloc[8].min())
-'''
-
 # No_Vaccination results
 data_column = gini_table_no_vac['No_Vaccination']
 no_vaccination_death_rate, no_vaccination_age_gini, no_vaccination_income_gini, no_vaccination_occupation_gini, no_vaccination_minority_gini = get_results_from_data_column(data_column) #20220306
-#print(no_vaccination_death_rate,no_vaccination_age_gini,no_vaccination_income_gini,no_vaccination_occupation_gini)
 
 # Baseline results
 data_column = gini_table_no_vac['Baseline']
 baseline_death_rate, baseline_age_gini, baseline_income_gini, baseline_occupation_gini, baseline_minority_gini = get_results_from_data_column(data_column) #20220306
-#print(baseline_death_rate,baseline_age_gini,baseline_income_gini,baseline_occupation_gini)
 
 # target: better of No_Vaccination and Baseline
 target_death_rate = min(baseline_death_rate, no_vaccination_death_rate)
@@ -529,9 +493,8 @@ cbg_hybrid_msa['Vulner_Rank'] = cbg_age_msa['Vulner_Rank_New'].copy()
 cbg_hybrid_msa['Damage_Rank'] = cbg_age_msa['Damage_Rank_New'].copy()
 if(cbg_hybrid_msa.isnull().any().any()):
     print('There are NaNs in cbg_hybrid_msa. Please check.')
-    pdb.set_trace()
 
-# Annotate the most vulnerable group. 这是为了配合函数，懒得改函数
+# Annotate the most vulnerable group.
 # Not grouping, so set all ['Most_Vulnerable']=1.
 cbg_hybrid_msa['Most_Vulnerable'] = 1
 
@@ -708,7 +671,6 @@ while(True):
     better_occupation_gini = (hybrid_occupation_gini<=(target_occupation_gini)); print('Occupation gini: ', hybrid_occupation_gini, target_occupation_gini, 'Good enough?', better_occupation_gini)
     better_minority_gini = (hybrid_minority_gini<=(target_minority_gini)); print('Minority gini: ', hybrid_minority_gini, target_minority_gini, 'Good enough?', better_minority_gini) #20220306
     better_overall_performance = (hybrid_overall_performance>=(target_overall_performance)); print('Overall performance: ', hybrid_overall_performance, target_overall_performance,'Good enough?', better_overall_performance)   
-    #print('Weights:',weights)
 
     # Compared to best in the history, to determine whether to save this one
     # Count number of dimensions that are better than target results
@@ -783,8 +745,6 @@ while(True):
             final_deaths_best_hybrid = final_deaths_hybrid.copy() #20220306
         
         elif(refine_mode):
-            #if((hybrid_death_rate<=best_hybrid_death_rate)&(hybrid_age_gini<=best_hybrid_age_gini)
-            #    &(hybrid_income_gini<best_hybrid_income_gini)&(hybrid_occupation_gini<best_hybrid_occupation_gini)):   
             if(hybrid_overall_performance>best_hybrid_overall_performance): # 20211020
                 print('Find a better solution. Weights:',weights)
                 if(os.path.exists(file_savename)):

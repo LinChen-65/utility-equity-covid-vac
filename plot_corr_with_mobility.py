@@ -1,8 +1,5 @@
 # python plot_corr_with_mobility.py
 
-import setproctitle
-setproctitle.setproctitle("covid-19-vac@chenlin")
-
 import os
 import pandas as pd
 import numpy as np
@@ -13,8 +10,6 @@ import argparse
 import constants
 import functions
 
-import pdb
-
 # root
 root = os.getcwd()
 dataroot = os.path.join(root, 'data')
@@ -23,15 +18,12 @@ fig_save_root = os.path.join(root, 'figures')
 
 # parameters
 parser = argparse.ArgumentParser()
-#parser.add_argument('--root', default='/data/chenlin/COVID-19/Data',
-#                    help='Root to retrieve data. data for dl3, home for rl4.')  
-#parser.add_argument('--saveroot', default='/data/chenlin/utility-equity-covid-vac/results/figures',
-#                    help='Root to save generated figures.')
+
 parser.add_argument('--num_groups', type=int, default=50,
                     help='Num of groups to divide CBGs into (for quantization).')   
 parser.add_argument('--colormap', default='hot',
                     help='Color map for graph.')                      
-parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data',
+parser.add_argument('--safegraph_root', default=dataroot, 
                     help='Safegraph data root.')
 args = parser.parse_args()
 
@@ -47,7 +39,6 @@ def get_avg_feat(cbg_list, data_df, feat_str):
         values.append(data_df.iloc[cbg][feat_str])
         weights.append(data_df.iloc[cbg]['Sum'])
     return np.average(np.array(values),weights=weights) 
-    
 
 # Scatter plot with density
 def scatter_kde(df, col_x, col_y, savepath, colormap='Spectral_r', print_corr=False, corr=None): 
@@ -126,8 +117,6 @@ corr_income_death_list= []
 corr_occupation_death_list= [] 
 corr_minority_death_list= [] 
 
-
-#for msa_idx in [0]:
 for msa_idx in range(len(constants.MSA_NAME_LIST)):
     MSA_NAME = constants.MSA_NAME_LIST[msa_idx]
     MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
@@ -221,29 +210,17 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     # Ethnicity
     cbg_ethnic_msa = pd.merge(cbg_ids_msa, cbg_ethnic, on='census_block_group', how='left')
     cbg_ethnic_msa.rename(columns={'B03002e13':'Hispanic_White_Absolute',
-                                   'B03002e3': 'NH_White'},inplace=True) #经验证，下方计算方式与直接取这个e3结果一致
+                                   'B03002e3': 'NH_White'},inplace=True)
     # Combine to calculate minority
     cbg_race_msa['Minority_Absolute'] = cbg_race_msa['Sum'] - (cbg_race_msa['White_Absolute'] - cbg_ethnic_msa['Hispanic_White_Absolute'])
     cbg_race_msa['Minority_Ratio'] = cbg_race_msa['Minority_Absolute'] / cbg_race_msa['Sum']
-    #print((cbg_ethnic_msa['NH_White'] == (cbg_race_msa['White_Absolute'] - cbg_ethnic_msa['Hispanic_White_Absolute'])).all())
 
     # Deal with NaN values
     cbg_race_msa.fillna(0,inplace=True)
     # Check whether there is NaN in cbg_tables
     if(cbg_race_msa.isnull().any().any()):
         print('NaN exists in cbg_race_msa. Please check.')
-        pdb.set_trace()
     cbg_minority_msa = cbg_race_msa 
-
-    '''
-    print(np.round((cbg_race_msa['Minority_Absolute'].sum()) / (cbg_race_msa['Sum'].sum()),3), 
-           '\n', np.round(cbg_race_msa['Minority_Ratio'].mean(),3),
-           '\n', np.round(cbg_race_msa['Minority_Ratio'].std(),3),
-           '\n', np.round(cbg_race_msa['Minority_Ratio'].median(),3), 
-           '\n', np.round(cbg_race_msa['Minority_Ratio'].max(),3), 
-           '\n', np.round(cbg_race_msa['Minority_Ratio'].min(),3))
-    pdb.set_trace()
-    '''
 
     ###############################################################################
     # Load and scale age-aware CBG-specific attack/death rates (original)
@@ -277,7 +254,6 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
         cbg_avg_infect_diff = np.load(os.path.join(result_root, '3cbg_avg_infect_diff_%s.npy'%MSA_NAME))
     else:
         print('cbg_avg_infect_same, cbg_avg_infect_diff: File not found. Please check.')
-        pdb.set_trace()
 
     SEIR_at_30d = np.load(os.path.join(result_root, 'SEIR_at_30d.npy'),allow_pickle=True).item()
     S_ratio = SEIR_at_30d[MSA_NAME]['S'] / (cbg_sizes.sum())
@@ -312,13 +288,11 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     data_msa['Death_Rate'] = cbg_age_msa['Death_Rate'].copy() #20220304
     
     data_msa['Valid'] = data_msa.apply(lambda x : 1 if x['Essential_Worker_Ratio']>0.2 else 0, axis=1)
-    #print('Before filtering, len(data_msa):', len(data_msa))
     data_msa = data_msa[data_msa['Valid']==1]
-    #print('After filtering, len(data_msa):', len(data_msa))
     data_msa = data_msa.reset_index()
     
     ###############################################################################
-    # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
+    # Grouping
     
     separators = functions.get_separators(data_msa, args.num_groups, 'Elder_Ratio','Sum', normalized=True)
     data_msa['Elder_Ratio_Quantile'] =  data_msa['Elder_Ratio'].apply(lambda x : functions.assign_group(x, separators))
@@ -329,7 +303,6 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
     separators = functions.get_separators(data_msa, args.num_groups, 'Mean_Household_Income','Sum', normalized=False)
     data_msa['Mean_Household_Income_Quantile'] =  data_msa['Mean_Household_Income'].apply(lambda x : functions.assign_group(x, separators))
 
-    # Grouping: 按args.num_groups分位数，将全体CBG分为args.num_groups个组，将分割点存储在separators中
     separators = functions.get_separators(data_msa, args.num_groups, 'Minority_Ratio','Sum', normalized=False)
     data_msa['Minority_Ratio_Quantile'] =  data_msa['Minority_Ratio'].apply(lambda x : functions.assign_group(x, separators))
 
@@ -343,7 +316,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
         elder_ratio_list.append(get_avg_feat(selected_cbgs,data_msa, 'Elder_Ratio'))
         mobility_age_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
         death_age_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
-    #print(np.corrcoef(elder_ratio_list,mobility_age_list)[0][1])
+
     corr_age_mobility_list.append(np.corrcoef(elder_ratio_list,mobility_age_list)[0][1])
     corr_age_death_list.append(np.corrcoef(elder_ratio_list,death_age_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
@@ -368,7 +341,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
         income_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mean_Household_Income'))
         mobility_income_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
         death_income_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
-    #print(np.corrcoef(income_list,mobility_income_list)[0][1])
+
     corr_income_mobility_list.append(np.corrcoef(income_list,mobility_income_list)[0][1])
     corr_income_death_list.append(np.corrcoef(income_list,death_income_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
@@ -394,7 +367,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
         ew_ratio_list.append(get_avg_feat(selected_cbgs,data_msa, 'Essential_Worker_Ratio'))
         mobility_occupation_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
         death_occupation_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
-    #print(np.corrcoef(ew_ratio_list,mobility_occupation_list)[0][1])
+
     corr_occupation_mobility_list.append(np.corrcoef(ew_ratio_list,mobility_occupation_list)[0][1])
     corr_occupation_death_list.append(np.corrcoef(ew_ratio_list,death_occupation_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
@@ -421,7 +394,7 @@ for msa_idx in range(len(constants.MSA_NAME_LIST)):
         minority_ratio_list.append(get_avg_feat(selected_cbgs,data_msa, 'Minority_Ratio'))
         mobility_minority_list.append(get_avg_feat(selected_cbgs,data_msa, 'Mobility'))
         death_minority_list.append(get_avg_feat(selected_cbgs,data_msa, 'Death_Rate')) #20220315
-    #print(np.corrcoef(minority_ratio_list,mobility_minority_list)[0][1])
+
     corr_minority_mobility_list.append(np.corrcoef(minority_ratio_list,mobility_minority_list)[0][1])
     corr_minority_death_list.append(np.corrcoef(minority_ratio_list,death_minority_list)[0][1]) #20220315
     # Normalization by MSA max #20210927
