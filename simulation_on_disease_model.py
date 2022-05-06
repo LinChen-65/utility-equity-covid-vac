@@ -24,7 +24,7 @@ resultroot = os.path.join(root, 'results')
 parser = argparse.ArgumentParser()
 parser.add_argument('--msa_name', 
                     help='MSA name.')
-parser.add_argument('--safegraph_root', default='/data/chenlin/COVID-19/Data', #dataroot
+parser.add_argument('--safegraph_root', default=dataroot, #'/data/chenlin/COVID-19/Data', #dataroot
                     help='Safegraph data root.') 
 parser.add_argument('--quick_test', default=False, action='store_true', 
                     help='If true, test quickly.')                    
@@ -225,9 +225,9 @@ for policy in policy_list:
 '''
 
 policy = 'Age_Agnostic'
-np.array(history_D2_age_agnostic).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
+np.array(history_D2_age_agnostic).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
 policy = 'No_Vaccination'
-np.array(history_D2_no_vaccination).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
+np.array(history_D2_no_vaccination).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
 
 print('Results saved.')
 pdb.set_trace()
