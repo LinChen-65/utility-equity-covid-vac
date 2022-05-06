@@ -190,8 +190,8 @@ else:
     cbg_avg_infect_same = np.mean(np.array(hourly_N_same_list),axis=0)
     cbg_avg_infect_diff = np.mean(np.array(hourly_N_diff_list),axis=0)
 
-    np.save(os.path.join(root, '3cbg_avg_infect_same_%s'%MSA_NAME), cbg_avg_infect_same) 
-    np.save(os.path.join(root, '3cbg_avg_infect_diff_%s'%MSA_NAME), cbg_avg_infect_diff) 
+    np.save(os.path.join(saveroot, '3cbg_avg_infect_same_%s'%MSA_NAME), cbg_avg_infect_same) 
+    np.save(os.path.join(saveroot, '3cbg_avg_infect_diff_%s'%MSA_NAME), cbg_avg_infect_diff) 
     
 print('cbg_avg_infect_same.shape:',cbg_avg_infect_same.shape)
 
