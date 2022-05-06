@@ -18,7 +18,7 @@ import constants
 
 #import SEIR
 from scipy.integrate import odeint
-from bayes_opt import BayesianOptimization
+#from bayes_opt import BayesianOptimization
 #from lmfit import minimize, Parameters, Parameter, report_fit
 from hyperopt import hp, tpe, Trials, fmin
 
