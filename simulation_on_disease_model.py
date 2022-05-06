@@ -225,8 +225,10 @@ for policy in policy_list:
 '''
 
 policy = 'Age_Agnostic'
+policy = policy.lower()
 np.array(history_D2_age_agnostic).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % (policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
 policy = 'No_Vaccination'
+policy = policy.lower()
 np.array(history_D2_no_vaccination).tofile(os.path.join(resultroot, 'vaccination_results_adaptive_31d_0.1_0.01', r'20210206_history_D2_%s_adaptive_%s_0.01_%sseeds_%s') % policy,VACCINATION_RATIO,NUM_SEEDS,MSA_NAME))
 
 print('Results saved.')
