@@ -550,7 +550,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                 vaccination_vector_baseline = functions.vaccine_distribution_flood(cbg_table=cbg_age_msa, 
                                                                                 vaccination_ratio=args.vaccination_ratio, 
                                                                                 demo_feat='Random_Permutation', 
-                                                                                ascending=None,
+                                                                                ascending=False,#None,
                                                                                 execution_ratio=1
                                                                                 )
                 # Run simulations
