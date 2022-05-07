@@ -24,8 +24,8 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 ```
 
 ## Dataset
-Since the data files and intermediate results needed to test the code are too large, we put it in zenodo (https://sandbox.zenodo.org/record/1056848). 
-**Please download them from this link and replace the 'data' and 'results' folder with these downloaded folders.**
+We put the datasets in a zenodo repo (https://sandbox.zenodo.org/record/1058859). 
+**Please download them from this link and unzip them into 'data' and 'results' folders in the current directory, respectively.**
 
 Sources of raw data:
 - COVID-19 daily death data are available at the New York Times (https://github.com/nytimes/covid-19-data). 
@@ -58,8 +58,8 @@ Expected outcomes:
 
 ```
 # Fig. 1(d)
-# Note: To generate this figure, you need to first run the code file named 'get_upper_lower_bound_of_models_wider.py', as mentioned above.
 python plot_groupwise_death_rate.py
+# Note: To generate this figure, you need to first run the code file named 'get_upper_lower_bound_of_models_wider.py', as mentioned above.
 ```
 
 Expected outcomes:
@@ -114,7 +114,7 @@ python hypothesis_test.py --msa_name Atlanta
 python vaccination_singledemo_middle_policies.py --msa_name Atlanta
 ```
 
-#### 4. Calculate community risk and societal harm (Fig.3(d))
+#### 4. Calculate community risk and societal risk (Fig.3(d))
 ```
 # Calculate the susceptible-infectious ratio
 python get_s_i_ratio_at_vaccination_moment.py
@@ -128,7 +128,7 @@ Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_corr_cr_sr%5D_result.png' height=150>
 
-#### 5. Regression analysis with/without community risk and societal harm (Fig.3)
+#### 5. Regression analysis with/without community risk and societal risk (Fig.3)
 ```
 # Generate random bags of vaccination results
 python vaccination_randombag.py --msa_name Atlanta --random_seed 66
@@ -140,9 +140,8 @@ Expected outcomes:
 
 <img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_regression_randombag_sample_average%5D_result.png' height=150>
 
-#### 6. Auto-search all-round vaccination strategies (Fig.4, Supplementary Fig.18)
+#### 6. All-round vaccination strategies (Fig.4, Supplementary Fig.18)
 ```
-python vaccination_comprehensive_autosearch.py --msa_name Atlanta --vaccination_time 31 --vaccination_ratio 0.1
 python plot_comprehensive_utility_equity.py --with_supplementary
 ```
 
