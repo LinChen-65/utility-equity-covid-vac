@@ -288,7 +288,7 @@ for this_msa in msa_name_list:
         
         if(os.path.exists(final_deaths_result_path)):
             print('Final deaths file already exists.')
-            exec(f'final_deaths_{policy} = np.fromfile(\'{final_deaths_result_path}\')')
+            exec(f'final_deaths_{policy} = np.fromfile(r\'{final_deaths_result_path}\')')
             exec(f'final_deaths_{policy} = np.reshape(final_deaths_{policy},(args.num_seeds,M))')   
         else:
             print('File not found. Please check, or go back to make_gini_table.')

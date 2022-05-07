@@ -45,7 +45,6 @@ MSA_NAME = args.msa_name; print('MSA_NAME: ',MSA_NAME)
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
 
 # Selection criteria
-#how_to_select_best_grid_search_models = 'deaths'
 how_to_select_best_grid_search_models = 'deaths_daily_smooth'
 
 
@@ -321,7 +320,6 @@ for death_scale in death_scale_list:
         rmse_dict_deaths_daily_smooth['%s,%s'%(attack_scale,death_scale)] = sqrt(mean_squared_error(deaths_daily_smooth,deaths_daily_total_no_vaccination))
         
         if(isfirst==True):
-            #best_rmse_deaths_daily = sqrt(mean_squared_error(deaths_daily,deaths_daily_total_no_vaccination))
             best_rmse_deaths_daily_smooth = sqrt(mean_squared_error(deaths_daily_smooth,deaths_daily_total_no_vaccination))
             best_parameters = [attack_scale,death_scale]
             print('Current best: ', best_rmse_deaths_daily_smooth, '\nCurrent best parameters: [%s,%s].'%(attack_scale,death_scale))
@@ -331,7 +329,6 @@ for death_scale in death_scale_list:
             print('Current mse: ', current_mse)
             print('Previous best: ',best_rmse_deaths_daily_smooth)
             if(best_rmse_deaths_daily_smooth > current_mse):
-                #best_rmse_deaths_daily = sqrt(mean_squared_error(deaths,deaths_total_no_vaccination))
                 best_rmse_deaths_daily_smooth = current_mse
                 best_parameters = [attack_scale,death_scale]
                 print('Current best: ', best_rmse_deaths_daily_smooth, '\nCurrent best parameters: [%s,%s].'%(attack_scale,death_scale))
@@ -367,7 +364,6 @@ for death_scale in death_scale_list:
         best_results['case rmse'] = sqrt(mean_squared_error(cases,cases_total_no_vaccination))
         best_results['case smooth rmse'] = sqrt(mean_squared_error(cases_smooth,cases_total_no_vaccination))
         if(how_to_select_best_grid_search_models == 'deaths_daily_smooth'):
-            #best_results['daily death rmse'] = best_rmse_deaths_daily
             best_results['daily death smooth rmse'] = best_rmse_deaths_daily_smooth
         if(how_to_select_best_grid_search_models == 'deaths'):
             best_results['death rmse'] = best_rmse_deaths

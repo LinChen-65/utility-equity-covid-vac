@@ -33,8 +33,6 @@ parser.add_argument('--acceptance_scenario',
                     help='Scenario of vaccine hesitancy (fully/real/cf18/cf13/cf17/ALL). Only useful when consider_hesitancy is True.')
 parser.add_argument('--consider_accessibility', default=False, action='store_true',
                     help='If true, consider vaccine accessibility.')
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce num_seeds to 2.')
 parser.add_argument('--num_groups', type=int, default=5,
                     help='Num of groups to divide CBGs into.') 
 parser.add_argument('--execution_ratio', type=float, default=1,
@@ -48,7 +46,6 @@ parser.add_argument('--safegraph_root', default=dataroot,
 args = parser.parse_args()
 
 print('Consider hesitancy? ', args.consider_hesitancy)                                   
-print('Quick testing?', args.quick_test)
 print('Consider accessibility?', args.consider_accessibility)
 
 
@@ -72,12 +69,8 @@ else:
 print('Vaccine acceptance scenario list: ', ACCEPTANCE_SCENARIO_LIST)
 
 # Setting num_seeds
-if(args.quick_test):
-    NUM_SEEDS = 2
-    NUM_SEEDS_CHECKING = 2
-else:
-    NUM_SEEDS = 30
-    NUM_SEEDS_CHECKING = 30 
+NUM_SEEDS = 30
+NUM_SEEDS_CHECKING = 30 
 print('NUM_SEEDS: ', NUM_SEEDS)
 print('NUM_SEEDS_CHECKING: ', NUM_SEEDS_CHECKING)
 STARTING_SEED = range(NUM_SEEDS)
@@ -514,7 +507,7 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                 vaccination_vector_baseline = functions.vaccine_distribution_flood(cbg_table=cbg_age_msa, 
                                                                                 vaccination_ratio=args.vaccination_ratio, 
                                                                                 demo_feat='Random_Permutation', 
-                                                                                ascending=False,#None,
+                                                                                ascending=False,
                                                                                 execution_ratio=1
                                                                                 )
                 # Run simulations
@@ -522,10 +515,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                                         vaccination_vector=vaccination_vector_baseline,
                                                         vaccine_acceptance = vaccine_acceptance, #20211007
                                                         protection_rate = args.protection_rate)
-                if(args.quick_test): print('Testing. Not saving results.')
-                else:
-                    print(f'Save {policy} results at:\n{filename}.')
-                    final_deaths.tofile(filename) 
+                print(f'Save {policy} results at:\n{filename}.')
+                final_deaths.tofile(filename) 
 
         ###############################################################################
         # Experiments for vaccinating the least disadvantaged communities
@@ -551,10 +542,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                                    vaccination_vector=vaccination_vector_age,
                                                    vaccine_acceptance = vaccine_acceptance, #20211007
                                                    protection_rate = args.protection_rate)
-                if(args.quick_test): print('Testing. Not saving results.')
-                else:
-                    print(f'Save {policy} results at:\n{filename}.')
-                    final_deaths.tofile(filename) 
+                print(f'Save {policy} results at:\n{filename}.')
+                final_deaths.tofile(filename) 
 
         ###############################################################################
         # Income, prioritize the most disadvantaged
@@ -574,10 +563,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                                             vaccination_vector=vaccination_vector_income,
                                                             vaccine_acceptance = vaccine_acceptance, #20211007
                                                             protection_rate = args.protection_rate)
-                if(args.quick_test): print('Testing. Not saving results.')
-                else:
-                    print(f'Save {policy} results at:\n{filename}.')
-                    final_deaths.tofile(filename) 
+                print(f'Save {policy} results at:\n{filename}.')
+                final_deaths.tofile(filename) 
 
         ###############################################################################
         # Occupation, prioritize the most disadvantaged
@@ -597,10 +584,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                                         vaccination_vector=vaccination_vector_occupation,
                                                         vaccine_acceptance = vaccine_acceptance, #20211007
                                                         protection_rate = args.protection_rate)
-                if(args.quick_test): print('Testing. Not saving results.')
-                else:
-                    print(f'Save {policy} results at:\n{filename}.')
-                    final_deaths.tofile(filename) 
+                print(f'Save {policy} results at:\n{filename}.')
+                final_deaths.tofile(filename) 
 
         ###############################################################################
         # SVI, prioritize the most disadvantaged
@@ -640,10 +625,8 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                               vaccination_vector=vaccination_vector_svi_new,
                                               vaccine_acceptance = vaccine_acceptance, #20211007
                                               protection_rate = args.protection_rate)
-                if(args.quick_test): print('Testing. Not saving results.')
-                else:
-                    print(f'Save {policy} results at:\n{filename}.')
-                    final_deaths.tofile(filename) 
+                print(f'Save {policy} results at:\n{filename}.')
+                final_deaths.tofile(filename) 
 
         ###############################################################################
         # Minority, prioritized the most disadvantaged
@@ -664,11 +647,10 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                               vaccination_vector=vaccination_vector_minority,
                                               vaccine_acceptance = vaccine_acceptance, #20211007
                                               protection_rate = args.protection_rate)
-                if(args.quick_test): print('Testing. Not saving results.')
-                else:
-                    print(f'Save {policy} results at:\n{filename}.')            
 
-                    final_deaths.tofile(filename) #20220304
+                print(f'Save {policy} results at:\n{filename}.')            
+
+                final_deaths.tofile(filename) #20220304
                 
     ###############################################################################
     # Experiments for vaccinating the least disadvantaged communities
@@ -752,11 +734,9 @@ for ACCEPTANCE_SCENARIO in ACCEPTANCE_SCENARIO_LIST:
                                           vaccine_acceptance = vaccine_acceptance, #20211007
                                           protection_rate = args.protection_rate)
             # Save results
-            if(args.quick_test): print('Testing. Not saving results.')
-            else:
-                policy = policy.lower()
-                print(f'Save {policy} results at:\n{filename}.')            
-                final_deaths.tofile(filename) #20220304
+            policy = policy.lower()
+            print(f'Save {policy} results at:\n{filename}.')            
+            final_deaths.tofile(filename) #20220304
 
      
     end = time.time()

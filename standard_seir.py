@@ -62,7 +62,7 @@ def ode_model(z, t, beta, sigma, gamma):
     dEdt = beta*S*I/N - sigma*E
     dIdt = sigma*E - gamma*I
     dRdt = gamma*I
-    dDdt = IFR*I # 202101807
+    dDdt = IFR*I 
     return [dSdt, dEdt, dIdt, dRdt, dDdt]
 
 def ode_solver(t, initial_conditions, params):
@@ -239,7 +239,7 @@ for this_msa in msa_name_list:
     for i in range(1,NUM_DAYS):
         predicted_deaths_daily.append(predicted_deaths_accumulated[i]-predicted_deaths_accumulated[i-1])
     print('predicted_deaths_daily: ', predicted_deaths_daily)
-    predicted_deaths_daily = np.array(predicted_deaths_daily) #20220315
+    predicted_deaths_daily = np.array(predicted_deaths_daily)
     RMSE = sqrt(mean_squared_error(deaths_daily_smooth, predicted_deaths_daily))
     normalizer = deaths_daily_smooth.mean()
     RMSE_norm = RMSE / normalizer
@@ -250,7 +250,7 @@ for this_msa in msa_name_list:
     print('result_opt: ', result_opt)
 
     if(args.save_result):
-        filepath = os.path.join(saveroot, f'seir_daily_deaths_{this_msa}') #20220315
+        filepath = os.path.join(saveroot, f'seir_daily_deaths_{this_msa}')
         predicted_deaths_daily.tofile(filepath)
         print(f'{this_msa}, file saved at: {filepath}')
 

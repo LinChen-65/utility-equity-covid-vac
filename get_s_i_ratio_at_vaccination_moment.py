@@ -20,8 +20,6 @@ saveroot = os.path.join(root, 'results')
 
 # parameters
 parser = argparse.ArgumentParser()
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce num_seeds to 2.')
 parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 parser.add_argument('--save_result', default=False, action='store_true',
@@ -47,12 +45,7 @@ MSA_NAME_LIST = ['Atlanta','Chicago','Dallas','Houston', 'LosAngeles',
 #############################################################################
 # Main variable settings
 
-# Quick Test: prototyping
-print('Quick testing?', args.quick_test)
-if(args.quick_test): 
-    NUM_SEEDS = 2
-else: 
-    NUM_SEEDS = 30
+NUM_SEEDS = 30
 print('NUM_SEEDS: ', NUM_SEEDS)
 STARTING_SEED = range(NUM_SEEDS)
 

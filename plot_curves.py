@@ -34,7 +34,7 @@ msa_name_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami
 anno_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'Los Angeles', 'Miami', 'Philadelphia', 'San Francisco', 'Washington D.C.']
 this_recheck_interval = 0.01
 
-def get_mean_max_min(history_D2): #20220313
+def get_mean_max_min(history_D2):
     deaths_total_mean = np.mean(np.sum(history_D2, axis=2), axis=1) #(63,30,3130)->(63,30)->(63,)
     deaths_total_max = np.max(np.sum(history_D2, axis=2), axis=1) 
     deaths_total_min = np.min(np.sum(history_D2, axis=2), axis=1) 
@@ -202,7 +202,6 @@ for msa_idx in range(len(msa_name_list)):
     plt.plot(deaths_daily_total_age_agnostic,label='Meta-population',marker='o',markersize=markersize,color=color_list[0],alpha=alpha_list[0]) 
     plt.plot(deaths_daily_total_no_vaccination,label='BD',marker='o',markersize=markersize,color=color_list[1],alpha=alpha_list[1]) 
     plt.plot(predicted_deaths_daily,label='Standard SEIR',marker='o',markersize=markersize,color=color_list[2],alpha=alpha_list[2])
-    #plt.scatter(np.arange(len(deaths_daily)),deaths_daily,color='grey',marker='x') 
     plt.plot(deaths_daily_smooth,label='Ground Truth',marker='o',markersize=markersize,color=color_list[3], alpha=alpha_list[3])
 
     plt.yticks(fontsize=14) 
@@ -211,7 +210,6 @@ for msa_idx in range(len(msa_name_list)):
     plt.xlim(-1,63)
     plt.xticks(np.arange(13)*5,fontsize=12)
     plt.xlabel('Days',fontsize=25)
-    #plt.legend(loc='upper left',fontsize=17.5)
 
     # Save the figure
     savepath = os.path.join(fig_save_root, 'sup', f'sup_model_curve_{this_msa}.pdf')
@@ -280,8 +278,8 @@ if(args.with_vac):
 
         y_max = np.max(np.array([np.max(mean_no_vac),np.max(max_no_vac),np.max(min_no_vac), 
                                 np.max(mean_baseline),np.max(max_baseline),np.max(min_baseline),
-                                np.max(mean_hybrid),np.max(max_hybrid),np.max(min_hybrid)])) #20220316
-        plt.vlines(31, 0, y_max, colors='black',linestyles ="dashed") #20220316
+                                np.max(mean_hybrid),np.max(max_hybrid),np.max(min_hybrid)]))
+        plt.vlines(31, 0, y_max, colors='black',linestyles ="dashed")
 
         plt.yticks(fontsize=14) 
         plt.ylabel('Daily deaths', fontsize=25)

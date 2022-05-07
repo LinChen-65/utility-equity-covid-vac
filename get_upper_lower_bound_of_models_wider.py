@@ -33,7 +33,7 @@ args = parser.parse_args()
 ##############################################################################
 # Constants
 
-datestring = 20210206 #'20220505'#'20210206'
+datestring = 20210206 
 
 MIN_DATETIME = datetime.datetime(2020, 3, 1, 0)
 MAX_DATETIME = datetime.datetime(2020, 5, 2, 23)
@@ -98,7 +98,6 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, protection_rate
     m.init_endogenous_variables()
     T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
     
-    #return total_affected, history_C2, history_D2, total_affected_each_cbg
     return history_C2, history_D2
 
 ###############################################################################
@@ -297,14 +296,13 @@ if(args.tolerance in scales.keys()):
         history_D2_no_vaccination, _ = functions.average_across_random_seeds_only_death(history_D2_no_vaccination_all, 
                                                                                         M, idxs_msa_nyt, 
                                                                                         print_results=False)
-        #print('history_D2_no_vaccination.shape:',history_D2_no_vaccination.shape)                                                                                    
+                                                                                          
         if(death_scale==scales[args.tolerance][MSA_NAME][0]):
             age_aware_history_D2_all = history_D2_no_vaccination.copy()
         else:
             age_aware_history_D2_all = np.concatenate((age_aware_history_D2_all, history_D2_no_vaccination),axis=1)
             print('age_aware_history_D2_all.shape:',age_aware_history_D2_all.shape)
         
-        #np.save(os.path.join(root,MSA_NAME,'age_aware_history_D2_all_%s.npy'%(MSA_NAME)), age_aware_history_D2_all)
         np.save(os.path.join(resultroot,'avg_age_aware_history_D2_all_%s.npy'%(MSA_NAME)), age_aware_history_D2_all)
 
         death_scale += 0.01
@@ -319,8 +317,7 @@ else:
 
     # No_Vaccination: Construct the vaccination vector
     vaccination_vector_no_vaccination = np.zeros(len(cbg_sizes))
-    #scale_bound = [constants.death_scale_dict[MSA_NAME][0]*(1-0.1), constants.death_scale_dict[MSA_NAME][0]*(1+0.1)]
-
+    
     if(args.tolerance>scales['max']):
         print('Expand from %s'%scales['max'])
         if(args.direction=='lower'):

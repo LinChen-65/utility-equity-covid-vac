@@ -29,8 +29,6 @@ parser.add_argument('--msa_name',
                     help='MSA name.')
 parser.add_argument('--random_seed', type=int, default=42, 
                     help='Random seed.')
-parser.add_argument('--quick_test', default=False, action='store_true',
-                    help='If true, reduce num_seeds to 2.')
 parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.') 
 args = parser.parse_args()
@@ -68,12 +66,8 @@ MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME]
 RANDOM_SEED = args.random_seed
 print('RANDOM_SEED:',RANDOM_SEED)
 
-# Quick Test: prototyping
-print('Quick testing?', args.quick_test)
-if(args.quick_test):
-    NUM_SEEDS = 2
-else:
-    NUM_SEEDS = 60 #30
+
+NUM_SEEDS = 60 #30
 print('NUM_SEEDS: ', NUM_SEEDS)
 STARTING_SEED = range(NUM_SEEDS)
 
