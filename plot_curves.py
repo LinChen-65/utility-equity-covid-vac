@@ -9,6 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import constants
+from scipy import stats
+from math import sqrt
+from sklearn.metrics import mean_squared_error
 
 # root
 root = os.getcwd()
@@ -29,10 +32,11 @@ parser.add_argument('--with_vac', default=False, action='store_true',
 args = parser.parse_args()
 
 
-
 msa_name_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami', 'Philadelphia', 'SanFrancisco', 'WashingtonDC']
 anno_list = ['Atlanta', 'Chicago', 'Dallas', 'Houston', 'Los Angeles', 'Miami', 'Philadelphia', 'San Francisco', 'Washington D.C.']
 this_recheck_interval = 0.01
+num_seeds = 60 
+num_days = 63
 
 def get_mean_max_min(history_D2):
     deaths_total_mean = np.mean(np.sum(history_D2, axis=2), axis=1) #(63,30,3130)->(63,30)->(63,)
@@ -48,11 +52,18 @@ def get_mean_max_min(history_D2):
         min_list.append(deaths_total_min[i]-deaths_total_min[i-1])
     return mean_list, max_list, min_list
 
+def get_ci(data):
+    bounds = list(stats.t.interval(alpha=0.99, df=len(data)-1, loc=np.mean(data), scale=stats.sem(data)))
+    lower = bounds[0]
+    upper = bounds[1]
+    return lower, upper
+
 ####################################################################################################
 # Fig. 1(c)
 
-from math import sqrt
-from sklearn.metrics import mean_squared_error
+# Load cbg dict
+dict_savepath = os.path.join(dataroot, 'cbg_nyt_dict.npy')
+cbg_dict = np.load(dict_savepath, allow_pickle=True).item()
 
 # Normalized by the mean of daily deaths smooth
 deaths_daily_rmse_seed_age_agnostic_msa = np.load(os.path.join(result_root,'20210206_norm_by_mean_deaths_daily_rmse_seed_age_agnostic_msa.npy'),
