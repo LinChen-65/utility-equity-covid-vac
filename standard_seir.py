@@ -250,7 +250,7 @@ for this_msa in msa_name_list:
     print('result_opt: ', result_opt)
 
     if(args.save_result):
-        filepath = os.path.join(saveroot, f'seir_daily_deaths_{this_msa}')
+        filepath = os.path.join(saveroot, f'new_seir_daily_deaths_{this_msa}')
         predicted_deaths_daily.tofile(filepath)
         print(f'{this_msa}, file saved at: {filepath}')
 
