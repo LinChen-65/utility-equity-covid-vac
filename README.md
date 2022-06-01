@@ -41,8 +41,8 @@ Note: Parameters should be specified to generate corrsponding results. Example v
 ```
 python grid_search_parameters.py --msa_name Atlanta
 python adjust_scaling_factors.py --msa_name Atlanta
-# Obtain simulation results on BD model and meta-population model
-python simulation_on_disease_model.py --msa_name Atlanta
+# Obtain simulation results on BD model and meta-population model # can adjust --num_seeds to get different numbers of simulations
+python simulation_on_disease_model.py --msa_name Atlanta --num_seeds 30
 # Determine upper and lower bounds
 python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta --direction lower --tolerance 1.5
 python get_upper_lower_bound_of_models_wider.py --msa_name Atlanta --direction upper --tolerance 1.5
