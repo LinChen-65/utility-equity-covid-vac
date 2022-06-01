@@ -1,5 +1,4 @@
 import numpy as np
-import copy
 import pdb
 
 class Model:
@@ -85,10 +84,10 @@ class Model:
         self.death_lag = death_lag
 
         self.CBG_ATTACK_RATES_NEW = self.CBG_ATTACK_RATES_ORIGINAL * (1*(1-self.VACCINATION_VECTOR/self.CBG_SIZES)+(1-self.PROTECTION_RATE)*self.VACCINATION_VECTOR/self.CBG_SIZES)
-        self.CBG_DEATH_RATES_NEW = self.CBG_DEATH_RATES_ORIGINAL #20211013
-        self.CBG_ATTACK_RATES_NEW = np.clip(self.CBG_ATTACK_RATES_NEW, 0, None) # 20210116
-        self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, 0, None) # 20210116
-        self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, None, 1) # 20210214
+        self.CBG_DEATH_RATES_NEW = self.CBG_DEATH_RATES_ORIGINAL 
+        self.CBG_ATTACK_RATES_NEW = np.clip(self.CBG_ATTACK_RATES_NEW, 0, None) 
+        self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, 0, None) 
+        self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, None, 1) 
         assert((self.CBG_DEATH_RATES_NEW>=0).all())
         assert((self.CBG_DEATH_RATES_NEW<=1).all())
         
@@ -137,9 +136,6 @@ class Model:
                 
                 history_C2.append(self.C2) # Save history for cases
                 history_D2.append(self.D2) # Save history for deaths
-                
-                if(no_print==False):
-                    print('t:',t,'L:',L,'I:',I,'R',R,'C',C,'D',D)
             
             if(epidemic_over == False):
                 assert((self.cbg_latent>=0).all())
@@ -204,7 +200,6 @@ class Model:
     def get_new_cases(self, t):
         ### Compute CBG densities and infection rates
         cbg_densities = self.cbg_infected / self.CBG_SIZES  # S x N,Ici/Nci
-        overall_densities = (np.sum(self.cbg_infected, axis=1) / np.sum(self.CBG_SIZES)).reshape(-1, 1)  # S x 1#总感染率，全部cbg的感染数除以总人数
         num_sus = np.clip(self.CBG_SIZES - self.cbg_latent - self.cbg_infected - self.cbg_removed, 0, None)  # S x N，易感人数即普通人人数维度是1×N
         sus_frac = num_sus / self.CBG_SIZES  # S x N，普通人比例
 
