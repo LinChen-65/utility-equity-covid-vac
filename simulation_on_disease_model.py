@@ -1,4 +1,4 @@
-# python simulation_on_disease_model.py --msa_name Atlanta
+# python simulation_on_disease_model.py --msa_name Atlanta --num_seeds 60
 
 import argparse
 import os
@@ -22,6 +22,8 @@ parser.add_argument('--msa_name',
                     help='MSA name.')
 parser.add_argument('--safegraph_root', default=dataroot,
                     help='Safegraph data root.')               
+parser.add_argument('--num_seeds', type=int, default=30,
+                    help='Safegraph data root.') 
 args = parser.parse_args()
 
 
@@ -36,7 +38,7 @@ policy_list = ['No_Vaccination', 'Age_Agnostic']
 print('Policy list: ', policy_list)
 
 
-NUM_SEEDS = 30
+NUM_SEEDS = args.num_seeds #30
 print('NUM_SEEDS: ', NUM_SEEDS)
 STARTING_SEED = range(NUM_SEEDS)
 
