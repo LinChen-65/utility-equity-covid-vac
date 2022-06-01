@@ -87,7 +87,7 @@ def get_overall_performance(gini_df_dict,  with_real_scaled=False):
         minority_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Minority'])
         hybrid_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Hybrid'])
         hybrid_ablation_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'])  
-        svi_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['SVI'])
+        svi_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['SVI_new'])
         if(with_real_scaled):
             real_scaled_l1_norm[i] = get_l1_norm(gini_df_dict[msa_name_list[i]]['Real_Scaled'])
 
@@ -139,7 +139,7 @@ def get_util_equi_for_each_MSA(gini_df_dict): #20220312
         minority_util[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[1] 
         hybrid_util[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[1] 
         hybrid_ablation_util[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[1] 
-        svi_util[i] = -gini_df_dict[msa_name_list[i]]['SVI'].iloc[1] 
+        svi_util[i] = -gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[1] 
         
         # equity by age
         baseline_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[3] 
@@ -149,7 +149,7 @@ def get_util_equi_for_each_MSA(gini_df_dict): #20220312
         minority_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[3] 
         hybrid_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[3] 
         hybrid_ablation_equi_age[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[3]
-        svi_equi_age[i] = -gini_df_dict[msa_name_list[i]]['SVI'].iloc[3]
+        svi_equi_age[i] = -gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[3]
 
         # equity by income
         baseline_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[5] 
@@ -159,7 +159,7 @@ def get_util_equi_for_each_MSA(gini_df_dict): #20220312
         minority_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[5] 
         hybrid_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[5] 
         hybrid_ablation_equi_income[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[5] 
-        svi_equi_income[i] = -gini_df_dict[msa_name_list[i]]['SVI'].iloc[5] 
+        svi_equi_income[i] = -gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[5] 
 
         # equity by occupation
         baseline_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[7] 
@@ -169,7 +169,7 @@ def get_util_equi_for_each_MSA(gini_df_dict): #20220312
         minority_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[7] 
         hybrid_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[7] 
         hybrid_ablation_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[7] 
-        svi_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['SVI'].iloc[7]
+        svi_equi_occupation[i] = -gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[7]
 
         # equity by minority
         baseline_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Baseline'].iloc[9] 
@@ -179,7 +179,7 @@ def get_util_equi_for_each_MSA(gini_df_dict): #20220312
         minority_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Minority'].iloc[9] 
         hybrid_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[9] 
         hybrid_ablation_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[9] 
-        svi_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['SVI'].iloc[9] 
+        svi_equi_minority[i] = -gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[9] 
 
 
     return baseline_util, age_util, income_util, occupation_util, minority_util, hybrid_util, hybrid_ablation_util, svi_util, baseline_equi_age, age_equi_age, income_equi_age, occupation_equi_age, minority_equi_age, hybrid_equi_age, hybrid_ablation_equi_age, svi_equi_age, baseline_equi_income, age_equi_income, income_equi_income, occupation_equi_income, minority_equi_income, hybrid_equi_income, hybrid_ablation_equi_income, svi_equi_income, baseline_equi_occupation, age_equi_occupation, income_equi_occupation, occupation_equi_occupation, minority_equi_occupation, hybrid_equi_occupation, hybrid_ablation_equi_occupation, svi_equi_occupation, baseline_equi_minority, age_equi_minority, income_equi_minority, occupation_equi_minority, minority_equi_minority, hybrid_equi_minority, hybrid_ablation_equi_minority, svi_equi_minority
@@ -216,7 +216,7 @@ def get_seed_util_equi_for_each_MSA(gini_df_dict): #20220525
         minority_util[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Minority'].iloc[1])]
         hybrid_util[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[1])]
         hybrid_ablation_util[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[1])]
-        svi_util[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI'].iloc[1])]
+        svi_util[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[1])]
         
         # equity by age
         baseline_equi_age[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Baseline'].iloc[6])]
@@ -226,7 +226,7 @@ def get_seed_util_equi_for_each_MSA(gini_df_dict): #20220525
         minority_equi_age[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Minority'].iloc[6])]
         hybrid_equi_age[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[6])]
         hybrid_ablation_equi_age[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[6])]
-        svi_equi_age[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI'].iloc[6])]
+        svi_equi_age[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[6])]
 
         # equity by income
         baseline_equi_income[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Baseline'].iloc[7])]
@@ -236,7 +236,7 @@ def get_seed_util_equi_for_each_MSA(gini_df_dict): #20220525
         minority_equi_income[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Minority'].iloc[7])]
         hybrid_equi_income[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[7])]
         hybrid_ablation_equi_income[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[7])]
-        svi_equi_income[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI'].iloc[7])]
+        svi_equi_income[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[7])]
 
         # equity by occupation
         baseline_equi_occupation[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Baseline'].iloc[8])]
@@ -246,7 +246,7 @@ def get_seed_util_equi_for_each_MSA(gini_df_dict): #20220525
         minority_equi_occupation[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Minority'].iloc[8])]
         hybrid_equi_occupation[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[8])]
         hybrid_ablation_equi_occupation[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[8])]
-        svi_equi_occupation[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI'].iloc[8])]
+        svi_equi_occupation[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[8])]
 
         # equity by minority
         baseline_equi_minority[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Baseline'].iloc[9] )]
@@ -256,7 +256,7 @@ def get_seed_util_equi_for_each_MSA(gini_df_dict): #20220525
         minority_equi_minority[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Minority'].iloc[9])]
         hybrid_equi_minority[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid'].iloc[9])]
         hybrid_ablation_equi_minority[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['Hybrid_Ablation'].iloc[9])]
-        svi_equi_minority[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI'].iloc[9])] 
+        svi_equi_minority[i] = [-np.array(value) for value in eval(gini_df_dict[msa_name_list[i]]['SVI_new'].iloc[9])] 
 
     return baseline_util, age_util, income_util, occupation_util, minority_util, hybrid_util, hybrid_ablation_util, svi_util, baseline_equi_age, age_equi_age, income_equi_age, occupation_equi_age, minority_equi_age, hybrid_equi_age, hybrid_ablation_equi_age, svi_equi_age, baseline_equi_income, age_equi_income, income_equi_income, occupation_equi_income, minority_equi_income, hybrid_equi_income, hybrid_ablation_equi_income, svi_equi_income, baseline_equi_occupation, age_equi_occupation, income_equi_occupation, occupation_equi_occupation, minority_equi_occupation, hybrid_equi_occupation, hybrid_ablation_equi_occupation, svi_equi_occupation, baseline_equi_minority, age_equi_minority, income_equi_minority, occupation_equi_minority, minority_equi_minority, hybrid_equi_minority, hybrid_ablation_equi_minority, svi_equi_minority
 
