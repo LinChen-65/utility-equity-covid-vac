@@ -44,8 +44,6 @@ args = parser.parse_args()
 print('\nargs.msa_name: ',args.msa_name)
 
 
-
-
 # Derived variables
 if(args.msa_name=='all'):
     print('all msa.')
@@ -54,10 +52,9 @@ else:
     print('msa name:',args.msa_name)
     msa_name_list = [args.msa_name]
 
-RANDOM_SEED_LIST = [38,39,40] #RANDOM_SEED_LIST = [66,42,5]
+RANDOM_SEED_LIST = [38,39,40] 
 print('Num of random seeds: ', args.len_seeds)
 print('Random seeds: ',RANDOM_SEED_LIST[:args.len_seeds])
-
 print('Num of samples: ', args.num_samples)
 print('Sample fraction: ', args.sample_frac)
 
@@ -84,30 +81,40 @@ def get_std_feat(cbg_list, data_df, feat_str):
     average = np.average(np.array(values),weights=weights)
     return math.sqrt(np.average((values-average)**2, weights=weights))
 
-#if(os.path.exists(os.path.join(saveroot, 'minority_adj_r2_model2_std_array'))):
-if(False):
-    fatality_adj_r2_model1_mean_array = np.fromfile(os.path.join(saveroot, 'fatality_adj_r2_model1_mean_array'))
-    fatality_adj_r2_model2_mean_array = np.fromfile(os.path.join(saveroot, 'fatality_adj_r2_model2_mean_array'))
-    age_adj_r2_model1_mean_array = np.fromfile(os.path.join(saveroot, 'age_adj_r2_model1_mean_array'))
-    age_adj_r2_model2_mean_array = np.fromfile(os.path.join(saveroot, 'age_adj_r2_model2_mean_array'))
-    income_adj_r2_model1_mean_array = np.fromfile(os.path.join(saveroot, 'income_adj_r2_model1_mean_array'))
-    income_adj_r2_model2_mean_array = np.fromfile(os.path.join(saveroot, 'income_adj_r2_model2_mean_array'))
-    occupation_adj_r2_model1_mean_array = np.fromfile(os.path.join(saveroot, 'occupation_adj_r2_model1_mean_array'))
-    occupation_adj_r2_model2_mean_array = np.fromfile(os.path.join(saveroot, 'occupation_adj_r2_model2_mean_array'))
-    minority_adj_r2_model1_mean_array = np.fromfile(os.path.join(saveroot, 'minority_adj_r2_model1_mean_array'))
-    minority_adj_r2_model2_mean_array = np.fromfile(os.path.join(saveroot, 'minority_adj_r2_model2_mean_array'))
+if(os.path.exists(os.path.join(resultroot, 'minority_adj_r2_model2_array'))):
+    fatality_adj_r2_model1_mean_array = np.fromfile(os.path.join(resultroot, 'fatality_adj_r2_model1_mean_array'))
+    fatality_adj_r2_model2_mean_array = np.fromfile(os.path.join(resultroot, 'fatality_adj_r2_model2_mean_array'))
+    age_adj_r2_model1_mean_array = np.fromfile(os.path.join(resultroot, 'age_adj_r2_model1_mean_array'))
+    age_adj_r2_model2_mean_array = np.fromfile(os.path.join(resultroot, 'age_adj_r2_model2_mean_array'))
+    income_adj_r2_model1_mean_array = np.fromfile(os.path.join(resultroot, 'income_adj_r2_model1_mean_array'))
+    income_adj_r2_model2_mean_array = np.fromfile(os.path.join(resultroot, 'income_adj_r2_model2_mean_array'))
+    occupation_adj_r2_model1_mean_array = np.fromfile(os.path.join(resultroot, 'occupation_adj_r2_model1_mean_array'))
+    occupation_adj_r2_model2_mean_array = np.fromfile(os.path.join(resultroot, 'occupation_adj_r2_model2_mean_array'))
+    minority_adj_r2_model1_mean_array = np.fromfile(os.path.join(resultroot, 'minority_adj_r2_model1_mean_array'))
+    minority_adj_r2_model2_mean_array = np.fromfile(os.path.join(resultroot, 'minority_adj_r2_model2_mean_array'))
 
-    fatality_adj_r2_model1_std_array = np.fromfile(os.path.join(saveroot, 'fatality_adj_r2_model1_std_array'))
-    fatality_adj_r2_model2_std_array = np.fromfile(os.path.join(saveroot, 'fatality_adj_r2_model2_std_array'))
-    age_adj_r2_model1_std_array = np.fromfile(os.path.join(saveroot, 'age_adj_r2_model1_std_array'))
-    age_adj_r2_model2_std_array = np.fromfile(os.path.join(saveroot, 'age_adj_r2_model2_std_array'))
-    income_adj_r2_model1_std_array = np.fromfile(os.path.join(saveroot, 'income_adj_r2_model1_std_array'))
-    income_adj_r2_model2_std_array = np.fromfile(os.path.join(saveroot, 'income_adj_r2_model2_std_array'))
-    occupation_adj_r2_model1_std_array = np.fromfile(os.path.join(saveroot, 'occupation_adj_r2_model1_std_array'))
-    occupation_adj_r2_model2_std_array = np.fromfile(os.path.join(saveroot, 'occupation_adj_r2_model2_std_array'))
-    minority_adj_r2_model1_std_array = np.fromfile(os.path.join(saveroot, 'minority_adj_r2_model1_std_array'))
-    minority_adj_r2_model2_std_array = np.fromfile(os.path.join(saveroot, 'minority_adj_r2_model2_std_array'))
-    
+    fatality_adj_r2_model1_std_array = np.fromfile(os.path.join(resultroot, 'fatality_adj_r2_model1_std_array'))
+    fatality_adj_r2_model2_std_array = np.fromfile(os.path.join(resultroot, 'fatality_adj_r2_model2_std_array'))
+    age_adj_r2_model1_std_array = np.fromfile(os.path.join(resultroot, 'age_adj_r2_model1_std_array'))
+    age_adj_r2_model2_std_array = np.fromfile(os.path.join(resultroot, 'age_adj_r2_model2_std_array'))
+    income_adj_r2_model1_std_array = np.fromfile(os.path.join(resultroot, 'income_adj_r2_model1_std_array'))
+    income_adj_r2_model2_std_array = np.fromfile(os.path.join(resultroot, 'income_adj_r2_model2_std_array'))
+    occupation_adj_r2_model1_std_array = np.fromfile(os.path.join(resultroot, 'occupation_adj_r2_model1_std_array'))
+    occupation_adj_r2_model2_std_array = np.fromfile(os.path.join(resultroot, 'occupation_adj_r2_model2_std_array'))
+    minority_adj_r2_model1_std_array = np.fromfile(os.path.join(resultroot, 'minority_adj_r2_model1_std_array'))
+    minority_adj_r2_model2_std_array = np.fromfile(os.path.join(resultroot, 'minority_adj_r2_model2_std_array'))
+
+    fatality_adj_r2_model1_array = np.fromfile(os.path.join(resultroot, 'fatality_adj_r2_model1_array')).reshape(len(msa_name_list), args.num_samples)
+    fatality_adj_r2_model2_array = np.fromfile(os.path.join(resultroot, 'fatality_adj_r2_model2_array')).reshape(len(msa_name_list), args.num_samples)
+    age_adj_r2_model1_array = np.fromfile(os.path.join(resultroot, 'age_adj_r2_model1_array')).reshape(len(msa_name_list), args.num_samples)
+    age_adj_r2_model2_array = np.fromfile(os.path.join(resultroot, 'age_adj_r2_model2_array')).reshape(len(msa_name_list), args.num_samples)
+    income_adj_r2_model1_array = np.fromfile(os.path.join(resultroot, 'income_adj_r2_model1_array')).reshape(len(msa_name_list), args.num_samples)
+    income_adj_r2_model2_array = np.fromfile(os.path.join(resultroot, 'income_adj_r2_model2_array')).reshape(len(msa_name_list), args.num_samples)
+    occupation_adj_r2_model1_array = np.fromfile(os.path.join(resultroot, 'occupation_adj_r2_model1_array')).reshape(len(msa_name_list), args.num_samples)
+    occupation_adj_r2_model2_array = np.fromfile(os.path.join(resultroot, 'occupation_adj_r2_model2_array')).reshape(len(msa_name_list), args.num_samples)
+    minority_adj_r2_model1_array = np.fromfile(os.path.join(resultroot, 'minority_adj_r2_model1_array')).reshape(len(msa_name_list), args.num_samples)
+    minority_adj_r2_model2_array = np.fromfile(os.path.join(resultroot, 'minority_adj_r2_model2_array')).reshape(len(msa_name_list), args.num_samples)
+
 else:
     ###############################################################################
     # Load Common Data: No need for reloading when switching among differet MSAs.
@@ -157,15 +164,21 @@ else:
     occupation_adj_r2_model2_std_array = np.zeros(len(msa_name_list))
     minority_adj_r2_model1_std_array = np.zeros(len(msa_name_list))
     minority_adj_r2_model2_std_array = np.zeros(len(msa_name_list))
+    fatality_adj_r2_model1_array = np.zeros((len(msa_name_list), args.num_samples))
+    fatality_adj_r2_model2_array = np.zeros((len(msa_name_list), args.num_samples))
+    age_adj_r2_model1_array = np.zeros((len(msa_name_list), args.num_samples))
+    age_adj_r2_model2_array = np.zeros((len(msa_name_list), args.num_samples))
+    income_adj_r2_model1_array = np.zeros((len(msa_name_list), args.num_samples))
+    income_adj_r2_model2_array = np.zeros((len(msa_name_list), args.num_samples))
+    occupation_adj_r2_model1_array = np.zeros((len(msa_name_list), args.num_samples))
+    occupation_adj_r2_model2_array = np.zeros((len(msa_name_list), args.num_samples))
+    minority_adj_r2_model1_array = np.zeros((len(msa_name_list), args.num_samples))
+    minority_adj_r2_model2_array = np.zeros((len(msa_name_list), args.num_samples))
 
     for msa_idx in range(len(msa_name_list)):
         this_msa = msa_name_list[msa_idx]
         print(this_msa)
         MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[this_msa]
-        # Load POI-CBG visiting matrices
-        f = open(os.path.join(dataroot, '%s_2020-03-01_to_2020-05-02.pkl'%MSA_NAME_FULL), 'rb') 
-        poi_cbg_visits_list = pickle.load(f)
-        f.close()
 
         data = pd.DataFrame()
 
@@ -189,7 +202,6 @@ else:
         x = {}
         for i in cbgs_to_idxs:
             x[str(i)] = cbgs_to_idxs[i]
-        idxs_msa_all = list(x.values())
 
         # Select counties belonging to the MSA
         y = []
@@ -300,15 +312,11 @@ else:
         cbg_avg_infect_all_norm = cbg_avg_infect_same_norm + cbg_avg_infect_diff_norm
         # alpha_bar
         avg_death_rates_scaled = np.matmul(cbg_sizes.T, cbg_death_rates_scaled) / np.sum(cbg_sizes)
-
-        # New new method # 20210619
         cbg_vulnerability = cbg_avg_infect_all_norm * cbg_death_rates_scaled 
         cbg_secondary_damage = cbg_avg_infect_all_norm * (cbg_avg_infect_all_norm*(S_ratio/I_ratio)) * avg_death_rates_scaled
         cbg_damage = cbg_vulnerability + cbg_secondary_damage
-
         cbg_age_msa['Vulnerability'] = cbg_vulnerability.copy()
         cbg_age_msa['Damage'] = cbg_damage.copy()
-
         cbg_age_msa['Vulner_Rank'] = cbg_age_msa['Vulnerability'].rank(ascending=False,method='first') 
         cbg_age_msa['Damage_Rank'] = cbg_age_msa['Damage'].rank(ascending=False,method='first')
 
@@ -333,7 +341,7 @@ else:
         # Load detailed results and average across random seeds
 
         # Simulation times and random seeds
-        NUM_SEEDS = 60 # 30
+        NUM_SEEDS = 60 
         STARTING_SEED = range(NUM_SEEDS)
         # The following parameters are just to make sure the name is correct. 'No_Vaccination' actually does not need these parameters.
         # Vaccination_Ratio
@@ -396,20 +404,6 @@ else:
         del cbg_occupation_msa
         del cbg_ethnic_msa
 
-        # Check range
-        print('Avg_Elder_Ratio',randombag_results['Avg_Elder_Ratio'].max(),randombag_results['Avg_Elder_Ratio'].min())
-        print('Avg_Mean_Household_Income',randombag_results['Avg_Mean_Household_Income'].max(),randombag_results['Avg_Mean_Household_Income'].min())
-        print('Avg_EW_Ratio',randombag_results['Avg_EW_Ratio'].max(),randombag_results['Avg_EW_Ratio'].min())
-        print('Avg_EW_Ratio',randombag_results['Avg_Minority_Ratio'].max(),randombag_results['Avg_Minority_Ratio'].min()) #20220308
-        print('Avg_Vulnerability',randombag_results['Avg_Vulnerability'].max(),randombag_results['Avg_Vulnerability'].min())
-        print('Avg_Damage',randombag_results['Avg_Damage'].max(),randombag_results['Avg_Damage'].min())
-
-        print('Fatality_Rate_Rel',randombag_results['Fatality_Rate_Rel'].max(),randombag_results['Fatality_Rate_Rel'].min())
-        print('Age_Gini_Rel',randombag_results['Age_Gini_Rel'].max(),randombag_results['Age_Gini_Rel'].min())
-        print('Income_Gini_Rel',randombag_results['Income_Gini_Rel'].max(),randombag_results['Income_Gini_Rel'].min())
-        print('Occupation_Gini_Rel',randombag_results['Occupation_Gini_Rel'].max(),randombag_results['Occupation_Gini_Rel'].min())
-        print('Minority_Gini_Rel',randombag_results['Minority_Gini_Rel'].max(),randombag_results['Minority_Gini_Rel'].min()) #20220308
-
         ###############################################################################
         # Preprocessing: Standardization
 
@@ -443,7 +437,6 @@ else:
             # Linear Regression (statsmodels)
 
             # Target: 
-            #demo_feat_list = ['Avg_Elder_Ratio','Avg_Mean_Household_Income','Avg_EW_Ratio']
             demo_feat_list = ['Avg_Elder_Ratio','Avg_Mean_Household_Income','Avg_EW_Ratio','Avg_Minority_Ratio',
                             'Std_Elder_Ratio','Std_Mean_Household_Income','Std_EW_Ratio','Std_Minority_Ratio'
                             ]
@@ -454,8 +447,7 @@ else:
             for target in target_list:
                 if(args.stop_to_observe):
                     print(f'###################################### target: {target} ########################################')
-                #Y = sample[target]
-                Y = -sample[target] #20220314,social utility, equity
+                Y = -sample[target] #social utility, equity
 
                 X = sample[demo_feat_list]
                 
@@ -549,6 +541,17 @@ else:
         minority_adj_r2_model1_std_array[msa_idx] = np.std(np.array(minority_adj_r2_model1))
         minority_adj_r2_model2_std_array[msa_idx] = np.std(np.array(minority_adj_r2_model2))
 
+        fatality_adj_r2_model1_array[msa_idx] = np.array(fatality_adj_r2_model1)
+        fatality_adj_r2_model2_array[msa_idx] = np.array(fatality_adj_r2_model2)
+        age_adj_r2_model1_array[msa_idx] = np.array(age_adj_r2_model1)
+        age_adj_r2_model2_array[msa_idx] = np.array(age_adj_r2_model2)
+        income_adj_r2_model1_array[msa_idx] = np.array(income_adj_r2_model1)
+        income_adj_r2_model2_array[msa_idx] = np.array(income_adj_r2_model2)
+        occupation_adj_r2_model1_array[msa_idx] = np.array(occupation_adj_r2_model1)
+        occupation_adj_r2_model2_array[msa_idx] = np.array(occupation_adj_r2_model2)
+        minority_adj_r2_model1_array[msa_idx] = np.array(minority_adj_r2_model1)
+        minority_adj_r2_model2_array[msa_idx] = np.array(minority_adj_r2_model2)
+
 
     # Save results
     fatality_adj_r2_model1_mean_array.tofile(os.path.join(resultroot, 'fatality_adj_r2_model1_mean_array'))
@@ -573,6 +576,17 @@ else:
     minority_adj_r2_model1_std_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model1_std_array'))
     minority_adj_r2_model2_std_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model2_std_array'))
 
+    fatality_adj_r2_model1_array.tofile(os.path.join(resultroot, 'fatality_adj_r2_model1_array'))
+    fatality_adj_r2_model2_array.tofile(os.path.join(resultroot, 'fatality_adj_r2_model2_array'))
+    age_adj_r2_model1_array.tofile(os.path.join(resultroot, 'age_adj_r2_model1_array'))
+    age_adj_r2_model2_array.tofile(os.path.join(resultroot, 'age_adj_r2_model2_array'))
+    income_adj_r2_model1_array.tofile(os.path.join(resultroot, 'income_adj_r2_model1_array'))
+    income_adj_r2_model2_array.tofile(os.path.join(resultroot, 'income_adj_r2_model2_array'))
+    occupation_adj_r2_model1_array.tofile(os.path.join(resultroot, 'occupation_adj_r2_model1_array'))
+    occupation_adj_r2_model2_array.tofile(os.path.join(resultroot, 'occupation_adj_r2_model2_array'))
+    minority_adj_r2_model1_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model1_array'))
+    minority_adj_r2_model2_array.tofile(os.path.join(resultroot, 'minority_adj_r2_model2_array'))    
+
     print('File saved. Example path:', os.path.join(resultroot, 'minority_adj_r2_model2_std_array'))
 
 ##########################################################################################
@@ -582,62 +596,75 @@ anno_list=['Atlanta','Chicago','Dallas','Houston','L.A.','Miami','Phila.','S.F.'
 
 ##########################################
 # Fig3b
-plt.figure(figsize=(14,7))
-plt.bar(np.arange(9)*3,fatality_adj_r2_model1_mean_array,width=1,label='Only demo-feats',color='k',alpha=0.8,yerr=fatality_adj_r2_model1_std_array) #color='dimgrey',
-plt.bar(np.arange(9)*3+1.05,fatality_adj_r2_model2_mean_array,width=1,label='With $\it{societal~risk}$',color='r',alpha=0.65,yerr=fatality_adj_r2_model2_std_array) #color='cornflowerblue'
 
-plt.xticks(np.arange(9)*3+0.5,anno_list, fontsize=25,rotation=20)  
-plt.ylim(0,1)
+# box plot 
+num_msas = 9
+plt.figure(figsize=(14,5.5))
+bp = plt.boxplot([fatality_adj_r2_model1_array[i] for i in range(fatality_adj_r2_model1_array.shape[0])], positions=np.arange(num_msas)*3,patch_artist=True,widths=1) 
+[bp['boxes'][i].set(facecolor='silver', alpha=0.8) for i in range(num_msas)]
+bp = plt.boxplot([fatality_adj_r2_model2_array[i] for i in range(fatality_adj_r2_model2_array.shape[0])], positions=np.arange(num_msas)*3+1.05,patch_artist=True,widths=1) 
+[bp['boxes'][i].set(facecolor='r', alpha=0.65) for i in range(num_msas)]
+plt.xticks(np.arange(9)*3+0.5,anno_list, fontsize=25,rotation=20) 
+#plt.ylim(0,1)
 plt.yticks(fontsize=16) #fontsize=14
 plt.ylabel('Explained variance\nof social uility',fontsize=28)
-ax = plt.gca()
-box = ax.get_position()
-ax.set_position([box.x0, box.y0, box.width , box.height* 0.8]) #https://blog.csdn.net/yywan1314520/article/details/53740001
-
-plt.legend(fontsize=24,ncol=2,loc='upper center',bbox_to_anchor=(0.5,1.2))
 # Save figure
 savepath = os.path.join(fig_save_root, 'fig3b.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
-print(f'Fig3b, saved at {savepath}')
+print(f'Fig3b box plot, saved at {savepath}')
+
+# Fig3b, legend
+plt.figure()
+label_list = ['Only demo-feats','With $\it{societal~risk}$']
+color_list = ['silver','r']
+alpha_list = [0.8, 0.65]
+patches = [mpatches.Patch(color=color_list[i], alpha=alpha_list[i], label="{:s}".format(label_list[i])) for i in range(2) ]
+plt.legend(handles=patches,ncol=2,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
+# Save figure
+savepath = os.path.join(fig_save_root, f'fig3b_legend.pdf')
+plt.savefig(savepath,bbox_inches = 'tight')
+print(f'Fig3b_legend, saved at {savepath}')
+
 
 ##########################################
 # Fig3c
 
-def plot_equity_explained_variance(demo_feat, show_yticks=True):
-    plt.figure(figsize=(3,5))
+# box plot 
+def plot_equity_explained_variance_box(demo_feat, show_yticks=True):
+    plt.figure(figsize=(3,5.5))
     step_1 = 3
     step_2 = 1.1
-    plt.barh(np.arange(9)[::-1]*step_1,eval(f'{demo_feat}_adj_r2_model1_mean_array'),xerr=eval(f'{demo_feat}_adj_r2_model1_std_array'),
-         height=1,label='Only Demo-Feat',color='k',alpha=0.8) #color='orange',alpha=1
-    plt.barh(np.arange(9)[::-1]*step_1-1*step_2,eval(f'{demo_feat}_adj_r2_model2_mean_array'),xerr=eval(f'{demo_feat}_adj_r2_model2_std_array'),
-            height=1,label='With Vulnerability',color='green',alpha=0.7)#color='orange'
+    num_msas = 9
+    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model1_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1,patch_artist=True,vert=False,widths=1) 
+    [bp['boxes'][i].set(facecolor='silver', alpha=0.8) for i in range(num_msas)]
+    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model2_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1-1*step_2,patch_artist=True,vert=False,widths=1) 
+    [bp['boxes'][i].set(facecolor='green', alpha=0.7) for i in range(num_msas)]
     if(show_yticks):
         plt.yticks(np.arange(9)*step_1-0.5*step_2,anno_list[::-1], fontsize=20)  
     else:
         empty_list = ['','','','','','','','','']
         plt.yticks(np.arange(9)*step_1-0.5*step_2,empty_list, fontsize=20)  
+    plt.xlim(0,1)
     plt.xticks(fontsize=14) 
-    plt.xlabel(f'Explained variance\n',fontsize=18) #20220313
-    
+    plt.xlabel(f'Explained variance\n',fontsize=18) 
     # Save figure
     savepath = os.path.join(fig_save_root, f'fig3c_{demo_feat}.pdf')
     plt.savefig(savepath,bbox_inches = 'tight')
     print(f'Fig3c_{demo_feat}, saved at {savepath}')
     
-
 # Fig3c, age
-plot_equity_explained_variance(demo_feat='age', show_yticks=True)
+plot_equity_explained_variance_box(demo_feat='age', show_yticks=True)
 # Fig3c, income
-plot_equity_explained_variance(demo_feat='income', show_yticks=False)
+plot_equity_explained_variance_box(demo_feat='income', show_yticks=False)
 # Fig3c, occupation
-plot_equity_explained_variance(demo_feat='occupation', show_yticks=False)
+plot_equity_explained_variance_box(demo_feat='occupation', show_yticks=False)
 # Fig3c, minority
-plot_equity_explained_variance(demo_feat='minority', show_yticks=False)
+plot_equity_explained_variance_box(demo_feat='minority', show_yticks=False)
 
 # Fig3c, legend
 plt.figure()
 label_list = ['Only demo-feats','With $\it{community~risk}$']
-color_list = ['k','green']
+color_list = ['silver','green']
 alpha_list = [0.8, 0.7]
 patches = [mpatches.Patch(color=color_list[i], alpha=alpha_list[i], label="{:s}".format(label_list[i])) for i in range(2) ]
 plt.legend(handles=patches,ncol=2,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
@@ -645,3 +672,4 @@ plt.legend(handles=patches,ncol=2,fontsize=20,bbox_to_anchor=(0.8,-0.1))
 savepath = os.path.join(fig_save_root, f'fig3c_legend.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
 print(f'Fig3c_legend, saved at {savepath}')
+
