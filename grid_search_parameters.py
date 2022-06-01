@@ -41,9 +41,6 @@ max_datetime=MAX_DATETIME
 MSA_NAME = args.msa_name; print('MSA_NAME: ',MSA_NAME) #MSA_NAME = 'SanFrancisco'
 MSA_NAME_FULL = constants.MSA_NAME_FULL_DICT[MSA_NAME] #MSA_NAME_FULL = 'San_Francisco_Oakland_Hayward_CA'
 
-# how_to_select_best_grid_search_models = ['cases','cases_smooth','deaths','deaths_smooth]
-how_to_select_best_grid_search_models = 'cases'
-
 # Parameters to experiment
 NUM_SEEDS = 30
 p_sick_at_t0_list = [1e-2, 5e-3, 2e-3, 1e-3, 5e-4, 2e-4, 1e-4, 5e-5, 2e-5, 1e-5]
@@ -54,42 +51,6 @@ STARTING_SEED = range(NUM_SEEDS)
 
 ############################################################
 # functions
-
-def match_msa_name_to_msas_in_acs_data(msa_name, acs_msas):
-    msa_pieces = msa_name.split('_')
-    query_states = set()
-    i = len(msa_pieces) - 1
-    while True:
-        piece = msa_pieces[i]
-        if len(piece) == 2 and piece.upper() == piece:
-            query_states.add(piece)
-            i -= 1
-        else:
-            break
-    query_cities = set(msa_pieces[:i+1])
-
-    for msa in acs_msas:
-        if ', ' in msa:
-            city_string, state_string = msa.split(', ')
-            states = set(state_string.split('-'))
-            if states == query_states:
-                cities = city_string.split('-')
-                overlap = set(cities).intersection(query_cities)
-                if len(overlap) > 0:  # same states and at least one city matched
-                    return msa
-    return None
-
-
-def get_fips_codes_from_state_and_county_fp(state, county):
-    state = str(int(state))
-    county = str(int(county))
-    if len(state) == 1:
-        state = '0' + state
-    if len(county) == 1:
-        county = '00' + county
-    elif len(county) == 2:
-        county = '0' + county
-    return int(state + county)
     
 # Average history records across random seeds
 def average_across_random_seeds(history_C2, history_D2, num_cbgs, cbg_idxs, print_results=False):
@@ -109,10 +70,6 @@ def average_across_random_seeds(history_C2, history_D2, num_cbgs, cbg_idxs, prin
         for j in cbg_idxs:
             cases_msa[i] += avg_history_C2[i][j]
             deaths_msa[i] += avg_history_D2[i][j]
-            
-    if(print_results==True):
-        print('Cases: ',cases_msa)
-        print('Deaths: ',deaths_msa)
     
     return avg_history_C2, avg_history_D2,cases_msa,deaths_msa
 
@@ -143,9 +100,9 @@ poi_dwell_time_correction_factors = (poi_dwell_times / (poi_dwell_times+60)) ** 
 # Load ACS Data for MSA-county matching
 acs_data = pd.read_csv(os.path.join(root,'data', 'list1.csv'),header=2)
 acs_msas = [msa for msa in acs_data['CBSA Title'].unique() if type(msa) == str]
-msa_match = match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
+msa_match = functions.match_msa_name_to_msas_in_acs_data(MSA_NAME_FULL, acs_msas)
 msa_data = acs_data[acs_data['CBSA Title'] == msa_match].copy()
-msa_data['FIPS Code'] = msa_data.apply(lambda x : get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
+msa_data['FIPS Code'] = msa_data.apply(lambda x : functions.get_fips_codes_from_state_and_county_fp((x['FIPS State Code']),x['FIPS County Code']), axis=1)
 good_list = list(msa_data['FIPS Code'].values)
 print(good_list)
 
@@ -313,21 +270,20 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
             rmse_dict_deaths_agnostic['%s,%s,%s'%(p_sick_at_t0, home_beta, poi_psi)] = sqrt(mean_squared_error(deaths,deaths_total_age_agnostic))
             rmse_dict_deaths_smooth_agnostic['%s,%s,%s'%(p_sick_at_t0, home_beta, poi_psi)] = sqrt(mean_squared_error(deaths_smooth,deaths_total_age_agnostic))
             
-            if(how_to_select_best_grid_search_models == 'cases'):
-                if(isfirst==True):
+            if(isfirst==True):
+                best_rmse = sqrt(mean_squared_error(cases,cases_total_age_agnostic))
+                best_parameters = [p_sick_at_t0, home_beta, poi_psi]
+                print('Current best: ', best_rmse, '\nCurrent best parameter set: [%s,%s,%s].'%(p_sick_at_t0, home_beta, poi_psi))
+            else:
+                print('Current mse: ', sqrt(mean_squared_error(cases,cases_total_age_agnostic)))
+                print('Previous best: ',best_rmse)
+                if(best_rmse > sqrt(mean_squared_error(cases,cases_total_age_agnostic))):
                     best_rmse = sqrt(mean_squared_error(cases,cases_total_age_agnostic))
                     best_parameters = [p_sick_at_t0, home_beta, poi_psi]
                     print('Current best: ', best_rmse, '\nCurrent best parameter set: [%s,%s,%s].'%(p_sick_at_t0, home_beta, poi_psi))
                 else:
-                    print('Current mse: ', sqrt(mean_squared_error(cases,cases_total_age_agnostic)))
-                    print('Previous best: ',best_rmse)
-                    if(best_rmse > sqrt(mean_squared_error(cases,cases_total_age_agnostic))):
-                        best_rmse = sqrt(mean_squared_error(cases,cases_total_age_agnostic))
-                        best_parameters = [p_sick_at_t0, home_beta, poi_psi]
-                        print('Current best: ', best_rmse, '\nCurrent best parameter set: [%s,%s,%s].'%(p_sick_at_t0, home_beta, poi_psi))
-                    else:
-                        print('Current best not changed. \nCurrent best parameter set:',best_parameters)
-            
+                    print('Current best not changed. \nCurrent best parameter set:',best_parameters)
+        
             isfirst = False
             
             # Save rmse dicts
@@ -341,7 +297,7 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
                 best_results = dict()
                 best_results['rmse'] = best_rmse
                 best_results['parameters'] = best_parameters
-                np.save(os.path.join(root,'results', '20210127_best_results_%s_%s_%s'%(how_to_select_best_grid_search_models,MSA_NAME,p_sick_at_t0)),best_results)
+                np.save(os.path.join(root,'results', '20210127_best_results_cases_%s_%s'%(MSA_NAME,p_sick_at_t0)),best_results)
 
 end = time.time()
 print('Total Time:',(end-start))

@@ -46,24 +46,14 @@ class Model:
         self.POI_FACTORS = self.PSI / poi_areas#ψ/apj
         if poi_dwell_time_correction_factors is not None:
             self.POI_FACTORS = poi_dwell_time_correction_factors * self.POI_FACTORS#dpj^2*ψ/apj
-            #print('Adjusted POI transmission rates with dwell time correction factors')
             self.included_dwell_time_correction_factors = True
         else:
             self.included_dwell_time_correction_factors = False
         self.POI_CBG_VISITS_LIST = poi_cbg_visits_list#导入访问矩阵
-        if self.POI_CBG_VISITS_LIST is not None:
-            #print('Received POI_CBG_VISITS_LIST, will NOT be computing hourly matrices on the fly')
-            assert len(self.POI_CBG_VISITS_LIST) == self.T
-            assert self.POI_CBG_VISITS_LIST[0].shape == (self.M, self.N)
-        else:
-            # will use this matrix to compute hourly counts; must match all_hours length
-            assert self.POI_TIME_COUNTS.shape[1] == self.T
-        self.clipping_monitor = {
-        'num_base_infection_rates_clipped':[],
-        'num_active_pois':[],
-        'num_poi_infection_rates_clipped':[],
-        'num_cbgs_active_at_pois':[],
-        'num_cbgs_with_clipped_poi_cases':[]}
+
+        assert len(self.POI_CBG_VISITS_LIST) == self.T
+        assert self.POI_CBG_VISITS_LIST[0].shape == (self.M, self.N)
+        
         # CBG variables
         self.CBG_SIZES = cbg_sizes  #cbg人口数量
          # assume constant transmission rate, irrespective of how many people per square mile are in CBG.
@@ -215,18 +205,10 @@ class Model:
         overall_densities = (np.sum(self.cbg_infected, axis=1) / np.sum(self.CBG_SIZES)).reshape(-1, 1)  # S x 1#总感染率，全部cbg的感染数除以总人数
         num_sus = np.clip(self.CBG_SIZES - self.cbg_latent - self.cbg_infected - self.cbg_removed, 0, None)  # S x N，易感人数即普通人人数维度是1×N
         sus_frac = num_sus / self.CBG_SIZES  # S x N，普通人比例
-        #assert (cbg_densities >= 0).all()
-        #assert (cbg_densities <= 1).all()
-        #assert (sus_frac >= 0).all()
-        #assert (sus_frac <= 1).all()
 
-        if self.PSI > 0:
-            # Our model: can only be infected by people in your home CBG.
-                cbg_base_infection_rates = self.HOME_BETA * cbg_densities  # S x N，得到λtcbg
-                cbg_base_infection_rates=np.nan_to_num(cbg_base_infection_rates)
-        else:
-            # Ablation: standard model with uniform mixing.
-            cbg_base_infection_rates = np.tile(overall_densities, self.N) * self.HOME_BETA  # S x N
+        cbg_base_infection_rates = self.HOME_BETA * cbg_densities  # S x N，得到λtcbg
+        cbg_base_infection_rates=np.nan_to_num(cbg_base_infection_rates)
+        
         self.num_base_infection_rates_clipped = np.sum(cbg_base_infection_rates > 1)
         cbg_base_infection_rates = np.clip(cbg_base_infection_rates, None, 1.0)#限制感染率，大于1就取1。
 
@@ -235,23 +217,21 @@ class Model:
         if self.POI_CBG_VISITS_LIST is not None:  # try to load
             poi_cbg_visits = self.POI_CBG_VISITS_LIST[t]  # M x N导入lpf
             poi_visits = poi_cbg_visits @ np.ones(poi_cbg_visits.shape[1]) #@表示做内积，得到的是每个poi的所有cbg的访问数之和。Vpjt
-   
-        if not self.just_compute_r0:#凑数用的，并非这个意思
-          # use network data
-            self.num_active_pois = np.sum(poi_visits > 0)#访问人数大于0的poi数量
-            col_sums = np.squeeze(np.array(poi_cbg_visits.sum(axis=0)))#Ucit从cbg ci出来的人数 1xN
-            self.cbg_num_out = col_sums#每个cbg的人数，U
-            # S x M = (M) * ((M x N) @ (S x N).T ).T
-            poi_infection_rates = self.POI_FACTORS * (poi_cbg_visits @ cbg_densities.T).T#λpoit，poi内的感染率
-            self.num_poi_infection_rates_clipped = np.sum(poi_infection_rates > 1)
-            if self.clip_poisson_approximation:
-                poi_infection_rates = np.clip(poi_infection_rates, None, 1.0)#修正poi内的感染率
 
-            # S x N = (S x N) * ((S x M) @ (M x N))
-            cbg_mean_new_cases_from_poi = sus_frac * (poi_infection_rates @ poi_cbg_visits)#
-            cbg_mean_new_cases_from_poi=np.nan_to_num(cbg_mean_new_cases_from_poi)
-            num_cases_from_poi = np.random.poisson(cbg_mean_new_cases_from_poi)
-            self.num_cbgs_active_at_pois = np.sum(cbg_mean_new_cases_from_poi > 0)
+        self.num_active_pois = np.sum(poi_visits > 0)#访问人数大于0的poi数量
+        col_sums = np.squeeze(np.array(poi_cbg_visits.sum(axis=0)))#Ucit从cbg ci出来的人数 1xN
+        self.cbg_num_out = col_sums#每个cbg的人数，U
+        # S x M = (M) * ((M x N) @ (S x N).T ).T
+        poi_infection_rates = self.POI_FACTORS * (poi_cbg_visits @ cbg_densities.T).T#λpoit，poi内的感染率
+        self.num_poi_infection_rates_clipped = np.sum(poi_infection_rates > 1)
+        if self.clip_poisson_approximation:
+            poi_infection_rates = np.clip(poi_infection_rates, None, 1.0)#修正poi内的感染率
+
+        # S x N = (S x N) * ((S x M) @ (M x N))
+        cbg_mean_new_cases_from_poi = sus_frac * (poi_infection_rates @ poi_cbg_visits)#
+        cbg_mean_new_cases_from_poi=np.nan_to_num(cbg_mean_new_cases_from_poi)
+        num_cases_from_poi = np.random.poisson(cbg_mean_new_cases_from_poi)
+        self.num_cbgs_active_at_pois = np.sum(cbg_mean_new_cases_from_poi > 0)
 
         self.num_cbgs_with_clipped_poi_cases = np.sum(num_cases_from_poi > num_sus)
         self.cbg_new_cases_from_poi = np.clip(num_cases_from_poi, None, num_sus)
@@ -262,11 +242,5 @@ class Model:
             cbg_base_infection_rates)
         self.cbg_new_cases = self.cbg_new_cases_from_poi + self.cbg_new_cases_from_base
 
-        # Keep track of clipping
-        self.clipping_monitor['num_base_infection_rates_clipped'].append(self.num_base_infection_rates_clipped)
-        self.clipping_monitor['num_active_pois'].append(self.num_active_pois)
-        self.clipping_monitor['num_poi_infection_rates_clipped'].append(self.num_poi_infection_rates_clipped)
-        self.clipping_monitor['num_cbgs_active_at_pois'].append(self.num_cbgs_active_at_pois)
-        self.clipping_monitor['num_cbgs_with_clipped_poi_cases'].append(self.num_cbgs_with_clipped_poi_cases)
         assert (self.cbg_new_cases <= num_sus).all()
 

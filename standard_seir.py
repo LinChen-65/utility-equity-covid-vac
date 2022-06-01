@@ -179,15 +179,15 @@ for this_msa in msa_name_list:
     ###############################################################################
     # Parameters 
 
-    initN = cbg_sizes.sum() #1380000000
-    initE = 0 #initN * (1 - 1e-4) #1
+    initN = cbg_sizes.sum() 
+    initE = 0
     initR = 0
     initD = 0
-    sigma = 1/4 #1/5.2
-    gamma = 1/3.5 #1/2.9
+    sigma = 1/4 
+    gamma = 1/3.5 
     IFR = 0.0066
     # beta is learnable #R0 = 4 #beta = R0 * gamma
-    days = NUM_DAYS #150
+    days = NUM_DAYS 
 
       
     # Bayesian optimization with lib: Hyperopt
@@ -203,10 +203,10 @@ for this_msa in msa_name_list:
         tpe_algo = tpe.suggest
         # Create a trials object
         tpe_trials = Trials()
-        # Run 2000 evals with the tpe algorithm
+        # Run evals with the tpe algorithm
         tpe_best = fmin(fn=target_function, space=space, 
                         algo=tpe_algo, trials=tpe_trials, 
-                        max_evals=300)
+                        max_evals=500)
 
         print(tpe_best)
         S, E, I, R, D = Standard_SEIR(initE, initI, initR, initN, initD, tpe_best['beta'], sigma, gamma, days)
@@ -250,7 +250,7 @@ for this_msa in msa_name_list:
     print('result_opt: ', result_opt)
 
     if(args.save_result):
-        filepath = os.path.join(saveroot, f'seir_daily_deaths_{this_msa}')
+        filepath = os.path.join(saveroot, f'new_seir_daily_deaths_{this_msa}')
         predicted_deaths_daily.tofile(filepath)
         print(f'{this_msa}, file saved at: {filepath}')
 
