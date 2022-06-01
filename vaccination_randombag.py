@@ -10,7 +10,7 @@ import pickle
 
 import constants
 import functions
-import disease_model_test as disease_model
+import disease_model
 
 import time
 
