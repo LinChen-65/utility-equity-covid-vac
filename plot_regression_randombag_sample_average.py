@@ -599,15 +599,25 @@ anno_list=['Atlanta','Chicago','Dallas','Houston','L.A.','Miami','Phila.','S.F.'
 
 # box plot 
 num_msas = 9
-plt.figure(figsize=(14,5.5))
-bp = plt.boxplot([fatality_adj_r2_model1_array[i] for i in range(fatality_adj_r2_model1_array.shape[0])], positions=np.arange(num_msas)*3,patch_artist=True,widths=1) 
+plt.figure(figsize=(12,5.5)) #figsize=(14,5.5)
+widths = 0.9 #1
+dist = 2.3 #3
+bp = plt.boxplot([fatality_adj_r2_model1_array[i] for i in range(fatality_adj_r2_model1_array.shape[0])], positions=np.arange(num_msas)*dist,patch_artist=True,widths=widths) 
 [bp['boxes'][i].set(facecolor='silver', alpha=0.8) for i in range(num_msas)]
-bp = plt.boxplot([fatality_adj_r2_model2_array[i] for i in range(fatality_adj_r2_model2_array.shape[0])], positions=np.arange(num_msas)*3+1.05,patch_artist=True,widths=1) 
+bp = plt.boxplot([fatality_adj_r2_model2_array[i] for i in range(fatality_adj_r2_model2_array.shape[0])], positions=np.arange(num_msas)*dist+1.05,patch_artist=True,widths=widths) 
 [bp['boxes'][i].set(facecolor='r', alpha=0.65) for i in range(num_msas)]
-plt.xticks(np.arange(9)*3+0.5,anno_list, fontsize=25,rotation=20) 
-#plt.ylim(0,1)
-plt.yticks(fontsize=16) #fontsize=14
+plt.xticks(np.arange(num_msas)*dist+0.5,anno_list, fontsize=25,rotation=20) 
+plt.xlim(-1-0.02,(num_msas-1)*dist+1.05+widths+0.02)
+plt.yticks(fontsize=16) 
 plt.ylabel('Explained variance\nof social uility',fontsize=28)
+
+# Background color
+for i in range(num_msas):
+    if(i%2==0):
+        plt.axvspan(i*dist-widths/2, i*dist-widths/2+2, color='grey',alpha=0.15)
+    else:
+        plt.axvspan(i*dist-widths/2, i*dist-widths/2+2, color='silver',alpha=0.15)
+
 # Save figure
 savepath = os.path.join(fig_save_root, 'fig3b.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
@@ -632,12 +642,13 @@ print(f'Fig3b_legend, saved at {savepath}')
 # box plot 
 def plot_equity_explained_variance_box(demo_feat, show_yticks=True):
     plt.figure(figsize=(3,5.5))
-    step_1 = 3
+    step_1 = 2.4 #3
     step_2 = 1.1
     num_msas = 9
-    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model1_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1,patch_artist=True,vert=False,widths=1) 
+    widths=1
+    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model1_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1,patch_artist=True,vert=False,widths=widths) 
     [bp['boxes'][i].set(facecolor='silver', alpha=0.8) for i in range(num_msas)]
-    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model2_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1-1*step_2,patch_artist=True,vert=False,widths=1) 
+    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model2_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1-1*step_2,patch_artist=True,vert=False,widths=widths) 
     [bp['boxes'][i].set(facecolor='green', alpha=0.7) for i in range(num_msas)]
     if(show_yticks):
         plt.yticks(np.arange(9)*step_1-0.5*step_2,anno_list[::-1], fontsize=20)  
@@ -646,7 +657,16 @@ def plot_equity_explained_variance_box(demo_feat, show_yticks=True):
         plt.yticks(np.arange(9)*step_1-0.5*step_2,empty_list, fontsize=20)  
     plt.xlim(0,1)
     plt.xticks(fontsize=14) 
-    plt.xlabel(f'Explained variance\n',fontsize=18) 
+    plt.ylim(-step_2-widths/2-0.2, (num_msas-1)*step_1+widths/2+0.2)
+    plt.xlabel(f'Explained variance\n',fontsize=18) #20220313
+    
+    # Background color
+    for i in range(num_msas):
+        if(i%2==0):
+            plt.axhspan((num_msas-i-1)*step_1+widths/2, (num_msas-i-2)*step_1+widths/2, color='grey',alpha=0.15)
+        else:
+            plt.axhspan((num_msas-i-1)*step_1+widths/2, (num_msas-i-2)*step_1+widths/2, color='silver',alpha=0.15)
+    
     # Save figure
     savepath = os.path.join(fig_save_root, f'fig3c_{demo_feat}.pdf')
     plt.savefig(savepath,bbox_inches = 'tight')
