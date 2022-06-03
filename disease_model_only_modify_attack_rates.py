@@ -24,13 +24,14 @@ class Model:
                                  cbg_sizes,                                 
                                  all_hours,
                                  p_sick_at_t0,
-                                 vaccination_time, # when to apply vaccination (which hour)
-                                 vaccination_vector, # num of vaccines each CBG receives 
-                                 protection_rate,
                                  poi_psi,
                                  home_beta,
-                                 cbg_attack_rates_original,
-                                 cbg_death_rates_original,
+                                 with_vac=True,
+                                 vaccination_time=None, # when to apply vaccination (which hour)
+                                 vaccination_vector=None, # num of vaccines each CBG receives 
+                                 protection_rate=None,
+                                 cbg_attack_rates_original=1,
+                                 cbg_death_rates_original=1,
                                  poi_cbg_visits_list=None,
                                  poi_dwell_time_correction_factors=None,
                                  just_compute_r0=False,
@@ -57,17 +58,17 @@ class Model:
         self.POI_CBG_VISITS_LIST = poi_cbg_visits_list#导入访问矩阵
         assert len(self.POI_CBG_VISITS_LIST) == self.T
         assert self.POI_CBG_VISITS_LIST[0].shape == (self.M, self.N)
-
+        
         
         # CBG variables
         self.CBG_SIZES = cbg_sizes  #cbg人口数量
-         # assume constant transmission rate, irrespective of how many people per square mile are in CBG.
-        self.HOME_BETA = home_beta#β0
+        self.HOME_BETA = home_beta #β0
+        self.with_vac = with_vac
         self.CBG_ATTACK_RATES_ORIGINAL = cbg_attack_rates_original
         self.CBG_DEATH_RATES_ORIGINAL = cbg_death_rates_original
         self.LATENCY_PERIOD = latency_period
         self.INFECTIOUS_PERIOD = infectious_period
-        self.all_hours = all_hours#全部的时间
+        self.all_hours = all_hours #全部的时间
         self.P_SICK_AT_T0 = p_sick_at_t0  # p0
         self.VACCINATION_TIME = vaccination_time
         self.VACCINATION_VECTOR = vaccination_vector
@@ -78,8 +79,12 @@ class Model:
         self.death_lag = death_lag
         self.returnSEIR = returnSEIR
 
-        self.CBG_ATTACK_RATES_NEW = self.CBG_ATTACK_RATES_ORIGINAL * (1*(1-self.VACCINATION_VECTOR/self.CBG_SIZES)+(1-self.PROTECTION_RATE)*self.VACCINATION_VECTOR/self.CBG_SIZES)
-        self.CBG_DEATH_RATES_NEW = self.CBG_DEATH_RATES_ORIGINAL * (1*(1-self.VACCINATION_VECTOR/self.CBG_SIZES)+(1-self.PROTECTION_RATE)*self.VACCINATION_VECTOR/self.CBG_SIZES)
+        if(self.with_vac):
+            self.CBG_ATTACK_RATES_NEW = self.CBG_ATTACK_RATES_ORIGINAL * (1*(1-self.VACCINATION_VECTOR/self.CBG_SIZES)+(1-self.PROTECTION_RATE)*self.VACCINATION_VECTOR/self.CBG_SIZES)
+            self.CBG_DEATH_RATES_NEW = self.CBG_DEATH_RATES_ORIGINAL * (1*(1-self.VACCINATION_VECTOR/self.CBG_SIZES)+(1-self.PROTECTION_RATE)*self.VACCINATION_VECTOR/self.CBG_SIZES)
+        else:
+            self.CBG_ATTACK_RATES_NEW = self.CBG_ATTACK_RATES_ORIGINAL
+            self.CBG_DEATH_RATES_NEW = self.CBG_DEATH_RATES_ORIGINAL
         self.CBG_ATTACK_RATES_NEW = np.clip(self.CBG_ATTACK_RATES_NEW, 0, None) 
         self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, 0, None) 
         self.CBG_DEATH_RATES_NEW = np.clip(self.CBG_DEATH_RATES_NEW, None, 1) 

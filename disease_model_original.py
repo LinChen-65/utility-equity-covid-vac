@@ -1,5 +1,4 @@
 import numpy as np
-import time
 
 class Model:
     def __init__(self,
@@ -97,7 +96,6 @@ class Model:
         return [int(round(x)) for x in arr]
     
     def simulate_disease_spread(self,verbosity=24): 
-        start_time = time.time() 
         L_1=[]
         I_1=[]
         R_1=[]
@@ -112,7 +110,6 @@ class Model:
         history_D2 = []
         
         while t < self.T:#仿真时间之内
-            iter_t0 = time.time()
             if (verbosity > 0) and (t % verbosity == 0):
                 L = np.sum(self.cbg_latent, axis=1)#获得msa内所有cbg的L态人数
                 I = np.sum(self.cbg_infected, axis=1)#获得msa内所有cbg的I态人数
@@ -138,8 +135,6 @@ class Model:
             if self.debug and verbosity > 0 and t % verbosity == 0:
                 print('Num active POIs: %d. Num with infection rates clipped: %d' % (self.num_active_pois, self.num_poi_infection_rates_clipped))
                 print('Num CBGs active at POIs: %d. Num with clipped num cases from POIs: %d' % (self.num_cbgs_active_at_pois, self.num_cbgs_with_clipped_poi_cases))
-            if self.debug:
-                print("Time for iteration %i: %2.3f seconds" % (t, time.time() - iter_t0))
 
             if np.max(self.cbg_latent + self.cbg_infected) < 1:
                 print('Disease died off after t=%d. Stopping experiment.' % t)
@@ -169,9 +164,7 @@ class Model:
             self.estimated_R0['R0_base'] = 1.*total_base / initial_cases
             self.estimated_R0['R0_POI'] = 1.*total_poi / initial_cases
             assert np.allclose(self.estimated_R0['R0_base'] + self.estimated_R0['R0_POI'], self.estimated_R0['R0'])
-        end_time = time.time()
-        print('Simulation time = %.3fs -> %.3fs per iteration' %
-            (end_time - start_time, (end_time - start_time)/t))
+
         return T1,L_1,I_1,R_1,self.C2,self.D2, history_C2, history_D2, all_infected
 
 

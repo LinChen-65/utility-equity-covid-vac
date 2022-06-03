@@ -10,7 +10,8 @@ import time
 
 import constants
 import functions
-import disease_model_original as disease_model
+#import disease_model_original as disease_model
+import disease_model_only_modify_attack_rates as disease_model
 
 from math import sqrt
 from sklearn.metrics import mean_squared_error
@@ -233,11 +234,14 @@ for idx_p_sick_at_t0 in range(len(p_sick_at_t0_list)):
                                        confirmation_rate=.1,
                                        confirmation_lag=168,  # 7 days
                                        death_rate=.0066,
-                                       death_lag=432)
+                                       death_lag=432,
+                                       with_vac=False
+                                       )
             m.init_endogenous_variables()
-            T1,L_1,I_1,R_1,C2,D2, history_C2, history_D2, total_affected_cbg = m.simulate_disease_spread()
-
-            total_affected_cbg_age_agnostic = total_affected_cbg
+            #T1,L_1,I_1,R_1,C2,D2, history_C2, history_D2, total_affected_cbg = m.simulate_disease_spread()
+            T1,L_1,I_1,R_1,C2,D2,total_affected, history_C2, history_D2, total_affected_each_cbg = m.simulate_disease_spread(no_print=True)    
+    
+            #total_affected_cbg_age_agnostic = total_affected_cbg
             history_C2_age_agnostic = history_C2.copy()
             history_D2_age_agnostic = history_D2.copy()
 
