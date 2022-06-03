@@ -24,7 +24,7 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 ```
 
 ## Dataset
-We put the datasets in a zenodo repo (https://sandbox.zenodo.org/record/1058859). 
+We put the datasets in a zenodo repo (please refer to the Data Availability section). 
 **Please download them from this link and unzip them into 'data' and 'results' folders in the current directory, respectively.**
 
 Sources of raw data:
