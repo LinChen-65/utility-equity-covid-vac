@@ -24,12 +24,13 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 ```
 
 ## Dataset
-We put the datasets in a zenodo repo (please refer to the Data Availability section). 
-**Please download them from this link and unzip them into 'data' and 'results' folders in the current directory, respectively.**
+1. Download our dataset in the zenodo repo (please refer to the Data Availability section), and unzip them into the 'data' and 'results' folders in the current directory, respectively.
+2. Download demographic data from Safegraph (https://www.safegraph.com/free-data/open-census-data), and unzip them into the 'data' folder. We use the 2016 5-year ACS version (accessed on Nov. 23rd, 2020).
+3. Download estimated mobility networks from http://covid-mobility.stanford.edu, and unzip them into the 'data' folder.
 
-Sources of raw data:
+Detailed sources of raw data:
 - COVID-19 daily death data are available at the New York Times (https://github.com/nytimes/covid-19-data). 
-- Mobile phone mobility data and demographic data for census block groups are available at SafeGraph (https://www.safegraph.com/academics). Specifically, Safegraph demographic data can be freely downloaded (https://docs.safegraph.com/docs/open-census-data). When you download the data, remember to change the parameter '--safegraph_root' in the code.
+- Mobile phone mobility data and demographic data for census block groups are available at SafeGraph (https://www.safegraph.com/academics). Specifically, Safegraph demographic data can be freely downloaded (https://www.safegraph.com/free-data/open-census-data). When you download the data, remember to change the parameter '--safegraph_root' in the code.
 - Estimated mobility networks (ending with '*.pkl') should be retrieved from http://covid-mobility.stanford.edu, so we do not include it in the repository.
 - Social vulnerability indices for communities are available at the website of U.S. Agency for Toxic Substances and Disease Registry (https://www.atsdr.cdc.gov/placeandhealth/svi/data_documentation_download.html).
 - Vaccination data are available at the website of U.S. CDC (https://covid.cdc.gov/covid-data-tracker/##vaccination-demographic).
