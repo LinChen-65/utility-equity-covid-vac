@@ -9,7 +9,8 @@ import pickle
 
 import constants
 import functions
-import disease_model_returnSEIR as disease_model
+#import disease_model_returnSEIR as disease_model
+import disease_model_only_modify_attack_rates as disease_model
 
 import time
 
@@ -78,7 +79,8 @@ def run_simulation(starting_seed, num_seeds, vaccination_vector, protection_rate
                                infectious_period=84,  # 3.5 days
                                confirmation_rate=.1,
                                confirmation_lag=168,  # 7 days
-                               death_lag=432
+                               death_lag=432,
+                               returnSEIR=True
                                )
 
     m.init_endogenous_variables()

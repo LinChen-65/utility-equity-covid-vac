@@ -1,5 +1,4 @@
 import numpy as np
-import pdb
 
 class Model:
     def __init__(self,
@@ -55,11 +54,9 @@ class Model:
         else:
             self.included_dwell_time_correction_factors = False
         self.POI_CBG_VISITS_LIST = poi_cbg_visits_list#导入访问矩阵
-        if self.POI_CBG_VISITS_LIST is not None:
-            assert len(self.POI_CBG_VISITS_LIST) == self.T
-            assert self.POI_CBG_VISITS_LIST[0].shape == (self.M, self.N)
-        else:
-            assert self.POI_TIME_COUNTS.shape[1] == self.T
+        assert len(self.POI_CBG_VISITS_LIST) == self.T
+        assert self.POI_CBG_VISITS_LIST[0].shape == (self.M, self.N)
+
         
         # CBG variables
         self.CBG_SIZES = cbg_sizes  #cbg人口数量
@@ -75,8 +72,6 @@ class Model:
         self.VACCINATION_VECTOR = vaccination_vector
         self.VACCINE_ACCEPTANCE = vaccine_acceptance #20211007
         self.VACCINATION_VECTOR = np.clip(self.VACCINATION_VECTOR, None, (self.CBG_SIZES*self.VACCINE_ACCEPTANCE))
-        print('Toal num of vaccines: ', vaccination_vector.sum())
-        print('Considering vaccine acceptance, actual num of vaccines: ', self.VACCINATION_VECTOR.sum())
         self.PROTECTION_RATE = protection_rate
         self.just_compute_r0 = just_compute_r0
         self.confirmation_rate = confirmation_rate

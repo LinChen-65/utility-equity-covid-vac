@@ -1,5 +1,4 @@
 import numpy as np
-import time
 
 class Model:
     def __init__(self,
@@ -40,6 +39,7 @@ class Model:
                                  confirmation_rate=.1,
                                  confirmation_lag=168,  # 7 days
                                  death_lag=432,  # 18 days
+                                 returnSEIR=False,
                                  no_print=False,
                                  ):
         self.M = len(poi_areas)#POI的数量
@@ -51,7 +51,6 @@ class Model:
         self.POI_FACTORS = self.PSI / poi_areas#ψ/apj
         if poi_dwell_time_correction_factors is not None:
             self.POI_FACTORS = poi_dwell_time_correction_factors * self.POI_FACTORS#dpj^2*ψ/apj
-            #print('Adjusted POI transmission rates with dwell time correction factors')
             self.included_dwell_time_correction_factors = True
         else:
             self.included_dwell_time_correction_factors = False
@@ -77,6 +76,7 @@ class Model:
         self.confirmation_rate = confirmation_rate
         self.confirmation_lag = confirmation_lag
         self.death_lag = death_lag
+        self.returnSEIR = returnSEIR
 
         self.CBG_ATTACK_RATES_NEW = self.CBG_ATTACK_RATES_ORIGINAL * (1*(1-self.VACCINATION_VECTOR/self.CBG_SIZES)+(1-self.PROTECTION_RATE)*self.VACCINATION_VECTOR/self.CBG_SIZES)
         self.CBG_DEATH_RATES_NEW = self.CBG_DEATH_RATES_ORIGINAL * (1*(1-self.VACCINATION_VECTOR/self.CBG_SIZES)+(1-self.PROTECTION_RATE)*self.VACCINATION_VECTOR/self.CBG_SIZES)
@@ -130,7 +130,6 @@ class Model:
         epidemic_over = False
         
         while t < self.T:#仿真时间之内
-            iter_t0 = time.time()
             if (verbosity > 0) and (t % verbosity == 0):
                 L = np.sum(self.cbg_latent, axis=1) # 获得msa内所有cbg的L态人数
                 I = np.sum(self.cbg_infected, axis=1) # 获得msa内所有cbg的I态人数
@@ -166,8 +165,6 @@ class Model:
                 if self.debug and verbosity > 0 and t % verbosity == 0:
                     print('Num active POIs: %d. Num with infection rates clipped: %d' % (self.num_active_pois, self.num_poi_infection_rates_clipped))
                     print('Num CBGs active at POIs: %d. Num with clipped num cases from POIs: %d' % (self.num_cbgs_active_at_pois, self.num_cbgs_with_clipped_poi_cases))
-                if self.debug:
-                    print("Time for iteration %i: %2.3f seconds" % (t, time.time() - iter_t0))
 
                 if np.max(self.cbg_latent + self.cbg_infected) < 1:
                     epidemic_over = True # epidemic is over
@@ -185,8 +182,15 @@ class Model:
         if self.N <= 10:
             print('Final state after %d rounds: L+I+R=%s' % (t, self.format_floats(cbg_all_affected)))
         total_affected = np.sum(cbg_all_affected, axis=1)
-     
-        return T1,L_1,I_1,R_1,self.C2,self.D2, total_affected, history_C2, history_D2, cbg_all_affected
+
+        if(self.returnSEIR):
+            E = np.mean(np.sum(self.cbg_latent, axis=1)) # 获得msa内所有cbg的E态人数
+            I = np.mean(np.sum(self.cbg_infected, axis=1)) # 获得msa内所有cbg的I态人数
+            R = np.mean(np.sum(self.cbg_removed, axis=1)) # 获得msa内所有cbg的R态人数
+            S = np.sum(self.CBG_SIZES) - E - I - R
+            return S,E,I,R
+        else:
+            return T1,L_1,I_1,R_1,self.C2,self.D2, total_affected, history_C2, history_D2, cbg_all_affected
     
     def update_states(self, t):
         self.get_new_cases(t)
