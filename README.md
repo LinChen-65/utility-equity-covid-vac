@@ -24,7 +24,7 @@ pip install numpy pandas matplotlib setproctitle datetime scipy statsmodels scik
 ```
 
 ## Dataset
-1. Download our dataset in the zenodo repo (please refer to the Data Availability section), and unzip them into the 'data' and 'results' folders in the current directory, respectively.
+1. Download our dataset in the zenodo repo (please refer to the Data Availability section), and unzip them into the 'data' folder in the current directory.
 2. Download demographic data from Safegraph (https://www.safegraph.com/free-data/open-census-data), and unzip them into the 'data' folder. We use the 2016 5-year ACS version (accessed on Nov. 23rd, 2020).
 3. Download estimated mobility networks from http://covid-mobility.stanford.edu, and unzip them into the 'data' folder.
 
