@@ -435,17 +435,27 @@ baseline_util, age_util, income_util, occupation_util, minority_util, hybrid_uti
 
 plt.figure(figsize=(14,6))
 
-dist = 4 
+dist = 3.3 #4 
 alpha = 1 
-bp = plt.boxplot(hybrid_util, positions=np.arange(9)*dist,patch_artist=True,widths=0.9) #labels='Comprehensive',color=color_list[0],alpha=alpha
+widths = 0.9
+bp = plt.boxplot(hybrid_util, positions=np.arange(9)*dist,patch_artist=True,widths=widths) #labels='Comprehensive',color=color_list[0],alpha=alpha
 [bp['boxes'][i].set(facecolor=color_list[0], alpha=alpha) for i in range(num_msas)]
-bp = plt.boxplot(age_util, positions=np.arange(9)*dist+1,patch_artist=True,widths=0.9) #labels='Prioritize by age',color=color_list[1],alpha=alpha
+bp = plt.boxplot(age_util, positions=np.arange(9)*dist+1,patch_artist=True,widths=widths) #labels='Prioritize by age',color=color_list[1],alpha=alpha
 [bp['boxes'][i].set(facecolor=color_list[1], alpha=alpha) for i in range(num_msas)]
-bp = plt.boxplot(baseline_util, positions=np.arange(9)*dist+2,patch_artist=True,widths=0.9) #labels='Homogeneous',color=color_list[4],alpha=alpha
+bp = plt.boxplot(baseline_util, positions=np.arange(9)*dist+2,patch_artist=True,widths=widths) #labels='Homogeneous',color=color_list[4],alpha=alpha
 [bp['boxes'][i].set(facecolor=color_list[4], alpha=alpha) for i in range(num_msas)]
 
+plt.xlim(-widths/2-0.2, 8*dist+2+widths/2+0.2)
 plt.xticks(np.arange(9)*dist+1,anno_list,fontsize=24,rotation=20)
 plt.ylabel('Change in social utility\n(w.r.t. No-vaccination)',fontsize=24)
+
+# Background color
+for i in range(num_msas):
+    if(i%2==0):
+        plt.axvspan(i*dist-widths/2, i*dist-widths/2+3, color='grey',alpha=0.15)
+    else:
+        plt.axvspan(i*dist-widths/2, i*dist-widths/2+3, color='silver',alpha=0.15)
+
 
 # Save the figure
 savepath = os.path.join(root, subroot , 'fig4b.pdf')
@@ -492,7 +502,6 @@ plt.scatter(np.arange(9)*dist_1+dist_2,age_equi_age,marker=marker_list[0],s=mark
 plt.scatter(np.arange(9)*dist_1+dist_2,age_equi_income,marker=marker_list[1],s=markersize,color=color_list[1],alpha=alpha)
 plt.scatter(np.arange(9)*dist_1+dist_2,age_equi_occupation,marker=marker_list[2],s=markersize,color=color_list[1],alpha=alpha)
 plt.scatter(np.arange(9)*dist_1+dist_2,age_equi_minority,marker=marker_list[3],s=markersize,color=color_list[1],alpha=alpha)
-
 
 plt.scatter(np.arange(9)*dist_1+dist_2*2,baseline_equi_occupation,marker=marker_list[0],s=markersize,color=color_list[4],alpha=alpha)
 plt.scatter(np.arange(9)*dist_1+dist_2*2,baseline_equi_age,marker=marker_list[1],s=markersize,color=color_list[4],alpha=alpha)
