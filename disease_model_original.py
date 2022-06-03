@@ -180,8 +180,6 @@ class Model:
         new_infectious = self.get_new_infectious()
         new_removed = self.get_new_removed()
         if not self.just_compute_r0:
-            # normal case.
-            #print('normal case')
             self.cbg_latent = self.cbg_latent + self.cbg_new_cases - new_infectious
             self.cbg_infected = self.cbg_infected + new_infectious - new_removed
             self.cbg_removed = self.cbg_removed + new_removed
@@ -193,7 +191,6 @@ class Model:
             new_deaths_to_happen = np.random.binomial(new_infectious.astype(int), self.death_rate)
             self.deaths_to_happen = self.deaths_to_happen + new_deaths_to_happen - self.new_deaths
         else:
-            # if we want to calibrate R0, don't allow anyone new to become infected - just put new_cases in removed.
             self.cbg_latent = self.cbg_latent - new_infectious
             self.cbg_infected = self.cbg_infected + new_infectious - new_removed
             self.cbg_removed = self.cbg_removed + new_removed + self.cbg_new_cases
@@ -202,7 +199,6 @@ class Model:
     def get_new_cases(self, t):
         ### Compute CBG densities and infection rates
         cbg_densities = self.cbg_infected / self.CBG_SIZES  # S x N,Ici/Nci
-        overall_densities = (np.sum(self.cbg_infected, axis=1) / np.sum(self.CBG_SIZES)).reshape(-1, 1)  # S x 1#总感染率，全部cbg的感染数除以总人数
         num_sus = np.clip(self.CBG_SIZES - self.cbg_latent - self.cbg_infected - self.cbg_removed, 0, None)  # S x N，易感人数即普通人人数维度是1×N
         sus_frac = num_sus / self.CBG_SIZES  # S x N，普通人比例
 
