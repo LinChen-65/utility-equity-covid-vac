@@ -55,7 +55,7 @@ python plot_curves.py
 
 Expected outcomes:
 
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_13.png' height=480>
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_13.png' height=400>
 
 ```
 # Fig. 1(d)
@@ -148,13 +148,6 @@ python plot_comprehensive_utility_equity.py --with_supplementary
 
 Expected outcomes (example):
 
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_comprehensive_utility_equity%5D_result.png' height=300>
+<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_comprehensive_utility_equity%5D_result.png' height=350>
 
-```
-# Supplementary Fig.18
-python plot_curves.py --with_vac
-```
 
-Expected outcomes: 
-
-<img src='https://github.com/LinChen-65/utility-equity-covid-vac/blob/main/figures/%5Bplot_curves%5D_result_2.png' height=300>
