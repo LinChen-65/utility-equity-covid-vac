@@ -14,6 +14,7 @@ from sklearn.metrics import mean_squared_error
 import functions
 import constants
 import time
+import seaborn as sns
 
 # root
 root = os.getcwd()
@@ -197,56 +198,107 @@ print(get_ci(improve_standardSEIR))
 
 
 # Re-order
-bar_standardSEIR_reorder = np.sort(bar_standardSEIR)[::-1]
+bar_standardSEIR_reorder = np.sort(bar_standardSEIR)
 ref = np.argsort(bar_standardSEIR)
-bar_agnostic_reorder = bar_agnostic[ref[::-1]]
-bar_aware_reorder = bar_aware[ref[::-1]]
-error_agnostic_reorder = error_agnostic[ref[::-1]]
-error_aware_reorder = error_aware[ref[::-1]]
-bar_standardSEIR_reorder = bar_standardSEIR[ref[::-1]]
-anno_list_reorder = np.array(anno_list)[ref[::-1]]
-msa_name_list_reorder = np.array(msa_name_list)[ref[::-1]]
+bar_agnostic_reorder = bar_agnostic[ref]
+bar_aware_reorder = bar_aware[ref]
+error_agnostic_reorder = error_agnostic[ref]
+error_aware_reorder = error_aware[ref]
+bar_standardSEIR_reorder = bar_standardSEIR[ref]
+anno_list = ['Atlanta','Chicago','Dallas','Houston', 'L.A.','Miami','Phila.','S.F.','D.C.']
+anno_list_reorder = np.array(anno_list)[ref]
+msa_name_list_reorder = np.array(msa_name_list)[ref] 
 
 
-# box plot 
-height = 1
-distance = height*3 #4
-fig,ax = plt.subplots(figsize=(4.3,7))
+# distribution # 20220604
 num_msas = len(msa_name_list)
-for i in range(len(msa_name_list)):
-    plt.vlines(bar_standardSEIR_reorder[i], i*distance-height-0.5*height, i*distance+0.5*height, color='k', linestyles='dashed')
-bp = plt.boxplot([scatter_age_agnostic[msa_name_list_reorder[i]] for i in range(num_msas)], positions=np.arange(9)*distance,patch_artist=True,vert=False,widths=1,showfliers=False) 
-[bp['boxes'][i].set(facecolor='C0', alpha=1) for i in range(num_msas)]
-bp = plt.boxplot([scatter_no_vac[msa_name_list_reorder[i]] for i in range(num_msas)], positions=np.arange(9)*distance-height,patch_artist=True,vert=False,widths=1,showfliers=False) 
-[bp['boxes'][i].set(facecolor='C1', alpha=1) for i in range(num_msas)]
+my_pal = {'Metapopulation model': 'C0', 'BD model': 'C1', 'dummy': 'k'}
+alpha = 0.8
+width = 1.6
+plt.subplots(figsize=(4.3,7))
 
-# background color
-y = (np.arange(num_msas*distance)-height-0.5)
-xmin = 0.1
-xmax = 1.65
+# Draw standard SEIR
+for i in range(len(msa_name_list)):
+    plt.vlines(bar_standardSEIR_reorder[i], i-0.8, i, color='green', linestyles='dashed', linewidth=1)
+
+# Organize data into a dataframe
+data_df = pd.DataFrame(columns=['msa', 'model', 'result'])
+for i in range(num_msas):
+    msa_name = msa_name_list_reorder[i]
+    for j in range(len(scatter_age_agnostic[msa_name])):
+        data_df.loc[len(data_df)] = [msa_name, 'Metapopulation model', scatter_age_agnostic[msa_name][j]]
+        #data_df.loc[len(data_df)] = [msa_name, 'BD model', scatter_no_vac[msa_name][j]]
+ # Dummy data point
+data_df.loc[len(data_df)] = ['dummy', 'dummy', -999]
+# Plot violin
+g1 = sns.violinplot(y="msa", x="result", hue="model",
+        data=data_df, palette=my_pal, saturation=0.8, linewidth=0.4, split=True, scale='width', inner=None, width=width)
+# Adjust transparancy
+for violin in g1.collections:
+    violin.set_alpha(alpha)
+# Add median lines
+for i in range(num_msas):
+    plt.vlines(data_df.loc[(data_df['msa']==msa_name_list_reorder[i]) & (data_df['model']=='Metapopulation model')].median(), i-0.8, i, color='k', linewidth=0.8)
+    #plt.vlines(data_df.loc[(data_df['msa']==msa_name_list_reorder[i]) & (data_df['model']=='BD model')].median(), i, i+0.4, color='k', linewidth=0.6)
+
+# Organize data into a dataframe
+data_df = pd.DataFrame(columns=['msa', 'model', 'result'])
+for i in range(num_msas):
+    msa_name = msa_name_list_reorder[i]
+    for j in range(len(scatter_age_agnostic[msa_name])):
+        #data_df.loc[len(data_df)] = [msa_name, 'Metapopulation model', scatter_age_agnostic[msa_name][j]]
+        data_df.loc[len(data_df)] = [msa_name, 'BD model', scatter_no_vac[msa_name][j]]
+ # Dummy data point
+data_df.loc[len(data_df)] = ['dummy', 'dummy', -999]
+# Plot violin
+g2 = sns.violinplot(y="msa", x="result", hue="model",
+        data=data_df, palette=my_pal, saturation=0.8, linewidth=0.4, split=True, scale='width', inner=None, width=width)
+# Adjust transparancy
+for violin in g2.collections:
+    violin.set_alpha(alpha)
+# Add median lines
+for i in range(num_msas):
+    #plt.vlines(data_df.loc[(data_df['msa']==msa_name_list_reorder[i]) & (data_df['model']=='Metapopulation model')].median(), i-0.4, i, color='k', linewidth=0.6)
+    plt.vlines(data_df.loc[(data_df['msa']==msa_name_list_reorder[i]) & (data_df['model']=='BD model')].median(), i-0.8, i, color='k', linewidth=0.8)
+
+# Add horizontal lines
+for i in range(num_msas):
+    plt.hlines(i, 0,1.65, color='k',linewidth=0.5)
+plt.xlim(0,1.65)
+plt.ylim(num_msas-1-0.4+width/2, -0.9) 
+
+# Background color
 for i in range(num_msas):
     if(i%2==0):
-        plt.fill_betweenx(y[i*distance:(i+1)*distance], xmin, xmax, facecolor='grey',alpha=0.15)
+        plt.axhspan(i-0.8, i, color='grey',alpha=0.15)
     else:
-        plt.fill_betweenx(y[i*distance:(i+1)*distance], xmin, xmax, facecolor='silver',alpha=0.15)
-plt.yticks(np.arange(9)*distance, anno_list_reorder,fontsize=18)#,rotation=20
-plt.xlim(xmin, xmax)
+        plt.axhspan(i-0.8, i, color='silver',alpha=0.15)
+
+# Remove hue legend
+leg = plt.gca().legend()
+leg.remove()
+g1.tick_params(left=False)  # remove the ticks
+g1.set(ylabel=None)
+plt.yticks(np.arange(9)-width/4, anno_list_reorder,fontsize=18)#,rotation=20
 plt.xlabel('NRMSE of daily deaths',fontsize=19)
 plt.xticks(fontsize=13)
-savepath = os.path.join(fig_save_root, f'fig1c.pdf')
+savepath = os.path.join(fig_save_root, 'fig1c.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')
-print(f'Fig1c, saved at {savepath}')
+print(f'test, saved at {savepath}')
 
 
 # Fig1c, legend
 plt.figure()
-label_list = ['Meta-population model', 'BD model'] 
-color_list = ['C0','C1'] 
-alpha_list = [1,1] 
-plt.vlines(bar_standardSEIR_reorder[0], 0*distance-height-0.5*height, 0*distance+0.5*height, color='k', linestyles='dashed', label='SEIR model')
+label_list = ['Meta-population model', 'BD model'] #'SEIR model',
+color_list = ['C0','C1'] #'grey',
+alpha_list = [0.8, 0.8] #[1,1] #0.6,
+
+plt.vlines(bar_standardSEIR_reorder[0], 0, 1, color='green', linestyles='dashed', label='SEIR model')
 plt.bar(1,1,label=label_list[0],color=color_list[0], alpha=alpha_list[0])
 plt.bar(2,1,label=label_list[1],color=color_list[1], alpha=alpha_list[1])
 plt.legend(ncol=1,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
+#patches = [mpatches.Patch(color=color_list[i], alpha=alpha_list[i], label="{:s}".format(label_list[i])) for i in range(len(label_list)) ]
+#plt.legend(handles=patches,ncol=1,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
 # Save figure
 savepath = os.path.join(fig_save_root, f'fig1c_legend.pdf')
 plt.savefig(savepath,bbox_inches = 'tight')

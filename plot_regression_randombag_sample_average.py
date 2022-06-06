@@ -15,6 +15,7 @@ from scipy import stats
 import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import seaborn as sns
 
 import constants
 import functions
@@ -639,53 +640,100 @@ print(f'Fig3b_legend, saved at {savepath}')
 ##########################################
 # Fig3c
 
-# box plot 
-def plot_equity_explained_variance_box(demo_feat, show_yticks=True):
+# distribution 
+def plot_equity_explained_variance(demo_feat, show_yticks=True):
     plt.figure(figsize=(3,5.5))
-    step_1 = 2.4 #3
-    step_2 = 1.1
+    widths=0.8
     num_msas = 9
-    widths=1
-    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model1_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1,patch_artist=True,vert=False,widths=widths) 
-    [bp['boxes'][i].set(facecolor='silver', alpha=0.8) for i in range(num_msas)]
-    bp = plt.boxplot([eval(f'{demo_feat}_adj_r2_model2_array[i]') for i in range(num_msas)], positions=np.arange(9)[::-1]*step_1-1*step_2,patch_artist=True,vert=False,widths=widths) 
-    [bp['boxes'][i].set(facecolor='green', alpha=0.7) for i in range(num_msas)]
+    alpha = 0.7
+    
+    # Create a dictionary with one specific color per group:
+    my_pal = {"Only demo-feats": "silver", "With $\it{community~risk}$": "limegreen", "dummy":'k'}
+
+    # Organize data into a dataframe
+    data_df = pd.DataFrame(columns=['msa', 'model', 'result'])
+    for i in range(num_msas):
+        for j in range(len(age_adj_r2_model1_array[i])):
+            data_df.loc[len(data_df)] = [msa_name_list[i], 'Only demo-feats', eval(f'{demo_feat}_adj_r2_model1_array[i]')[j]]
+    # Dummy data point
+    data_df.loc[len(data_df)] = ['dummy', 'dummy', -999]
+    # Plot violin
+    g1 = sns.violinplot(y="msa", x="result", hue="model",
+           data=data_df, palette=my_pal, saturation=0.8, linewidth=0.4, split=True, scale='width', inner=None, width=widths*2)
+    # Adjust transparancy
+    for violin in g1.collections:
+        violin.set_alpha(alpha)
+    # Plot median lines
+    for i in range(num_msas):
+        plt.vlines(data_df.loc[(data_df['msa']==msa_name_list[i]) & (data_df['model']=='Only demo-feats')].median(), i-0.8, i, color='grey', linewidth=1)
+
+    # Organize data into a dataframe
+    data_df = pd.DataFrame(columns=['msa', 'model', 'result'])
+    for i in range(num_msas):
+        for j in range(len(age_adj_r2_model1_array[i])):
+            data_df.loc[len(data_df)] = [msa_name_list[i], 'With $\it{community~risk}$', eval(f'{demo_feat}_adj_r2_model2_array[i]')[j]]
+    # Dummy data point
+    data_df.loc[len(data_df)] = ['dummy', 'dummy', -999]
+    # Plot violin
+    g2 = sns.violinplot(y="msa", x="result", hue="model",
+           data=data_df, palette=my_pal, saturation=0.8, linewidth=0.4, split=True, scale='width', inner=None, width=widths*2)
+    # Adjust transparancy
+    for violin in g2.collections:
+        violin.set_alpha(alpha)
+    # Plot median lines
+    for i in range(num_msas):
+        plt.vlines(data_df.loc[(data_df['msa']==msa_name_list[i]) & (data_df['model']=='With $\it{community~risk}$')].median(), i-0.8, i, color='green', linewidth=1)
+    
+    # Remove hue legend
+    leg = plt.gca().legend()
+    leg.remove()
+    # Set y ticks    
     if(show_yticks):
-        plt.yticks(np.arange(9)*step_1-0.5*step_2,anno_list[::-1], fontsize=20)  
+        plt.yticks(np.arange(9)-1.2+widths,anno_list, fontsize=18)  
     else:
         empty_list = ['','','','','','','','','']
-        plt.yticks(np.arange(9)*step_1-0.5*step_2,empty_list, fontsize=20)  
+        plt.yticks(np.arange(9)-1.2+widths,empty_list, fontsize=18)  
+    # Add horizontal lines
+    for i in range(num_msas):
+        plt.hlines(i-0.8+widths, 0,1, color='k', linewidth=0.4)
+        #plt.hlines(i-0.8, 0,1, color='k', linewidth=0.4)
+    # Other settings
+    plt.ylim(num_msas-1-0.4+widths, -1.1) 
     plt.xlim(0,1)
     plt.xticks(fontsize=14) 
-    plt.ylim(-step_2-widths/2-0.2, (num_msas-1)*step_1+widths/2+0.2)
-    plt.xlabel(f'Explained variance\n',fontsize=18) #20220313
+    plt.xlabel(f'Explained variance\n',fontsize=16) 
+    g1.tick_params(left=False)  # remove the ticks
+    g1.set(ylabel=None)
     
     # Background color
     for i in range(num_msas):
         if(i%2==0):
-            plt.axhspan((num_msas-i-1)*step_1+widths/2, (num_msas-i-2)*step_1+widths/2, color='grey',alpha=0.15)
+            plt.axhspan(i-0.8, i+widths-0.8, color='grey',alpha=0.15)
         else:
-            plt.axhspan((num_msas-i-1)*step_1+widths/2, (num_msas-i-2)*step_1+widths/2, color='silver',alpha=0.15)
+            plt.axhspan(i-0.8, i+widths-0.8, color='silver',alpha=0.15)
     
     # Save figure
-    savepath = os.path.join(fig_save_root, f'fig3c_{demo_feat}.pdf')
+    savepath = os.path.join(fig_save_root, f'fig3c_{demo_feat}.pdf') 
     plt.savefig(savepath,bbox_inches = 'tight')
     print(f'Fig3c_{demo_feat}, saved at {savepath}')
-    
+
+
 # Fig3c, age
-plot_equity_explained_variance_box(demo_feat='age', show_yticks=True)
+plot_equity_explained_variance(demo_feat='age', show_yticks=True)
 # Fig3c, income
-plot_equity_explained_variance_box(demo_feat='income', show_yticks=False)
+plot_equity_explained_variance(demo_feat='income', show_yticks=False)
 # Fig3c, occupation
-plot_equity_explained_variance_box(demo_feat='occupation', show_yticks=False)
+plot_equity_explained_variance(demo_feat='occupation', show_yticks=False)
 # Fig3c, minority
-plot_equity_explained_variance_box(demo_feat='minority', show_yticks=False)
+plot_equity_explained_variance(demo_feat='minority', show_yticks=False)
+
+
 
 # Fig3c, legend
 plt.figure()
 label_list = ['Only demo-feats','With $\it{community~risk}$']
 color_list = ['silver','green']
-alpha_list = [0.8, 0.7]
+alpha_list = [0.8,0.6] #[0.8, 0.6] #[0.8, 0.7]
 patches = [mpatches.Patch(color=color_list[i], alpha=alpha_list[i], label="{:s}".format(label_list[i])) for i in range(2) ]
 plt.legend(handles=patches,ncol=2,fontsize=20,bbox_to_anchor=(0.8,-0.1)) 
 # Save figure
